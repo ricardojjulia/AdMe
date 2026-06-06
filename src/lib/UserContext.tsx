@@ -38,9 +38,73 @@ interface UserContextType {
   coupons: any[];
   redeemPerk: (name: string, cost: number) => Promise<string>;
   setLocation: (loc: { lat: number; lng: number } | null) => void;
+  selectPersona: (id: string | null) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
+
+export const DEMO_PERSONAS = [
+  {
+    id: 'a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0e1',
+    name: 'Sarah (Tech Dev)',
+    avatar: 'S',
+    rewardsBalance: 2450,
+    role: 'consumer' as const,
+    adCreditsBalance: 0,
+    currentStreak: 7,
+    lastActiveDate: null,
+    subscriptionTier: 'free',
+    preferences: ['Tech & SaaS', 'Gaming', 'Finance']
+  },
+  {
+    id: 'a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0e2',
+    name: 'Marcus (Local Foodie)',
+    avatar: 'M',
+    rewardsBalance: 350,
+    role: 'consumer' as const,
+    adCreditsBalance: 0,
+    currentStreak: 3,
+    lastActiveDate: null,
+    subscriptionTier: 'free',
+    preferences: ['Local Eateries', 'Wellness & Health', 'Faith & Books']
+  },
+  {
+    id: 'a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0e3',
+    name: 'Elena (New Consumer)',
+    avatar: 'E',
+    rewardsBalance: 50,
+    role: 'consumer' as const,
+    adCreditsBalance: 0,
+    currentStreak: 1,
+    lastActiveDate: null,
+    subscriptionTier: 'free',
+    preferences: ['Faith & Books', 'Veteran-owned']
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000001',
+    name: 'Valor Brews (Business)',
+    avatar: 'VB',
+    rewardsBalance: 850,
+    role: 'business' as const,
+    adCreditsBalance: 15000,
+    currentStreak: 5,
+    lastActiveDate: null,
+    subscriptionTier: 'growth',
+    preferences: []
+  },
+  {
+    id: 'a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0f5',
+    name: 'WorkStation (Business)',
+    avatar: 'WS',
+    rewardsBalance: 1200,
+    role: 'business' as const,
+    adCreditsBalance: 45000,
+    currentStreak: 12,
+    lastActiveDate: null,
+    subscriptionTier: 'enterprise',
+    preferences: []
+  }
+];
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -57,13 +121,46 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [isSupabaseEnabled, setIsSupabaseEnabled] = useState(false);
 
   useEffect(() => {
-    // Check if Supabase URL is available and valid
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here') {
-      setIsSupabaseEnabled(true);
-      const supabase = createClient();
-      
-      const loadData = async () => {
+    const loadData = async () => {
+      const demoPersonaId = typeof window !== 'undefined' ? localStorage.getItem('adme_demo_persona_id') : null;
+      const hasSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here';
+      setIsSupabaseEnabled(!!hasSupabase);
+
+      if (demoPersonaId) {
+        const persona = DEMO_PERSONAS.find(p => p.id === demoPersonaId);
+        if (persona) {
+          setUser({
+            id: persona.id,
+            name: persona.name,
+            avatar: persona.avatar,
+            rewardsBalance: persona.rewardsBalance,
+            role: persona.role,
+            adCreditsBalance: persona.adCreditsBalance,
+            currentStreak: persona.currentStreak,
+            lastActiveDate: persona.lastActiveDate,
+            subscriptionTier: persona.subscriptionTier,
+            subscriptionRenewal: null
+          });
+          setPreferences(persona.preferences);
+          
+          if (hasSupabase) {
+            try {
+              const supabase = createClient();
+              const { data: couponData } = await supabase.from('coupons').select('*').eq('user_id', persona.id).order('created_at', { ascending: false });
+              if (couponData) {
+                setCoupons(couponData);
+              }
+            } catch (e) {
+              console.error("Failed to load coupons for demo user:", e);
+            }
+          }
+          return;
+        }
+      }
+
+      if (hasSupabase) {
         try {
+          const supabase = createClient();
           const { data: { session } } = await supabase.auth.getSession();
           if (!session?.user) {
              setUser(null);
@@ -102,10 +199,28 @@ export function UserProvider({ children }: { children: ReactNode }) {
           console.error("Supabase load error:", error);
           setUser(null);
         }
-      };
+      } else {
+        const defaultPersona = DEMO_PERSONAS[0];
+        setUser({
+          id: defaultPersona.id,
+          name: defaultPersona.name,
+          avatar: defaultPersona.avatar,
+          rewardsBalance: defaultPersona.rewardsBalance,
+          role: defaultPersona.role,
+          adCreditsBalance: defaultPersona.adCreditsBalance,
+          currentStreak: defaultPersona.currentStreak,
+          lastActiveDate: defaultPersona.lastActiveDate,
+          subscriptionTier: defaultPersona.subscriptionTier,
+          subscriptionRenewal: null
+        });
+        setPreferences(defaultPersona.preferences);
+      }
+    };
 
-      loadData();
+    loadData();
 
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here') {
+      const supabase = createClient();
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
            loadData();
@@ -350,8 +465,21 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return generatedCode;
   };
 
+  const selectPersona = async (id: string | null) => {
+    if (!id) {
+      localStorage.removeItem('adme_demo_persona_id');
+      if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here') {
+        const supabase = createClient();
+        await supabase.auth.signOut();
+      }
+    } else {
+      localStorage.setItem('adme_demo_persona_id', id);
+    }
+    window.location.reload();
+  };
+
   return (
-    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, redeemPerk, setLocation }}>
+    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, redeemPerk, setLocation, selectPersona }}>
       {children}
     </UserContext.Provider>
   );
