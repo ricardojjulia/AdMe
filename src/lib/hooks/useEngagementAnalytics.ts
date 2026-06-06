@@ -9,9 +9,9 @@ export function useEngagementAnalytics(adId: string) {
     const hasViewedRef = useRef(false);
     const [isLiked, setIsLiked] = useState(false);
 
-    const logAction = async (type: string, points: number, creditsToDeduct?: number) => {
+    const logAction = async (type: string, points: number, creditsToDeduct?: number, viewDurationSeconds?: number) => {
         let actionName = "Engaged with Ad";
-        if (type === 'view') actionName = "Viewed Ad";
+        if (type === 'view' || type === 'view_reward') actionName = "Viewed Ad";
         if (type === 'click') actionName = "Clicked Ad CTA";
         if (type === 'like') actionName = "Liked Ad";
         
@@ -29,7 +29,9 @@ export function useEngagementAnalytics(adId: string) {
             addToast(`Earned ${points} points for engagement!`, 'success');
         }
 
-        addReward(finalPoints, actionName);
+        if (points > 0) {
+            addReward(finalPoints, actionName);
+        }
         if (creditsToDeduct) {
             deductCredits(creditsToDeduct);
         }
@@ -37,7 +39,20 @@ export function useEngagementAnalytics(adId: string) {
             try {
                 const { createClient } = await import("@/lib/supabase/client");
                 const supabase = createClient();
-                await supabase.from('engagements').insert({ user_id: user.id, ad_id: adId, engagement_type: type });
+                
+                // Only write to engagements if it's not a temporary UI view reward type
+                if (type !== 'view_reward') {
+                    const insertPayload: any = { 
+                        user_id: user.id, 
+                        ad_id: adId, 
+                        engagement_type: type 
+                    };
+                    if (type === 'view' && typeof viewDurationSeconds === 'number') {
+                        insertPayload.view_duration_seconds = viewDurationSeconds;
+                    }
+                    await supabase.from('engagements').insert(insertPayload);
+                }
+                
                 if (type === 'like') {
                     await supabase.rpc('increment_ad_likes', { target_ad_id: adId });
                 }
@@ -48,16 +63,47 @@ export function useEngagementAnalytics(adId: string) {
     };
 
     useEffect(() => {
+        const isIntersectingRef = { current: false };
+        const startTimeRef = { current: null as number | null };
+
+        const handleViewExit = () => {
+            isIntersectingRef.current = false;
+            if (startTimeRef.current !== null) {
+                const durationMs = Date.now() - startTimeRef.current;
+                const durationSec = parseFloat((durationMs / 1000).toFixed(1));
+                startTimeRef.current = null;
+                
+                console.log(`[Analytics] Ad ${adId} viewed for ${durationSec} seconds on exit.`);
+                
+                // Only log if they viewed for at least 0.5s to avoid scroll noise
+                if (durationSec >= 0.5) {
+                    logAction('view', 0, undefined, durationSec);
+                }
+            }
+        };
+
         const observer = new IntersectionObserver(
             ([entry]) => {
-                if (entry.isIntersecting && !hasViewedRef.current) {
+                if (entry.isIntersecting) {
+                    isIntersectingRef.current = true;
+                    startTimeRef.current = Date.now();
+                    
+                    // Trigger the 2-second points reward timeout if not already viewed in this session
+                    const currentStart = startTimeRef.current;
                     setTimeout(() => {
-                        if (ref.current && ref.current.getBoundingClientRect().top >= 0) {
-                            console.log(`[Analytics] Ad ${adId} viewed for 2+ seconds.`);
+                        if (
+                            isIntersectingRef.current && 
+                            startTimeRef.current === currentStart && 
+                            !hasViewedRef.current
+                        ) {
                             hasViewedRef.current = true;
-                            logAction('view', 1);
+                            console.log(`[Analytics] Ad ${adId} viewed for 2+ continuous seconds. Awarding points.`);
+                            logAction('view_reward', 1);
                         }
                     }, 2000);
+                } else {
+                    // Exiting viewport
+                    handleViewExit();
                 }
             },
             { threshold: 0.5 }
@@ -67,8 +113,11 @@ export function useEngagementAnalytics(adId: string) {
             observer.observe(ref.current);
         }
 
-        return () => observer.disconnect();
-    }, [adId, addReward, user]);
+        return () => {
+            handleViewExit();
+            observer.disconnect();
+        };
+    }, [adId, user]);
 
     const logClick = () => {
         console.log(`[Analytics] CTA Clicked on Ad ${adId}`);
