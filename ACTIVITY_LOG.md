@@ -42,5 +42,17 @@
 - Documented Phase 6, 7, and 8 additions in [CHANGELOG.md](file:///Users/rjulia/programs/AdMe/CHANGELOG.md), bumping the minor version to `1.2.0`.
 - Staged, committed, and pushed the updated CHANGELOG.md and ACTIVITY_LOG.md to GitHub.
 
+## [2026-06-06T19:12:19-04:00] User Request
+**User**: Continue
+
+**Action**:
+- Created interactive sub-components [InteractionUnits.tsx](file:///Users/rjulia/programs/AdMe/src/components/InteractionUnits.tsx) containing Canvas-based `<ScratchCard />` and `<QuizCard />` brand trivia components.
+- Added custom styling in [InteractionUnits.module.css](file:///Users/rjulia/programs/AdMe/src/components/InteractionUnits.module.css).
+- Integrated interaction badges and conditional rendering logic in [FeedCard.tsx](file:///Users/rjulia/programs/AdMe/src/components/FeedCard.tsx) and [NativeAdCard.tsx](file:///Users/rjulia/programs/AdMe/src/components/NativeAdCard.tsx).
+- Persisted completion states per ad ID in `localStorage` to claim the +50 points rewards via `addReward`.
+- Verified build and type check compilation cleanly via `npm run build`.
+- Created feature branch `feature/phase9-value-exchange`, staged, committed, and merged to `main`, pushing changes to GitHub.
+
+
 
 

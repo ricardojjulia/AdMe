@@ -10,6 +10,7 @@ import { useEngagementAnalytics } from "@/lib/hooks/useEngagementAnalytics";
 import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
 import { LeadModal } from "./LeadModal";
+import { ScratchCard, QuizCard } from "./InteractionUnits";
 import styles from "./FeedCard.module.css";
 
 interface FeedCardProps {
@@ -19,13 +20,40 @@ interface FeedCardProps {
 export function FeedCard({ ad }: FeedCardProps) {
   const [showReportOptions, setShowReportOptions] = useState(false);
   const { ref, logClick, logLike, isLiked } = useEngagementAnalytics(ad.id);
-  const { toggleSavedAd, savedAds, reportAd, user, skipAd } = useUser();
+  const { toggleSavedAd, savedAds, reportAd, user, skipAd, addReward } = useUser();
   const { addToast } = useToast();
   const isSaved = savedAds.includes(ad.id);
   const [likesCount, setLikesCount] = useState(ad.metrics.likes);
   const [isSkipping, setIsSkipping] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [isLeadOpen, setIsLeadOpen] = useState(false);
+
+  const [activeInteraction, setActiveInteraction] = useState<boolean>(false);
+  const [isInteractionCompleted, setIsInteractionCompleted] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const completed = localStorage.getItem(`adme_interaction_completed_${ad.id}`);
+      if (completed) {
+        setIsInteractionCompleted(true);
+      }
+    }
+  }, [ad.id]);
+
+  const interactionType = ad.advertiser.name === "Valor Brews" || ad.advertiser.name === "The Green Kitchen" ? 'scratch' : 'quiz';
+
+  const handleCompleteInteraction = () => {
+    if (isInteractionCompleted) return;
+    
+    addReward(50, `Value-Exchange: ${ad.advertiser.name}`);
+    localStorage.setItem(`adme_interaction_completed_${ad.id}`, 'true');
+    setIsInteractionCompleted(true);
+    addToast("Successfully completed! +50 points added to your balance.", "success");
+    
+    setTimeout(() => {
+      setActiveInteraction(false);
+    }, 3500);
+  };
 
   useEffect(() => {
     let channel: any;
@@ -144,32 +172,109 @@ export function FeedCard({ ad }: FeedCardProps) {
         <div className={styles.badges}>
           <span className={styles.badge}>Just in</span>
           <span className={styles.badgeAccent}>{ad.cta.label}</span>
+          
+          {/* Value Exchange Interaction Badge */}
+          {isInteractionCompleted ? (
+            <span style={{ fontSize: '0.75rem', background: 'rgba(16, 185, 129, 0.15)', color: 'rgb(110, 231, 183)', padding: '0.2rem 0.5rem', borderRadius: '0.25rem', fontWeight: 'bold' }}>
+              ✅ Reward Claimed (+50 pts)
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setActiveInteraction(true)}
+              style={{
+                background: 'linear-gradient(135deg, hsl(var(--primary)/0.2) 0%, hsl(var(--accent)/0.2) 100%)',
+                border: '1px solid hsl(var(--primary)/0.4)',
+                borderRadius: '0.25rem',
+                color: 'hsl(var(--primary))',
+                fontSize: '0.75rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                padding: '0.2rem 0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'scale(1.03)';
+                e.currentTarget.style.borderColor = 'hsl(var(--primary))';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'none';
+                e.currentTarget.style.borderColor = 'hsl(var(--primary)/0.4)';
+              }}
+            >
+              🎁 Play & Earn +50 pts
+            </button>
+          )}
         </div>
       </div>
 
-      <div className={styles.media} style={{ borderColor: ad.content.primaryColor }}>
-        <Image
-          src={ad.content.mediaUrl}
-          alt="Ad creative"
-          fill
-          className={styles.mediaImg}
-          unoptimized
-          priority
-        />
-        <div className={styles.overlay}>
-          <span className={styles.overlayTag}>Immersive drop</span>
-          <a
-            href={ad.cta.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={logClick}
-            className={styles.overlayCta}
-            style={{ backgroundColor: ad.content.primaryColor }}
+      {activeInteraction ? (
+        <div className={styles.media} style={{ borderColor: ad.content.primaryColor, minHeight: '220px', display: 'block', height: 'auto', position: 'relative' }}>
+          {interactionType === 'scratch' ? (
+            <ScratchCard 
+              rewardAmount={50} 
+              brandName={ad.advertiser.name} 
+              onComplete={handleCompleteInteraction} 
+            />
+          ) : (
+            <QuizCard 
+              rewardAmount={50} 
+              brandName={ad.advertiser.name} 
+              onComplete={handleCompleteInteraction} 
+            />
+          )}
+          <button
+            type="button"
+            onClick={() => setActiveInteraction(false)}
+            style={{
+              position: 'absolute',
+              top: '0.5rem',
+              right: '0.5rem',
+              background: 'rgba(0,0,0,0.6)',
+              border: 'none',
+              borderRadius: '50%',
+              width: '24px',
+              height: '24px',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.8rem',
+              zIndex: 100
+            }}
           >
-            {ad.cta.label} →
-          </a>
+            ✕
+          </button>
         </div>
-      </div>
+      ) : (
+        <div className={styles.media} style={{ borderColor: ad.content.primaryColor }}>
+          <Image
+            src={ad.content.mediaUrl}
+            alt="Ad creative"
+            fill
+            className={styles.mediaImg}
+            unoptimized
+            priority
+          />
+          <div className={styles.overlay}>
+            <span className={styles.overlayTag}>Immersive drop</span>
+            <a
+              href={ad.cta.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={logClick}
+              className={styles.overlayCta}
+              style={{ backgroundColor: ad.content.primaryColor }}
+            >
+              {ad.cta.label} →
+            </a>
+          </div>
+        </div>
+      )}
 
       <footer className={styles.footer}>
         <div className={styles.controls}>
