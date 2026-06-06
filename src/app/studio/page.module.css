@@ -1,0 +1,147 @@
+.shell {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 3rem 0;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.headerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.backBtn {
+  color: hsl(var(--muted-foreground));
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.backBtn:hover {
+  color: hsl(var(--primary));
+}
+
+.header h1 {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.metricCard {
+  padding: 2rem;
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.metricCard h2 {
+  color: hsl(var(--muted-foreground));
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.metricAmount {
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.currency {
+  font-size: 2.5rem;
+  color: hsl(var(--primary));
+  opacity: 0.8;
+}
+
+.subtext {
+  margin-top: 0.5rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.9rem;
+}
+
+.topUpBtn {
+  margin-top: auto;
+  align-self: flex-start;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  background-color: hsl(var(--foreground));
+  color: hsl(var(--background));
+}
+
+.campaignsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.campaignList {
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+}
+
+.campaignRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+}
+
+.campaignRow:last-child {
+  border-bottom: none;
+}
+
+.campaignHeadline {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.campaignStatus {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: hsl(var(--secondary));
+}
+
+.campaignMetrics {
+  display: flex;
+  gap: 2rem;
+  color: hsl(var(--muted-foreground));
+  text-align: right;
+}
+
+.campaignMetrics strong {
+  color: hsl(var(--foreground));
+  font-size: 1.2rem;
+  display: block;
+}

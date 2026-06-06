@@ -1,16 +1,12 @@
-import Image from "next/image";
+"use client";
 
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Feed } from "@/components/Feed";
+import { useUser } from "@/lib/UserContext";
 import styles from "./page.module.css";
-
-const filters = ["Tech drops", "Local gems", "Travel inspo", "Style", "Food" ];
-
-const insights = [
-  { label: "Live campaigns", value: "42", tone: "primary" },
-  { label: "Rewards in queue", value: "$186", tone: "secondary" },
-  { label: "Saved offers", value: "12", tone: "muted" },
-];
 
 const spotlight = {
   badge: "Spotlight drop",
@@ -19,7 +15,39 @@ const spotlight = {
   perks: ["Priority booking", "$200 accessory credit", "Concierge pickup"],
 };
 
+const topFilters = ["Tech", "Local", "Travel", "Style", "Food"];
+const sideFilters = ["Design", "Outdoors", "Gaming", "Wellness", "Beauty", "Finance"];
+
 export default function Home() {
+  const { user, preferences, togglePreference, savedAds, switchRole, location, enableLocation } = useUser();
+  const [activeTab, setActiveTab] = useState('For You');
+  const [searchQuery, setSearchQuery] = useState('');
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user && preferences.length === 0 && user.role !== 'business') {
+      router.push('/onboarding');
+    }
+  }, [user, preferences, router]);
+
+  const insights = [
+    { label: "Live campaigns", value: "42", tone: "primary" },
+    { label: "Rewards in queue", value: `$${user?.rewardsBalance || 0}`, tone: "secondary" },
+    { label: "Saved offers", value: savedAds.length.toString(), tone: "muted" },
+  ];
+
+  const handleTabClick = async (tab: string) => {
+    if (tab === 'Local' && !location) {
+      try {
+        await enableLocation();
+      } catch (e) {
+        console.error("Location permission denied", e);
+        // still set tab so they can see empty state or whatever
+      }
+    }
+    setActiveTab(tab);
+  };
+
   return (
     <div className={styles.shell}>
       <header className={styles.topbar}>
@@ -42,14 +70,31 @@ export default function Home() {
 
         <div className={styles.search}>
           <span aria-hidden className={styles.searchIcon}>⌕</span>
-          <input placeholder="Search drops, perks, creators" />
+          <input 
+            placeholder="Search drops, perks, creators" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
 
         <div className={styles.actions}>
-          <Link href="/login" className={styles.loginLink}>Log in</Link>
-          <button type="button" className={styles.iconButton} aria-label="Notifications">🔔</button>
-          <button type="button" className={styles.iconButton} aria-label="Saved">★</button>
-          <div className={styles.avatar} aria-hidden>RJ</div>
+          {!user ? (
+            <Link href="/login" className={styles.loginLink}>Log in</Link>
+          ) : (
+            <>
+              <button 
+                type="button" 
+                className={styles.ctaGhost} 
+                onClick={() => switchRole(user?.role === 'consumer' ? 'business' : 'consumer')}
+                style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+              >
+                Switch to {user?.role === 'consumer' ? 'Business' : 'Consumer'}
+              </button>
+              <button type="button" className={styles.iconButton} aria-label="Notifications">🔔</button>
+              <Link href="/profile" className={styles.iconButton} aria-label="Saved" style={{ textDecoration: 'none' }}>★</Link>
+              <Link href="/profile" className={styles.avatar} aria-hidden style={{ textDecoration: 'none' }}>{user.avatar}</Link>
+            </>
+          )}
         </div>
       </header>
 
@@ -63,25 +108,55 @@ export default function Home() {
           </p>
 
           <div className={styles.filterRow}>
-            {filters.map((filter) => (
-              <button key={filter} type="button" className={styles.filterChip}>
-                {filter}
-              </button>
-            ))}
+            {topFilters.map((filter) => {
+              const isActive = preferences.includes(filter);
+              return (
+                <button 
+                  key={filter} 
+                  type="button" 
+                  className={`${styles.filterChip} ${isActive ? styles.active : ""}`}
+                  onClick={() => togglePreference(filter)}
+                  style={isActive ? { backgroundColor: 'var(--foreground)', color: 'var(--background)' } : {}}
+                >
+                  {filter}
+                </button>
+              );
+            })}
           </div>
 
           <div className={styles.insights}>
-            {insights.map((insight) => (
-              <div key={insight.label} className={`${styles.insightCard} ${styles[insight.tone]}`}>
-                <span className={styles.insightValue}>{insight.value}</span>
-                <span className={styles.insightLabel}>{insight.label}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className={styles.heroCtas}>
-            <Link href="/login" className={styles.ctaOutline}>Log in</Link>
-            <Link href="/signup" className={styles.ctaGhost}>Create account</Link>
+            {user?.role === 'business' ? (
+              <Link href="/studio" style={{ textDecoration: 'none' }}>
+                <div className={`${styles.insightCard} ${styles.primary} hover-lift`}>
+                  <span className={styles.insightValue}>{user?.adCreditsBalance.toLocaleString() || '0'}</span>
+                  <span className={styles.insightLabel}>Ad Credits</span>
+                </div>
+              </Link>
+            ) : (
+              <>
+                <Link href="/rewards" style={{ textDecoration: 'none' }}>
+                  <div className={`${styles.insightCard} ${styles.primary} hover-lift`}>
+                    <span className={styles.insightValue}>{user?.rewardsBalance.toLocaleString() || '0'}</span>
+                    <span className={styles.insightLabel}>Rewards in queue</span>
+                  </div>
+                </Link>
+                {user && user.currentStreak > 0 && (
+                  <div className={`${styles.insightCard} ${styles.secondary} hover-lift`}>
+                    <span className={styles.insightValue}>🔥 {user.currentStreak}</span>
+                    <span className={styles.insightLabel}>Day Streak</span>
+                  </div>
+                )}
+              </>
+            )}
+            
+            <div 
+              className={`${styles.insightCard} ${styles.secondary} hover-lift`}
+              onClick={() => switchRole(user?.role === 'consumer' ? 'business' : 'consumer')}
+              style={{ cursor: 'pointer' }}
+            >
+              <span className={styles.insightValue}>⟲</span>
+              <span className={styles.insightLabel}>Switch Role</span>
+            </div>
           </div>
         </div>
 
@@ -102,13 +177,28 @@ export default function Home() {
         <div className={styles.feedColumn}>
           <div className={styles.feedHeader}>
             <div className={styles.tabs}>
-              <button className={`${styles.tab} ${styles.active}`}>For you</button>
-              <button className={styles.tab}>Local</button>
-              <button className={styles.tab}>Trending</button>
+              <button 
+                onClick={() => handleTabClick('For You')} 
+                className={`${styles.tab} ${activeTab === 'For You' ? styles.active : ''}`}
+              >
+                For you
+              </button>
+              <button 
+                onClick={() => handleTabClick('Local')} 
+                className={`${styles.tab} ${activeTab === 'Local' ? styles.active : ''}`}
+              >
+                Local {location ? '📍' : ''}
+              </button>
+              <button 
+                onClick={() => handleTabClick('Trending')} 
+                className={`${styles.tab} ${activeTab === 'Trending' ? styles.active : ''}`}
+              >
+                Trending
+              </button>
             </div>
             <div className={styles.pill}>Ad frequency: Balanced</div>
           </div>
-          <Feed />
+          <Feed searchQuery={searchQuery} activeTab={activeTab} />
         </div>
 
         <aside className={styles.sidebar}>
@@ -118,9 +208,20 @@ export default function Home() {
               <span className={styles.sideMeta}>Realtime</span>
             </div>
             <div className={styles.sideGrid}>
-              {["Design", "Outdoors", "Gaming", "Wellness", "Beauty", "Finance"].map((item) => (
-                <button key={item} type="button" className={styles.sideChip}>{item}</button>
-              ))}
+              {sideFilters.map((item) => {
+                const isActive = preferences.includes(item);
+                return (
+                  <button 
+                    key={item} 
+                    type="button" 
+                    className={`${styles.sideChip} ${isActive ? styles.active : ""}`}
+                    onClick={() => togglePreference(item)}
+                    style={isActive ? { backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)', borderColor: 'var(--primary)' } : {}}
+                  >
+                    {item}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

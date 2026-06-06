@@ -26,24 +26,52 @@ export default function LoginPage() {
     [type],
   );
 
-  const handleSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setLoading(true);
+    setErrorMsg("");
+    setSuccessMsg("");
 
     const formData = new FormData(event.currentTarget);
-    const payload = {
-      type,
-      company: formData.get("company")?.toString().trim() || undefined,
-      email: formData.get("email")?.toString().trim() || "",
-      password: formData.get("password")?.toString() || "",
-    };
-
-    // TODO: Replace with real auth call to your backend/identity provider
-    console.log("Submitting auth payload", payload);
+    formData.append("type", type);
+    
+    // Import server action dynamically or ensure it's available
+    const { loginWithEmail } = await import("./actions");
+    const result = await loginWithEmail(formData);
+    
+    if (result?.error) {
+      setErrorMsg(result.error);
+    }
+    setLoading(false);
   }, [type]);
 
-  const handleMagicLink = useCallback(() => {
-    // TODO: Wire to magic-link flow (e.g., Supabase, Clerk, custom endpoint)
-    console.log("Trigger magic link for account type", { type });
+  const handleMagicLink = useCallback(async () => {
+    const emailInput = document.querySelector('input[name="email"]') as HTMLInputElement;
+    if (!emailInput || !emailInput.value) {
+      setErrorMsg("Please enter an email address for the magic link.");
+      return;
+    }
+
+    setLoading(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    const formData = new FormData();
+    formData.append("email", emailInput.value);
+
+    const { loginWithMagicLink } = await import("./actions");
+    const result = await loginWithMagicLink(formData);
+
+    if (result?.error) {
+      setErrorMsg(result.error);
+    } else if (result?.success) {
+      setSuccessMsg(result.success);
+    }
+    setLoading(false);
   }, [type]);
 
   return (
@@ -81,6 +109,9 @@ export default function LoginPage() {
               </div>
               <span className={styles.pill}>Secure session</span>
             </div>
+
+            {errorMsg && <div style={{ color: 'hsl(var(--destructive))', fontSize: '0.9rem', marginBottom: '1rem', padding: '0.5rem', background: 'hsl(var(--destructive)/0.1)', borderRadius: 'var(--radius)' }}>{errorMsg}</div>}
+            {successMsg && <div style={{ color: 'hsl(var(--primary))', fontSize: '0.9rem', marginBottom: '1rem', padding: '0.5rem', background: 'hsl(var(--primary)/0.1)', borderRadius: 'var(--radius)' }}>{successMsg}</div>}
 
             {type === "business" && (
               <label className={styles.field}>

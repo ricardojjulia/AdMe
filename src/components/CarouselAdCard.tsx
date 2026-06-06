@@ -1,26 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useState, useEffect } from "react";
 import { Ad } from "@/types/ad";
-import { NativeAdCard } from "./NativeAdCard";
-import { CarouselAdCard } from "./CarouselAdCard";
 import { Comments } from "./Comments";
 import { useEngagementAnalytics } from "@/lib/hooks/useEngagementAnalytics";
 import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
-import styles from "./FeedCard.module.css";
+import styles from "./CarouselAdCard.module.css";
 
-interface FeedCardProps {
+interface CarouselAdCardProps {
   ad: Ad;
 }
 
-export function FeedCard({ ad }: FeedCardProps) {
-  const [showReportOptions, setShowReportOptions] = useState(false);
+export function CarouselAdCard({ ad }: CarouselAdCardProps) {
   const { ref, logClick, logLike, isLiked } = useEngagementAnalytics(ad.id);
-  const { toggleSavedAd, savedAds, reportAd, user, skipAd } = useUser();
+  const { toggleSavedAd, savedAds, reportAd, skipAd } = useUser();
   const { addToast } = useToast();
   const isSaved = savedAds.includes(ad.id);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [showReportOptions, setShowReportOptions] = useState(false);
   const [likesCount, setLikesCount] = useState(ad.metrics.likes);
   const [isSkipping, setIsSkipping] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -50,17 +49,21 @@ export function FeedCard({ ad }: FeedCardProps) {
     };
   }, [ad.id]);
 
-  if (ad.formatType === 'native') {
-    return <NativeAdCard ad={ad} />;
-  }
-
-  if (ad.formatType === 'carousel') {
-    return <CarouselAdCard ad={ad} />;
-  }
-
   const handleReport = (reason: string) => {
     reportAd(ad.id, reason);
     setShowReportOptions(false);
+  };
+
+  const images = ad.content.carouselMediaUrls || [ad.content.mediaUrl];
+
+  const nextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const prevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
   const handleMouseEnter = () => {
@@ -76,7 +79,7 @@ export function FeedCard({ ad }: FeedCardProps) {
     addToast("Ad skipped. We'll show less of this.", "info");
     setTimeout(() => {
       skipAd(ad.id);
-    }, 400); // Wait for skip-out animation
+    }, 400);
   };
 
   return (
@@ -89,13 +92,7 @@ export function FeedCard({ ad }: FeedCardProps) {
       <header className={styles.header}>
         <div className={styles.identity}>
           <div className={styles.avatar}>
-            <Image
-              src={ad.advertiser.avatar}
-              alt={ad.advertiser.name}
-              fill
-              className={styles.avatarImg}
-              unoptimized
-            />
+            <Image src={ad.advertiser.avatar} alt={ad.advertiser.name} fill className={styles.avatarImg} unoptimized />
           </div>
           <div>
             <p className={styles.name}>{ad.advertiser.name}</p>
@@ -106,7 +103,6 @@ export function FeedCard({ ad }: FeedCardProps) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <button type="button" className={styles.follow}>Follow</button>
           <div style={{ position: 'relative' }}>
             <button 
               onClick={() => setShowReportOptions(!showReportOptions)}
@@ -137,23 +133,30 @@ export function FeedCard({ ad }: FeedCardProps) {
       <div className={styles.body}>
         <h3>{ad.content.headline}</h3>
         <p>{ad.content.text}</p>
-        <div className={styles.badges}>
-          <span className={styles.badge}>Just in</span>
-          <span className={styles.badgeAccent}>{ad.cta.label}</span>
-        </div>
       </div>
 
-      <div className={styles.media} style={{ borderColor: ad.content.primaryColor }}>
-        <Image
-          src={ad.content.mediaUrl}
-          alt="Ad creative"
-          fill
-          className={styles.mediaImg}
-          unoptimized
-          priority
-        />
+      <div className={styles.carouselContainer} style={{ borderColor: ad.content.primaryColor }}>
+        <div className={styles.carouselTrack} style={{ transform: `translateX(-${currentIndex * 100}%)` }}>
+          {images.map((url, idx) => (
+            <div key={idx} className={styles.carouselSlide}>
+              <Image src={url} alt={`Slide ${idx}`} fill className={styles.mediaImg} unoptimized />
+            </div>
+          ))}
+        </div>
+        
+        {images.length > 1 && (
+          <>
+            <button onClick={prevImage} className={`${styles.navButton} ${styles.prevButton}`}>‹</button>
+            <button onClick={nextImage} className={`${styles.navButton} ${styles.nextButton}`}>›</button>
+            <div className={styles.dots}>
+              {images.map((_, idx) => (
+                <div key={idx} className={`${styles.dot} ${idx === currentIndex ? styles.activeDot : ''}`} />
+              ))}
+            </div>
+          </>
+        )}
+
         <div className={styles.overlay}>
-          <span className={styles.overlayTag}>Immersive drop</span>
           <a
             href={ad.cta.url}
             target="_blank"
@@ -169,16 +172,13 @@ export function FeedCard({ ad }: FeedCardProps) {
 
       <footer className={styles.footer}>
         <div className={styles.controls}>
-          <button onClick={logLike} type="button" className={`${styles.control} ${isLiked ? 'heart-pop' : ''}`} aria-label="Appreciate ad" style={{ color: isLiked ? 'hsl(var(--destructive))' : 'inherit' }}>
-            {isLiked ? '♥' : '♡'}
+          <button onClick={logLike} type="button" className={`${styles.control} ${isLiked ? 'heart-pop' : ''}`} style={{ color: isLiked ? 'hsl(var(--destructive))' : 'inherit' }}>
+            {isLiked ? '♥' : '♡'} {likesCount}
           </button>
           <button onClick={() => setShowComments(!showComments)} type="button" className={styles.control} aria-label="Comment">💬</button>
-          <button type="button" className={styles.control} aria-label="Share">↗</button>
           <button onClick={handleSkip} type="button" className={styles.control} aria-label="Skip ad" style={{marginLeft: 'auto'}}>✕</button>
         </div>
         <div className={styles.metrics}>
-          <span>{likesCount.toLocaleString()} loves</span>
-          <span>·</span>
           <button 
             type="button" 
             onClick={() => toggleSavedAd(ad.id)}

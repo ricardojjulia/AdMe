@@ -18,15 +18,33 @@ const CONTENT_TEMPLATES = [
 
 const CTA_LABELS = ["Shop Now", "Learn More", "Sign Up", "Book Now", "Watch Trailer"];
 const COLORS = ["#40c9ff", "#f4a261", "#9f7aea", "#34d399", "#f87171"];
+const CATEGORIES = ["Tech", "Local", "Travel", "Style", "Food", "Design", "Outdoors", "Gaming", "Wellness", "Beauty", "Finance"];
 
-export function generateMockAds(count: number = 10): Ad[] {
+export function generateMockAds(count: number = 10, userLocation?: { lat: number; lng: number }): Ad[] {
     return Array.from({ length: count }).map((_, i) => {
         const template = CONTENT_TEMPLATES[Math.floor(Math.random() * CONTENT_TEMPLATES.length)];
         const advertiser = ADVERTISERS[Math.floor(Math.random() * ADVERTISERS.length)];
         const ctaUrl = advertiser.url ?? "https://adme.app";
+        const category = CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)];
+        const formatRand = Math.random();
+        const formatType = formatRand > 0.66 ? 'social' : formatRand > 0.33 ? 'native' : 'carousel';
+
+        // Generate a random nearby location if user location is provided
+        let location;
+        if (userLocation) {
+            // Random offset roughly between 0 and ~50 miles (1 degree is ~69 miles)
+            const latOffset = (Math.random() - 0.5) * 1.5; 
+            const lngOffset = (Math.random() - 0.5) * 1.5;
+            location = {
+                lat: userLocation.lat + latOffset,
+                lng: userLocation.lng + lngOffset
+            };
+        }
 
         return {
             id: `ad-${Date.now()}-${i}`,
+            category,
+            formatType,
             advertiser: {
                 name: advertiser.name,
                 avatar: advertiser.avatar,
@@ -35,6 +53,11 @@ export function generateMockAds(count: number = 10): Ad[] {
                 headline: template.headline,
                 text: template.text,
                 mediaUrl: `https://picsum.photos/seed/${Math.random()}/800/1000`,
+                carouselMediaUrls: formatType === 'carousel' ? [
+                    `https://picsum.photos/seed/${Math.random()}/800/1000`,
+                    `https://picsum.photos/seed/${Math.random()}/800/1000`,
+                    `https://picsum.photos/seed/${Math.random()}/800/1000`
+                ] : undefined,
                 mediaType: 'image',
                 primaryColor: COLORS[Math.floor(Math.random() * COLORS.length)],
             },
@@ -46,6 +69,7 @@ export function generateMockAds(count: number = 10): Ad[] {
                 likes: Math.floor(Math.random() * 9000) + 240,
                 shares: Math.floor(Math.random() * 1200) + 40,
             },
+            location,
         };
     });
 }
