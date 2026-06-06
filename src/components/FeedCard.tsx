@@ -33,8 +33,9 @@ export function FeedCard({ ad }: FeedCardProps) {
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
       
+      const uniqueChannelId = `public:ads:${ad.id}:${Math.random().toString(36).substring(2, 9)}`;
       channel = supabase
-        .channel(`public:ads:${ad.id}`)
+        .channel(uniqueChannelId)
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ads', filter: `id=eq.${ad.id}` }, (payload) => {
           if (payload.new && typeof payload.new.likes === 'number') {
             setLikesCount(payload.new.likes);
