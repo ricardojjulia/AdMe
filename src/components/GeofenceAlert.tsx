@@ -24,15 +24,21 @@ export function GeofenceAlert() {
   useEffect(() => {
     // Clear dismissed list if location is cleared
     if (!location) {
-      setDismissedAds([]);
-      setAlerts([]);
+      if (dismissedAds.length > 0) {
+        setDismissedAds([]);
+      }
+      if (alerts.length > 0) {
+        setAlerts([]);
+      }
       return;
     }
 
     async function checkProximity() {
       if (!location) return;
       if (savedAds.length === 0) {
-        setAlerts([]);
+        if (alerts.length > 0) {
+          setAlerts([]);
+        }
         return;
       }
 
