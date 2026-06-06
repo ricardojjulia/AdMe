@@ -38,6 +38,7 @@ export default function CreateAdPage() {
     const primaryColor = formData.get("primaryColor") as string;
     const ctaLabel = formData.get("ctaLabel") as string;
     const ctaUrl = formData.get("ctaUrl") as string;
+    const isBoosted = formData.get("isBoosted") === "on";
 
     const supabase = createClient();
     
@@ -57,7 +58,8 @@ export default function CreateAdPage() {
       cta_url: ctaUrl,
       likes: 0,
       shares: 0,
-      campaign_id: campaignId
+      campaign_id: campaignId,
+      is_boosted: isBoosted
     };
 
     const adsToInsert = [
@@ -128,6 +130,12 @@ export default function CreateAdPage() {
           <input type="checkbox" checked={isABTest} onChange={(e) => setIsABTest(e.target.checked)} style={{ transform: 'scale(1.2)' }} />
           <strong>Run A/B Test</strong>
           <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem' }}>(Test a second variation)</span>
+        </label>
+ 
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginTop: '0.5rem', padding: '1rem', background: 'hsl(var(--card))', borderRadius: '0.5rem', border: '1px solid hsl(var(--border))' }}>
+          <input type="checkbox" name="isBoosted" style={{ transform: 'scale(1.2)' }} />
+          <strong>Boost Proximity Placement</strong>
+          <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem' }}>(Pay to rank first in nearby local searches)</span>
         </label>
 
         {isABTest && (

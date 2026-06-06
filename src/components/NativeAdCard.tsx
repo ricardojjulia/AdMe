@@ -7,6 +7,7 @@ import { Comments } from "./Comments";
 import { useEngagementAnalytics } from "@/lib/hooks/useEngagementAnalytics";
 import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
+import { LeadModal } from "./LeadModal";
 import styles from "./NativeAdCard.module.css";
 
 interface NativeAdCardProps {
@@ -22,6 +23,7 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
   const [likesCount, setLikesCount] = useState(ad.metrics.likes);
   const [isSkipping, setIsSkipping] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [isLeadOpen, setIsLeadOpen] = useState(false);
 
   useEffect(() => {
     let channel: any;
@@ -93,6 +95,7 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
               {ad.category}
             </span>
             <span className={styles.sponsor}>
+              {ad.isBoosted && <span style={{ marginRight: '0.4rem', background: 'hsl(var(--primary)/0.2)', color: 'hsl(var(--primary))', padding: '0.1rem 0.3rem', borderRadius: '0.25rem', fontSize: '0.7rem', fontWeight: 'bold' }}>Featured</span>}
               • Sponsored by {ad.advertiser.name}
               {ad.distanceMiles !== undefined && ` • 📍 ${ad.distanceMiles.toFixed(1)} mi away`}
             </span>
@@ -138,6 +141,14 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
             >
               ★ {isSaved ? "Saved" : "Save"}
             </button>
+            <button 
+              onClick={() => setIsLeadOpen(true)} 
+              type="button" 
+              className={styles.control}
+              style={{ color: 'hsl(var(--primary))', fontWeight: 'bold' }}
+            >
+              ✉ Contact
+            </button>
             <button onClick={handleSkip} type="button" className={styles.control} aria-label="Skip ad" style={{marginLeft: 'auto'}}>✕</button>
           </div>
           <a
@@ -153,6 +164,7 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
         </div>
       </div>
       {showComments && <Comments adId={ad.id} />}
+      <LeadModal isOpen={isLeadOpen} onClose={() => setIsLeadOpen(false)} ad={ad} />
     </article>
   );
 }

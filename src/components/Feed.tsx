@@ -49,7 +49,8 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
                 content: { headline: d.headline, text: d.content_text, mediaUrl: d.media_url, mediaType: d.media_type, primaryColor: d.primary_color },
                 cta: { label: d.cta_label, url: d.cta_url },
                 metrics: { likes: d.likes, shares: d.shares },
-                location: d.latitude != null && d.longitude != null ? { lat: d.latitude, lng: d.longitude } : undefined
+                location: d.latitude != null && d.longitude != null ? { lat: d.latitude, lng: d.longitude } : undefined,
+                isBoosted: d.is_boosted || false
             }));
 
             if (location) {
@@ -67,9 +68,18 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
               
               if (activeTab === 'Local') {
                 mappedAds = mappedAds.filter((ad: Ad) => ad.distanceMiles !== undefined && ad.distanceMiles <= 25);
-                mappedAds.sort((a: Ad, b: Ad) => (a.distanceMiles || 0) - (b.distanceMiles || 0));
               }
             }
+
+            // Sort: Boosted ads first, then by closest distance (for Local) or default
+            mappedAds.sort((a: Ad, b: Ad) => {
+              if (a.isBoosted && !b.isBoosted) return -1;
+              if (!a.isBoosted && b.isBoosted) return 1;
+              if (activeTab === 'Local') {
+                return (a.distanceMiles || 0) - (b.distanceMiles || 0);
+              }
+              return 0;
+            });
 
             setAds(mappedAds);
             setLoading(false);
@@ -81,7 +91,10 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
       }
 
       // Fallback to mock data
-      const pool = generateMockAds(100, location || undefined);
+      const pool = generateMockAds(100, location || undefined).map((ad, idx) => ({
+        ...ad,
+        isBoosted: idx % 5 === 0 // 20% of ads boosted
+      }));
       let filtered = pool;
       
       if (activeTab === 'Local') {
@@ -104,12 +117,20 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
           return ad;
         });
         
-        // If we are in local tab, filter out anything > 25 miles and sort by closest
         if (activeTab === 'Local') {
           filtered = filtered.filter(ad => ad.distanceMiles !== undefined && ad.distanceMiles <= 25);
-          filtered.sort((a, b) => (a.distanceMiles || 0) - (b.distanceMiles || 0));
         }
       }
+
+      // Sort fallback: Boosted ads first, then closest
+      filtered.sort((a, b) => {
+        if (a.isBoosted && !b.isBoosted) return -1;
+        if (!a.isBoosted && b.isBoosted) return 1;
+        if (activeTab === 'Local') {
+          return (a.distanceMiles || 0) - (b.distanceMiles || 0);
+        }
+        return 0;
+      });
       
       if (searchQuery.trim() !== '') {
         const q = searchQuery.toLowerCase();

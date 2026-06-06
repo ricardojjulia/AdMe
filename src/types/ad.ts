@@ -27,4 +27,5 @@ export interface Ad {
         lng: number;
     };
     distanceMiles?: number;
+    isBoosted?: boolean;
 }

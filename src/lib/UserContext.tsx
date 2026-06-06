@@ -12,6 +12,8 @@ interface User {
   adCreditsBalance: number;
   currentStreak: number;
   lastActiveDate: string | null;
+  subscriptionTier?: string;
+  subscriptionRenewal?: string | null;
 }
 
 interface UserContextType {
@@ -31,6 +33,8 @@ interface UserContextType {
   buyCredits: (amount: number) => void;
   deductCredits: (amount: number) => void;
   enableLocation: () => Promise<void>;
+  upgradeSubscription: (tier: string) => Promise<void>;
+  submitLead: (adId: string, message: string, contactInfo?: string) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -73,7 +77,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
               role: userData.role || 'consumer',
               adCreditsBalance: userData.ad_credits_balance || 0,
               currentStreak: userData.current_streak || 0,
-              lastActiveDate: userData.last_active_date || null
+              lastActiveDate: userData.last_active_date || null,
+              subscriptionTier: userData.subscription_tier || 'free',
+              subscriptionRenewal: userData.subscription_renewal || null
             });
 
             const { data: prefData } = await supabase.from('user_preferences').select('category').eq('user_id', userData.id);
@@ -236,8 +242,60 @@ export function UserProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const upgradeSubscription = async (tier: string) => {
+    if (!user) return;
+    const renewalDate = new Date();
+    renewalDate.setDate(renewalDate.getDate() + 30);
+    const renewalIso = renewalDate.toISOString();
+
+    setUser(prev => prev ? { ...prev, subscriptionTier: tier, subscriptionRenewal: renewalIso } : prev);
+
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here') {
+      try {
+        const supabase = createClient();
+        await supabase.from('users').update({
+          subscription_tier: tier,
+          subscription_renewal: renewalIso
+        }).eq('id', user.id);
+      } catch (e) {
+        console.error("Failed to upgrade subscription in Supabase", e);
+      }
+    }
+  };
+
+  const submitLead = async (adId: string, message: string, contactInfo: string = "") => {
+    if (!user) return;
+
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here') {
+      try {
+        const supabase = createClient();
+        
+        // 1. Insert lead record
+        await supabase.from('leads').insert({
+          ad_id: adId,
+          user_id: user.id,
+          message,
+          contact_info: contactInfo
+        });
+
+        // 2. Fetch the ad to identify the owner and deduct credits
+        const { data: adData } = await supabase.from('ads').select('owner_id').eq('id', adId).single();
+        if (adData?.owner_id) {
+          // Deduct 50 credits per lead from the owner's credits balance
+          const { data: ownerData } = await supabase.from('users').select('ad_credits_balance').eq('id', adData.owner_id).single();
+          if (ownerData) {
+            const newBalance = Math.max(0, (ownerData.ad_credits_balance || 0) - 50);
+            await supabase.from('users').update({ ad_credits_balance: newBalance }).eq('id', adData.owner_id);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to log lead in Supabase", e);
+      }
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation }}>
+    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead }}>
       {children}
     </UserContext.Provider>
   );

@@ -9,6 +9,7 @@ import { Comments } from "./Comments";
 import { useEngagementAnalytics } from "@/lib/hooks/useEngagementAnalytics";
 import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
+import { LeadModal } from "./LeadModal";
 import styles from "./FeedCard.module.css";
 
 interface FeedCardProps {
@@ -24,6 +25,7 @@ export function FeedCard({ ad }: FeedCardProps) {
   const [likesCount, setLikesCount] = useState(ad.metrics.likes);
   const [isSkipping, setIsSkipping] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [isLeadOpen, setIsLeadOpen] = useState(false);
 
   useEffect(() => {
     let channel: any;
@@ -100,6 +102,7 @@ export function FeedCard({ ad }: FeedCardProps) {
           <div>
             <p className={styles.name}>{ad.advertiser.name}</p>
             <p className={styles.meta}>
+              {ad.isBoosted && <span style={{ marginRight: '0.4rem', background: 'hsl(var(--primary)/0.2)', color: 'hsl(var(--primary))', padding: '0.1rem 0.3rem', borderRadius: '0.25rem', fontSize: '0.7rem', fontWeight: 'bold' }}>Featured</span>}
               Sponsored · {ad.category}
               {ad.distanceMiles !== undefined && ` · 📍 ${ad.distanceMiles.toFixed(1)} mi away`}
             </p>
@@ -186,9 +189,18 @@ export function FeedCard({ ad }: FeedCardProps) {
           >
             {isSaved ? "★ Saved" : "☆ Save"}
           </button>
+          <span>·</span>
+          <button 
+            type="button" 
+            onClick={() => setIsLeadOpen(true)}
+            style={{ background: 'none', border: 'none', color: 'hsl(var(--primary))', cursor: 'pointer', fontSize: 'inherit', fontWeight: 'bold' }}
+          >
+            ✉ Contact
+          </button>
         </div>
       </footer>
       {showComments && <Comments adId={ad.id} />}
+      <LeadModal isOpen={isLeadOpen} onClose={() => setIsLeadOpen(false)} ad={ad} />
     </article>
   );
 }
