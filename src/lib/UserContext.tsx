@@ -35,12 +35,15 @@ interface UserContextType {
   enableLocation: () => Promise<void>;
   upgradeSubscription: (tier: string) => Promise<void>;
   submitLead: (adId: string, message: string, contactInfo?: string) => Promise<void>;
+  coupons: any[];
+  redeemPerk: (name: string, cost: number) => Promise<string>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [coupons, setCoupons] = useState<any[]>([]);
 
   const [preferences, setPreferences] = useState<string[]>([
     "Tech & SaaS", "Local Eateries", "Faith & Books", "Veteran-owned"
@@ -87,6 +90,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
               setPreferences(prefData.map(p => p.category));
             } else {
               setPreferences([]);
+            }
+
+            const { data: couponData } = await supabase.from('coupons').select('*').eq('user_id', userData.id).order('created_at', { ascending: false });
+            if (couponData) {
+              setCoupons(couponData);
             }
           }
         } catch (error) {
@@ -294,8 +302,55 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const redeemPerk = async (name: string, cost: number): Promise<string> => {
+    const cleanName = name.replace(/[^a-zA-Z0-9]/g, "").substring(0, 6).toUpperCase();
+    const randomHex = Math.random().toString(16).substring(2, 6).toUpperCase();
+    const generatedCode = `${cleanName}-${randomHex}`;
+
+    setUser(prev => prev ? { ...prev, rewardsBalance: Math.max(0, prev.rewardsBalance - cost) } : prev);
+
+    const newCoupon = {
+      id: crypto.randomUUID(),
+      user_id: user?.id || '00000000-0000-0000-0000-000000000001',
+      code: generatedCode,
+      name: name,
+      cost_points: cost,
+      is_used: false,
+      created_at: new Date().toISOString()
+    };
+
+    setCoupons(prev => [newCoupon, ...prev]);
+
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here' && user) {
+      try {
+        const supabase = createClient();
+        await supabase.from('users').update({
+          rewards_balance: Math.max(0, user.rewardsBalance - cost)
+        }).eq('id', user.id);
+
+        await supabase.from('reward_history').insert({
+          user_id: user.id,
+          action: `Redeemed ${name}`,
+          points: -cost
+        });
+
+        await supabase.from('coupons').insert({
+          id: newCoupon.id,
+          user_id: user.id,
+          code: generatedCode,
+          name: name,
+          cost_points: cost
+        });
+      } catch (e) {
+        console.error("Failed to redeem perk in Supabase", e);
+      }
+    }
+
+    return generatedCode;
+  };
+
   return (
-    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead }}>
+    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, redeemPerk }}>
       {children}
     </UserContext.Provider>
   );

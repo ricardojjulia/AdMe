@@ -28,4 +28,6 @@ export interface Ad {
     };
     distanceMiles?: number;
     isBoosted?: boolean;
+    campaignId?: string;
+    variationName?: string;
 }

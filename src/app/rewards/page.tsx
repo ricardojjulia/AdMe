@@ -7,7 +7,7 @@ import styles from "./page.module.css";
 import { createClient } from "@/lib/supabase/client";
 
 export default function RewardsPage() {
-  const { user, savedAds, addReward } = useUser();
+  const { user, savedAds, redeemPerk } = useUser();
   const [history, setHistory] = useState<any[]>([]);
 
   const balance = user?.rewardsBalance || 0;
@@ -36,14 +36,18 @@ export default function RewardsPage() {
 
   const handleRedeem = async (perk: any) => {
     if (balance >= perk.cost) {
-      await addReward(-perk.cost, `Redeemed ${perk.name}`);
-      // Optimistic UI update
-      setHistory([{
-        id: Date.now(),
-        action: `Redeemed ${perk.name}`,
-        points: `-${perk.cost}`,
-        date: new Date().toLocaleDateString()
-      }, ...history]);
+      try {
+        const code = await redeemPerk(perk.name, perk.cost);
+        // Optimistic UI update
+        setHistory([{
+          id: Date.now(),
+          action: `Redeemed ${perk.name} (Code: ${code})`,
+          points: `-${perk.cost}`,
+          date: new Date().toLocaleDateString()
+        }, ...history]);
+      } catch (err) {
+        console.error(err);
+      }
     }
   };
 

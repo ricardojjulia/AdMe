@@ -13,6 +13,36 @@ interface FeedProps {
   activeTab?: string;
 }
 
+function performABSplitTest(ads: Ad[]): Ad[] {
+  const groups = ads.reduce((acc, ad) => {
+    const cid = ad.campaignId;
+    if (!cid) {
+      acc['un-grouped'] = acc['un-grouped'] || [];
+      acc['un-grouped'].push(ad);
+    } else {
+      acc[cid] = acc[cid] || [];
+      acc[cid].push(ad);
+    }
+    return acc;
+  }, {} as Record<string, Ad[]>);
+
+  const selectedAds: Ad[] = [];
+  
+  if (groups['un-grouped']) {
+    selectedAds.push(...groups['un-grouped']);
+  }
+  
+  Object.keys(groups).forEach(key => {
+    if (key !== 'un-grouped') {
+      const variations = groups[key];
+      const selected = variations[Math.floor(Math.random() * variations.length)];
+      selectedAds.push(selected);
+    }
+  });
+
+  return selectedAds;
+}
+
 export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +80,9 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
                 cta: { label: d.cta_label, url: d.cta_url },
                 metrics: { likes: d.likes, shares: d.shares },
                 location: d.latitude != null && d.longitude != null ? { lat: d.latitude, lng: d.longitude } : undefined,
-                isBoosted: d.is_boosted || false
+                isBoosted: d.is_boosted || false,
+                campaignId: d.campaign_id,
+                variationName: d.variation_name
             }));
 
             if (location) {
@@ -81,6 +113,9 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
               return 0;
             });
 
+            // Filter out duplicate variations via split testing
+            mappedAds = performABSplitTest(mappedAds);
+
             setAds(mappedAds);
             setLoading(false);
             return;
@@ -91,10 +126,16 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
       }
 
       // Fallback to mock data
-      const pool = generateMockAds(100, location || undefined).map((ad, idx) => ({
-        ...ad,
-        isBoosted: idx % 5 === 0 // 20% of ads boosted
-      }));
+      const pool: Ad[] = generateMockAds(100, location || undefined).map((ad, idx) => {
+        const isVariation = idx % 6 === 0 || idx % 6 === 1;
+        const campaignId = isVariation ? `mock-campaign-${Math.floor(idx / 6)}` : undefined;
+        return {
+          ...ad,
+          isBoosted: idx % 5 === 0,
+          campaignId: campaignId,
+          variationName: isVariation ? (idx % 2 === 0 ? 'A' : 'B') : undefined
+        };
+      });
       let filtered = pool;
       
       if (activeTab === 'Local') {
@@ -131,6 +172,9 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
         }
         return 0;
       });
+
+      // Filter out duplicate variations via split testing
+      filtered = performABSplitTest(filtered);
       
       if (searchQuery.trim() !== '') {
         const q = searchQuery.toLowerCase();

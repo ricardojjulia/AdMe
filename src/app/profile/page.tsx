@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/lib/UserContext";
+import { useToast } from "@/lib/ToastContext";
 import { FeedCard } from "@/components/FeedCard";
 import { Ad } from "@/types/ad";
 import styles from "./page.module.css";
@@ -14,7 +15,8 @@ const ALL_CATEGORIES = [
 ];
 
 export default function ProfilePage() {
-  const { user, preferences, togglePreference, savedAds } = useUser();
+  const { user, preferences, togglePreference, savedAds, coupons } = useUser();
+  const { addToast } = useToast();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'Preferences' | 'Wallet'>('Preferences');
   const [walletAds, setWalletAds] = useState<Ad[]>([]);
@@ -133,10 +135,38 @@ export default function ProfilePage() {
 
       {activeTab === 'Wallet' && (
         <section className={`${styles.section} animate-fade-in`}>
-          <p style={{ color: 'hsl(var(--muted-foreground))', marginBottom: '1rem' }}>
-            Your saved deals, coupons, and drops.
-          </p>
-          
+          {/* Active Coupons Section */}
+          <div style={{ marginBottom: '2rem' }}>
+            <h3 style={{ marginBottom: '0.75rem' }}>Your Active Vouchers & Coupons</h3>
+            {coupons.length === 0 ? (
+              <div style={{ padding: '1.5rem', background: 'hsl(var(--muted)/0.3)', border: '1px dashed hsl(var(--border))', borderRadius: 'var(--radius)', color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem', textAlign: 'center' }}>
+                🎟️ No active coupons yet. Go to the Rewards Hub to redeem your points!
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
+                {coupons.map((coupon) => (
+                  <div key={coupon.id} className="glass" style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid hsl(var(--primary)/0.3)', display: 'flex', flexDirection: 'column', gap: '0.5rem', position: 'relative' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'hsl(var(--primary))', fontWeight: 'bold', textTransform: 'uppercase' }}>Voucher</div>
+                    <h4 style={{ margin: 0, fontSize: '1rem' }}>{coupon.name}</h4>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.5rem' }}>
+                      <code style={{ background: 'hsl(var(--muted))', padding: '0.2rem 0.5rem', borderRadius: '0.25rem', fontSize: '0.85rem', fontWeight: 'bold' }}>{coupon.code}</code>
+                      <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(coupon.code);
+                          addToast("Coupon code copied!", "success");
+                        }}
+                        style={{ background: 'none', border: 'none', color: 'hsl(var(--primary))', cursor: 'pointer', fontSize: '0.8rem', textDecoration: 'underline' }}
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <h3 style={{ marginBottom: '0.75rem' }}>Saved Offers & Drops</h3>
           {savedAds.length === 0 ? (
             <div className={styles.emptyState}>
               <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>📭</div>
