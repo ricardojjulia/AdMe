@@ -17,6 +17,7 @@ export async function loginWithEmail(formData: FormData) {
   });
 
   if (error) {
+    const company = formData.get("company") as string;
     // If sign in fails, attempt sign up (simplified flow for demo purposes)
     const { error: signUpError } = await supabase.auth.signUp({
       email,
@@ -24,6 +25,7 @@ export async function loginWithEmail(formData: FormData) {
       options: {
         data: {
           account_type: type,
+          full_name: type === "business" && company ? company : undefined,
         }
       }
     });

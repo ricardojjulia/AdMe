@@ -1,25 +1,54 @@
-# AdMe ── Voluntary, Beautiful Advertising
+# AdMe ── The World's First Privacy-First, Permission-Based Advertising Marketplace
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Framework: Next.js 16](https://img.shields.io/badge/Next.js-16.0.8-black.svg?style=flat&logo=nextdotjs)](https://nextjs.org/)
 [![Database: Supabase](https://img.shields.io/badge/Database-Supabase-blueviolet.svg?style=flat&logo=supabase)](https://supabase.com/)
 
-AdMe is a Next.js web application designed to transform the advertising experience. Instead of intrusive pop-ups and tracking, AdMe features a high-fidelity, user-controlled ad feed where attention is treated as a premium value exchange. Users curate their vibes, follow brands, earn rewards for interaction, and localise campaigns based on proximity.
+> **"We know what you like, but we don't know who you are."**
+
+AdMe is a revolutionary discovery platform built to fix digital advertising for both users and businesses. Instead of surveillance-based tracking, AdMe operates as a consent-first, privacy-first ad marketplace. Users voluntarily control their preferences, maintain complete anonymity through hashed UIDs, and earn value for their attention. Small businesses get an affordable, level playing field to reach high-intent customers locally.
 
 ---
 
-## 🌟 Key Features
+## 🎯 The Core Problems We Solve
+
+### 1. Ad Relevance Without Surveillance (Consumers)
+Nobody wants diapers when they don’t have children, or political ads they disagree with. Users select precisely what they want to discover (e.g., Tech, Local restaurants, Home renovation, Veteran-owned businesses).
+
+### 2. High-Outcome local Discovery (Small Businesses)
+Traditional platforms (Google, Meta, TikTok) favor big spenders, burying local restaurants, coffee shops, contractors, and authors. AdMe provides low-cost subscription tiers (e.g., Free, $10/mo, $25/mo) allowing small businesses to compete and build volume first.
+
+### 3. Absolute Privacy by Design
+Meta and TikTok monitor every click, scroll, and keystroke. AdMe stores **zero personally identifiable information (PII)** in the public application layer. Attacker breaches yield only anonymous interaction lists, which are virtually worthless.
+
+---
+
+## 🛡️ Privacy-First Architecture
+
+*   **Anonymous UIDs**: Upon signup, the application generates a hashed UID (e.g., `UID-73A8-XP92-AB44`).
+*   **Zero PII Storage**: The public database table stores **no** real names, addresses, phone numbers, emails, birthdates, or genders.
+*   **Anonymous Metrics**: Advertisers track outcomes rather than identities. Supported interaction logs include:
+    *   UID clicked
+    *   UID viewed
+    *   UID saved
+    *   UID requested info
+    *   UID visited business page
+
+---
+
+## 🌟 Key Application Features
 
 ### 1. Unified Consumer Experience
-*   **Voluntary, Curated Feed**: Ad recommendations driven entirely by user-toggled categories (e.g., Tech, local, Wellness).
-*   **Ad Wallet & Save Center**: A wallet where users save interesting drops, deals, or coupon cards to redeem later.
+*   **Voluntary, Curated Feed**: Ad recommendations driven entirely by user-toggled categories.
+*   **Ad Wallet**: A local deal wallet where users save interesting drops, deals, or coupon cards to redeem later.
 *   **Gamified Streaks**: Daily action milestones that reward consistent interaction.
-*   **Proximity-based Filtering**: Automatic location tracking and distance calculation to display campaigns within a 25-mile radius.
+*   **Proximity-based Proximity Filtering**: Localised feed calculation displaying campaigns within a 25-mile radius.
+*   **Value Exchange (Reward Points)**: Users earn `AdPoints` for voluntary interaction (watching a demo, reviewing an ad, visiting a page), redeemable for gift cards, local business discounts, or charitable giving.
 
 ### 2. Premium Ad Formats
 *   **Native Ads**: Clean layouts organically blended into the feed.
 *   **Carousel Ads**: Multi-media horizontal swipe cards with smooth micro-animations.
-*   **Interactive Comments & Feedback**: Community threads on ad campaigns to discuss drops.
+*   **Interactive Comments**: Community feedback loops on ad campaigns.
 
 ### 3. Business Ad Studio
 *   **Campaign Builder**: Self-serve campaign wizard supporting targeting filters, formatting, and budgeting.
@@ -80,7 +109,7 @@ Ensure you have **Node.js 18+** and the **Supabase CLI** installed.
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
 
-3. Spin up local Supabase container (optional if using cloud instance):
+3. Spin up local Supabase container:
    ```bash
    supabase start
    ```
@@ -96,15 +125,6 @@ To compile the TypeScript project and generate static pages:
 ```bash
 npm run build
 ```
-
----
-
-## 🛠️ Architecture & Core Guidelines
-
-*   **Design Aesthetics**: Style with strict vanilla **CSS Modules**. Avoid ad-hoc utility classes. Ensure smooth transitions (`hover-lift`, HSL variables) and accessibility.
-*   **Security & RLS**: All tables in Supabase have Row Level Security enabled. Policies are defined inside `supabase/migrations`.
-*   **TypeScript Strictness**: Type safety is mandatory. Do not use `any` casting unless absolutely required for dynamic reducer indexes.
-*   **Performance First**: Lazy load non-critical libraries (e.g., dynamic imports for Supabase inside Client components).
 
 ---
 
