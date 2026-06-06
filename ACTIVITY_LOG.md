@@ -35,4 +35,12 @@
 - Enforced frequency caps and placements checks in [Feed.tsx](file:///Users/rjulia/programs/AdMe/src/components/Feed.tsx).
 - Successfully completed production compile tests (`npm run build`).
 
+## [2026-06-06T13:10:22-04:00] User Request
+**User**: We need to update the changelog with everything we've done
+
+**Action**:
+- Documented Phase 6, 7, and 8 additions in [CHANGELOG.md](file:///Users/rjulia/programs/AdMe/CHANGELOG.md), bumping the minor version to `1.2.0`.
+- Staged, committed, and pushed the updated CHANGELOG.md and ACTIVITY_LOG.md to GitHub.
+
+
 
