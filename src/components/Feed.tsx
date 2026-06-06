@@ -46,7 +46,7 @@ function performABSplitTest(ads: Ad[]): Ad[] {
 export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
-  const { preferences, reportedAds, skippedAds, location } = useUser();
+  const { preferences, reportedAds, skippedAds, location, adFrequency, deliveryChannels } = useUser();
 
   useEffect(() => {
     setLoading(true);
@@ -191,17 +191,32 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
 
     const timer = setTimeout(loadAds, 800);
     return () => clearTimeout(timer);
-  }, [preferences.join(','), searchQuery, activeTab, location]);
+  }, [preferences.join(','), searchQuery, activeTab, location, adFrequency, deliveryChannels]);
+
+  if (!deliveryChannels.feed) {
+    return (
+      <div className={styles.feed}>
+        <div className={styles.empty}>
+          📴 Feed-based placements are disabled in your Ad Controls.
+        </div>
+      </div>
+    );
+  }
+
+  const maxAds = adFrequency === 'low' ? 3 : (adFrequency === 'balanced' ? 6 : 10);
+  const visibleAds = ads
+    .filter(ad => !reportedAds.includes(ad.id) && !skippedAds.includes(ad.id))
+    .slice(0, maxAds);
 
   return (
     <div className={styles.feed}>
-      {ads.length === 0 && !loading && (
+      {visibleAds.length === 0 && !loading && (
         <div className={styles.empty}>
           No campaigns found for your vibe. Try tuning your preferences!
         </div>
       )}
 
-      {ads.filter(ad => !reportedAds.includes(ad.id) && !skippedAds.includes(ad.id)).map((ad) => (
+      {visibleAds.map((ad) => (
         <FeedCard key={ad.id} ad={ad} />
       ))}
 

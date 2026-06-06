@@ -15,13 +15,45 @@ interface ActiveAlert {
   couponCode?: string;
 }
 
+function isTimeInInterval(current: string, start: string, end: string) {
+  if (start <= end) {
+    return current >= start && current <= end;
+  } else {
+    // Spans midnight (e.g. 22:00 to 08:00)
+    return current >= start || current <= end;
+  }
+}
+
 export function GeofenceAlert() {
-  const { location, savedAds, coupons } = useUser();
+  const { location, savedAds, coupons, deliveryChannels, quietHours } = useUser();
   const { addToast } = useToast();
   const [alerts, setAlerts] = useState<ActiveAlert[]>([]);
   const [dismissedAds, setDismissedAds] = useState<string[]>([]);
 
   useEffect(() => {
+    // Clear alerts if geofenced channel is disabled
+    if (!deliveryChannels.geofenced) {
+      if (alerts.length > 0) {
+        setAlerts([]);
+      }
+      return;
+    }
+
+    // Clear alerts if currently in quiet hours
+    if (quietHours.enabled) {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const currentTimeString = `${hours}:${minutes}`;
+      
+      if (isTimeInInterval(currentTimeString, quietHours.start, quietHours.end)) {
+        if (alerts.length > 0) {
+          setAlerts([]);
+        }
+        return;
+      }
+    }
+
     // Clear dismissed list if location is cleared
     if (!location) {
       if (dismissedAds.length > 0) {
@@ -106,7 +138,7 @@ export function GeofenceAlert() {
     }
 
     checkProximity();
-  }, [location, savedAds, coupons, dismissedAds]);
+  }, [location, savedAds, coupons, dismissedAds, deliveryChannels, quietHours]);
 
   const handleDismiss = (adId: string) => {
     setDismissedAds(prev => [...prev, adId]);

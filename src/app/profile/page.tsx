@@ -15,10 +15,10 @@ const ALL_CATEGORIES = [
 ];
 
 export default function ProfilePage() {
-  const { user, preferences, togglePreference, savedAds, coupons } = useUser();
+  const { user, preferences, togglePreference, savedAds, coupons, adFrequency, deliveryChannels, quietHours, updateAdControlSettings } = useUser();
   const { addToast } = useToast();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'Preferences' | 'Wallet'>('Preferences');
+  const [activeTab, setActiveTab] = useState<'Preferences' | 'Wallet' | 'Controls'>('Preferences');
   const [walletAds, setWalletAds] = useState<Ad[]>([]);
   const [loadingWallet, setLoadingWallet] = useState(false);
 
@@ -109,6 +109,12 @@ export default function ProfilePage() {
         >
           Ad Wallet
         </button>
+        <button 
+          className={`${styles.tab} ${activeTab === 'Controls' ? styles.active : ''}`}
+          onClick={() => setActiveTab('Controls')}
+        >
+          Ad Controls
+        </button>
       </div>
 
       {activeTab === 'Preferences' && (
@@ -183,6 +189,159 @@ export default function ProfilePage() {
               ))}
             </div>
           )}
+        </section>
+      )}
+
+      {activeTab === 'Controls' && (
+        <section className={`${styles.section} animate-fade-in`}>
+          <p style={{ color: 'hsl(var(--muted-foreground))', marginBottom: '1rem' }}>
+            Customize your ad delivery settings, quiet hours, and channel notifications.
+          </p>
+          
+          <div className={styles.controlGrid}>
+            {/* Ad Frequency */}
+            <div className={styles.controlCard}>
+              <div>
+                <h3 className={styles.controlGroupTitle}>Ad Insertion Frequency</h3>
+                <p className={styles.controlGroupDesc}>Control how often sponsored drops and native campaigns populate your feed.</p>
+              </div>
+              <div className={styles.freqSelector}>
+                <button 
+                  type="button" 
+                  className={`${styles.freqBtn} ${adFrequency === 'low' ? styles.active : ''}`}
+                  onClick={() => updateAdControlSettings({ adFrequency: 'low' })}
+                >
+                  Low
+                </button>
+                <button 
+                  type="button" 
+                  className={`${styles.freqBtn} ${adFrequency === 'balanced' ? styles.active : ''}`}
+                  onClick={() => updateAdControlSettings({ adFrequency: 'balanced' })}
+                >
+                  Balanced
+                </button>
+                <button 
+                  type="button" 
+                  className={`${styles.freqBtn} ${adFrequency === 'high' ? styles.active : ''}`}
+                  onClick={() => updateAdControlSettings({ adFrequency: 'high' })}
+                >
+                  High
+                </button>
+              </div>
+              <div className={styles.freqExplain}>
+                {adFrequency === 'low' && "🐢 Low: Fewer ad insertions. Focuses only on highly matched preferences."}
+                {adFrequency === 'balanced' && "⚖️ Balanced: Standard delivery cadence."}
+                {adFrequency === 'high' && "🚀 High: Max drops. Optimized to build rewards fast."}
+              </div>
+            </div>
+
+            {/* Delivery Channels */}
+            <div className={styles.controlCard}>
+              <div>
+                <h3 className={styles.controlGroupTitle}>Delivery Channels</h3>
+                <p className={styles.controlGroupDesc}>Enable or disable direct ad placements by channel.</p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div className={styles.channelRow}>
+                  <div className={styles.channelLabel}>
+                    <span className={styles.channelName}>Feed-based Placements</span>
+                    <span className={styles.channelDesc}>Display native cards directly in your content feed.</span>
+                  </div>
+                  <label className={styles.switch}>
+                    <input 
+                      type="checkbox" 
+                      checked={deliveryChannels.feed} 
+                      onChange={(e) => updateAdControlSettings({ 
+                        deliveryChannels: { ...deliveryChannels, feed: e.target.checked } 
+                      })} 
+                    />
+                    <span className={styles.slider}></span>
+                  </label>
+                </div>
+
+                <div className={styles.channelRow}>
+                  <div className={styles.channelLabel}>
+                    <span className={styles.channelName}>📍 Geofenced Alerts</span>
+                    <span className={styles.channelDesc}>Receive proximity card pop-ups when walking near saved locations.</span>
+                  </div>
+                  <label className={styles.switch}>
+                    <input 
+                      type="checkbox" 
+                      checked={deliveryChannels.geofenced} 
+                      onChange={(e) => updateAdControlSettings({ 
+                        deliveryChannels: { ...deliveryChannels, geofenced: e.target.checked } 
+                      })} 
+                    />
+                    <span className={styles.slider}></span>
+                  </label>
+                </div>
+
+                <div className={styles.channelRow}>
+                  <div className={styles.channelLabel}>
+                    <span className={styles.channelName}>Push Notifications</span>
+                    <span className={styles.channelDesc}>Simulated push delivery for real-time campaign alerts.</span>
+                  </div>
+                  <label className={styles.switch}>
+                    <input 
+                      type="checkbox" 
+                      checked={deliveryChannels.push} 
+                      onChange={(e) => updateAdControlSettings({ 
+                        deliveryChannels: { ...deliveryChannels, push: e.target.checked } 
+                      })} 
+                    />
+                    <span className={styles.slider}></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Quiet Hours */}
+            <div className={styles.controlCard}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <h3 className={styles.controlGroupTitle}>Quiet Hours</h3>
+                  <p className={styles.controlGroupDesc}>Temporarily mute proximity triggers during specific times.</p>
+                </div>
+                <label className={styles.switch}>
+                  <input 
+                    type="checkbox" 
+                    checked={quietHours.enabled} 
+                    onChange={(e) => updateAdControlSettings({ 
+                      quietHours: { ...quietHours, enabled: e.target.checked } 
+                    })} 
+                  />
+                  <span className={styles.slider}></span>
+                </label>
+              </div>
+
+              {quietHours.enabled && (
+                <div className={styles.timeInputRow}>
+                  <div className={styles.timeField}>
+                    <label>Start Mute</label>
+                    <input 
+                      type="time" 
+                      className={styles.timeInput}
+                      value={quietHours.start} 
+                      onChange={(e) => updateAdControlSettings({ 
+                        quietHours: { ...quietHours, start: e.target.value } 
+                      })} 
+                    />
+                  </div>
+                  <div className={styles.timeField}>
+                    <label>End Mute</label>
+                    <input 
+                      type="time" 
+                      className={styles.timeInput}
+                      value={quietHours.end} 
+                      onChange={(e) => updateAdControlSettings({ 
+                        quietHours: { ...quietHours, end: e.target.value } 
+                      })} 
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </section>
       )}
     </main>

@@ -39,9 +39,14 @@ interface UserContextType {
   redeemPerk: (name: string, cost: number) => Promise<string>;
   setLocation: (loc: { lat: number; lng: number } | null) => void;
   selectPersona: (id: string | null) => Promise<void>;
+  adFrequency: 'low' | 'balanced' | 'high';
+  deliveryChannels: { feed: boolean; geofenced: boolean; push: boolean };
+  quietHours: { enabled: boolean; start: string; end: string };
+  updateAdControlSettings: (settings: { adFrequency?: 'low' | 'balanced' | 'high'; deliveryChannels?: { feed: boolean; geofenced: boolean; push: boolean }; quietHours?: { enabled: boolean; start: string; end: string } }) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
+
 
 export const DEMO_PERSONAS = [
   {
@@ -120,11 +125,31 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isSupabaseEnabled, setIsSupabaseEnabled] = useState(false);
 
+  const [adFrequency, setAdFrequency] = useState<'low' | 'balanced' | 'high'>('balanced');
+  const [deliveryChannels, setDeliveryChannels] = useState<{ feed: boolean; geofenced: boolean; push: boolean }>({ feed: true, geofenced: true, push: true });
+  const [quietHours, setQuietHours] = useState<{ enabled: boolean; start: string; end: string }>({ enabled: false, start: "22:00", end: "08:00" });
+
   useEffect(() => {
     const loadData = async () => {
       const demoPersonaId = typeof window !== 'undefined' ? localStorage.getItem('adme_demo_persona_id') : null;
       const hasSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here';
       setIsSupabaseEnabled(!!hasSupabase);
+
+      // Load settings from localStorage
+      if (typeof window !== 'undefined') {
+        const savedFrequency = localStorage.getItem("adme_ad_frequency") as 'low' | 'balanced' | 'high' | null;
+        if (savedFrequency) setAdFrequency(savedFrequency);
+
+        const savedChannels = localStorage.getItem("adme_delivery_channels");
+        if (savedChannels) {
+          try { setDeliveryChannels(JSON.parse(savedChannels)); } catch (e) {}
+        }
+
+        const savedQuietHours = localStorage.getItem("adme_quiet_hours");
+        if (savedQuietHours) {
+          try { setQuietHours(JSON.parse(savedQuietHours)); } catch (e) {}
+        }
+      }
 
       if (demoPersonaId) {
         const persona = DEMO_PERSONAS.find(p => p.id === demoPersonaId);
@@ -465,6 +490,25 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return generatedCode;
   };
 
+  const updateAdControlSettings = (settings: {
+    adFrequency?: 'low' | 'balanced' | 'high';
+    deliveryChannels?: { feed: boolean; geofenced: boolean; push: boolean };
+    quietHours?: { enabled: boolean; start: string; end: string };
+  }) => {
+    if (settings.adFrequency) {
+      setAdFrequency(settings.adFrequency);
+      localStorage.setItem("adme_ad_frequency", settings.adFrequency);
+    }
+    if (settings.deliveryChannels) {
+      setDeliveryChannels(settings.deliveryChannels);
+      localStorage.setItem("adme_delivery_channels", JSON.stringify(settings.deliveryChannels));
+    }
+    if (settings.quietHours) {
+      setQuietHours(settings.quietHours);
+      localStorage.setItem("adme_quiet_hours", JSON.stringify(settings.quietHours));
+    }
+  };
+
   const selectPersona = async (id: string | null) => {
     if (!id) {
       localStorage.removeItem('adme_demo_persona_id');
@@ -479,7 +523,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, redeemPerk, setLocation, selectPersona }}>
+    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, redeemPerk, setLocation, selectPersona, adFrequency, deliveryChannels, quietHours, updateAdControlSettings }}>
       {children}
     </UserContext.Provider>
   );

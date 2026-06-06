@@ -153,3 +153,194 @@
   border: 1px dashed hsl(var(--border));
   color: hsl(var(--muted-foreground));
 }
+
+/* Ad Control Panel styles */
+.controlGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+@media (min-width: 768px) {
+  .controlGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.controlCard {
+  background: hsl(var(--card)/0.5);
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.controlGroupTitle {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 0.25rem;
+}
+
+.controlGroupDesc {
+  font-size: 0.85rem;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.4;
+  margin-bottom: 0.5rem;
+}
+
+.freqSelector {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5rem;
+  background-color: hsl(var(--muted)/0.4);
+  padding: 0.25rem;
+  border-radius: 8px;
+  border: 1px solid hsl(var(--border)/0.5);
+}
+
+.freqBtn {
+  background: none;
+  border: none;
+  padding: 0.6rem;
+  border-radius: 6px;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.freqBtn:hover {
+  color: white;
+}
+
+.freqBtn.active {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.freqExplain {
+  font-size: 0.8rem;
+  color: hsl(var(--muted-foreground));
+  font-style: italic;
+  margin-top: 0.25rem;
+  line-height: 1.4;
+}
+
+.channelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid hsl(var(--border)/0.4);
+}
+
+.channelRow:last-child {
+  border-bottom: none;
+}
+
+.channelLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.channelName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: white;
+}
+
+.channelDesc {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Styled switch checkbox */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+  transition: .3s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+
+.switch input:checked + .slider {
+  background-color: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(20px);
+  background-color: hsl(var(--primary-foreground));
+}
+
+.timeInputRow {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.timeField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex-grow: 1;
+}
+
+.timeField label {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.timeInput {
+  background-color: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+  color: white;
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.timeInput:focus {
+  outline: none;
+  border-color: hsl(var(--primary));
+}
+

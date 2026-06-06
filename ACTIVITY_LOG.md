@@ -13,3 +13,26 @@
 
 **Action**: 
 - Created `agents.md` with instructions for research on user preferences for marketing and ads.
+
+## [2026-06-06T12:14:39-04:00] User Request
+**User**: we should have several individual accounts for demo and several business accounts for demo, what do you think?
+
+**Action**:
+- Created a floating [DemoPanel.tsx](file:///Users/rjulia/programs/AdMe/src/components/DemoPanel.tsx) drawer widget.
+- Created stylesheet [DemoPanel.module.css](file:///Users/rjulia/programs/AdMe/src/components/DemoPanel.module.css) featuring a premium glassmorphic UI overlay, glowing status indicators, and smooth transition animations.
+- Registered `<DemoPanel />` in the root layout [layout.tsx](file:///Users/rjulia/programs/AdMe/src/app/layout.tsx) globally inside the user provider shell.
+- Confirmed build stability by compiling the Next.js production build (`npm run build`).
+- Created feature branch `feature/phase7-demo-personas`, staged and committed changes, merged it to `main`, and pushed the branch to GitHub.
+
+## [2026-06-06T12:21:17-04:00] User Request
+**User**: what's next?
+
+**Action**:
+- Discussed roadmap options (Frequency control, Value-exchange units, Studio behavior simulator, and Data privacy ledger) and formulated an implementation plan.
+- Added settings states `adFrequency`, `deliveryChannels`, and `quietHours` to [UserContext.tsx](file:///Users/rjulia/programs/AdMe/src/lib/UserContext.tsx) with local storage sync.
+- Added an `"Ad Controls"` tab in [profile/page.tsx](file:///Users/rjulia/programs/AdMe/src/app/profile/page.tsx) with slider controls, toggle switches, and time inputs.
+- Enforced quiet hours and channel muting in [GeofenceAlert.tsx](file:///Users/rjulia/programs/AdMe/src/components/GeofenceAlert.tsx).
+- Enforced frequency caps and placements checks in [Feed.tsx](file:///Users/rjulia/programs/AdMe/src/components/Feed.tsx).
+- Successfully completed production compile tests (`npm run build`).
+
+
