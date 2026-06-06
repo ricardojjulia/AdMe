@@ -37,6 +37,7 @@ interface UserContextType {
   submitLead: (adId: string, message: string, contactInfo?: string) => Promise<void>;
   coupons: any[];
   redeemPerk: (name: string, cost: number) => Promise<string>;
+  setLocation: (loc: { lat: number; lng: number } | null) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -350,7 +351,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, redeemPerk }}>
+    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, redeemPerk, setLocation }}>
       {children}
     </UserContext.Provider>
   );

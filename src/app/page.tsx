@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Feed } from "@/components/Feed";
 import { useUser } from "@/lib/UserContext";
+import { GeofenceAlert } from "@/components/GeofenceAlert";
 import styles from "./page.module.css";
 
 const spotlight = {
@@ -19,7 +20,7 @@ const topFilters = ["Tech & SaaS", "Local Eateries", "Faith & Books", "Auto unde
 const sideFilters = ["Home & Garden", "Wellness & Health", "Gaming", "Finance"];
 
 export default function Home() {
-  const { user, preferences, togglePreference, savedAds, switchRole, location, enableLocation } = useUser();
+  const { user, preferences, togglePreference, savedAds, switchRole, location, enableLocation, setLocation } = useUser();
   const [activeTab, setActiveTab] = useState('For You');
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
@@ -243,8 +244,66 @@ export default function Home() {
               ))}
             </div>
           </div>
+
+          {/* Proximity Simulator Widget Card */}
+          <div className={styles.sideCard}>
+            <div className={styles.sideHeader}>
+              <h4>📍 Proximity Simulator</h4>
+              <span className={styles.sideMeta}>Local Mock</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.75rem' }}>
+              <p style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))', margin: '0 0 0.25rem 0', lineHeight: '1.3' }}>
+                Simulate walking near local hotspots to trigger geofenced deals.
+              </p>
+              <button 
+                type="button" 
+                onClick={() => setLocation({ lat: 34.0196, lng: -118.4913 })}
+                className="btn" 
+                style={{ display: 'flex', justifyContent: 'flex-start', padding: '0.5rem 0.75rem', fontSize: '0.85rem', background: location?.lat === 34.0196 ? 'hsl(var(--primary)/0.2)' : 'hsl(var(--muted))', color: location?.lat === 34.0196 ? 'hsl(var(--primary))' : 'white', border: location?.lat === 34.0196 ? '1px solid hsl(var(--primary))' : '1px solid transparent', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: '500' }}
+              >
+                ☕ At Valor Brews Coffee
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setLocation({ lat: 34.0123, lng: -118.4921 })}
+                className="btn" 
+                style={{ display: 'flex', justifyContent: 'flex-start', padding: '0.5rem 0.75rem', fontSize: '0.85rem', background: location?.lat === 34.0123 ? 'hsl(var(--primary)/0.2)' : 'hsl(var(--muted))', color: location?.lat === 34.0123 ? 'hsl(var(--primary))' : 'white', border: location?.lat === 34.0123 ? '1px solid hsl(var(--primary))' : '1px solid transparent', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: '500' }}
+              >
+                🥗 At The Green Kitchen
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setLocation({ lat: 34.0523, lng: -118.2438 })}
+                className="btn" 
+                style={{ display: 'flex', justifyContent: 'flex-start', padding: '0.5rem 0.75rem', fontSize: '0.85rem', background: location?.lat === 34.0523 ? 'hsl(var(--primary)/0.2)' : 'hsl(var(--muted))', color: location?.lat === 34.0523 ? 'hsl(var(--primary))' : 'white', border: location?.lat === 34.0523 ? '1px solid hsl(var(--primary))' : '1px solid transparent', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: '500' }}
+              >
+                🚗 At Nomad Motors HQ
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setLocation({ lat: 37.7750, lng: -122.4195 })}
+                className="btn" 
+                style={{ display: 'flex', justifyContent: 'flex-start', padding: '0.5rem 0.75rem', fontSize: '0.85rem', background: location?.lat === 37.7750 ? 'hsl(var(--primary)/0.2)' : 'hsl(var(--muted))', color: location?.lat === 37.7750 ? 'hsl(var(--primary))' : 'white', border: location?.lat === 37.7750 ? '1px solid hsl(var(--primary))' : '1px solid transparent', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: '500' }}
+              >
+                🌉 SF Downtown
+              </button>
+              {location && (
+                <button 
+                  type="button" 
+                  onClick={() => setLocation(null)}
+                  className="btn" 
+                  style={{ padding: '0.5rem', fontSize: '0.85rem', background: 'hsl(var(--destructive)/0.2)', color: 'hsl(var(--destructive))', border: '1px solid hsl(var(--destructive)/0.4)', borderRadius: '0.5rem', cursor: 'pointer', marginTop: '0.25rem', fontWeight: 'bold' }}
+                >
+                  ❌ Clear Mock Location
+                </button>
+              )}
+            </div>
+          </div>
         </aside>
       </section>
+
+      {/* Floating Geofence Alerts Trigger */}
+      <GeofenceAlert />
     </div>
   );
 }
