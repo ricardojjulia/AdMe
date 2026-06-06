@@ -43,7 +43,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   const [preferences, setPreferences] = useState<string[]>([
-    "Tech", "Local", "Travel", "Style", "Food"
+    "Tech & SaaS", "Local Eateries", "Faith & Books", "Veteran-owned"
   ]);
 
   const [savedAds, setSavedAds] = useState<string[]>([]);

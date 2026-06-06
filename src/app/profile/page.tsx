@@ -9,8 +9,8 @@ import { Ad } from "@/types/ad";
 import styles from "./page.module.css";
 
 const ALL_CATEGORIES = [
-  "Tech", "Local", "Travel", "Style", "Food", 
-  "Design", "Outdoors", "Gaming", "Wellness", "Beauty", "Finance"
+  "Tech & SaaS", "Local Eateries", "Faith & Books", "Auto under $40k", "Veteran-owned",
+  "Home & Garden", "Wellness & Health", "Gaming", "Finance"
 ];
 
 export default function ProfilePage() {

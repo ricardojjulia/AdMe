@@ -15,8 +15,8 @@ const spotlight = {
   perks: ["Priority booking", "$200 accessory credit", "Concierge pickup"],
 };
 
-const topFilters = ["Tech", "Local", "Travel", "Style", "Food"];
-const sideFilters = ["Design", "Outdoors", "Gaming", "Wellness", "Beauty", "Finance"];
+const topFilters = ["Tech & SaaS", "Local Eateries", "Faith & Books", "Auto under $40k", "Veteran-owned"];
+const sideFilters = ["Home & Garden", "Wellness & Health", "Gaming", "Finance"];
 
 export default function Home() {
   const { user, preferences, togglePreference, savedAds, switchRole, location, enableLocation } = useUser();

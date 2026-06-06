@@ -28,19 +28,43 @@ export default function CheckoutPage() {
     { id: 'scale', name: "Scale Plan", price: 99, perks: ["Unlimited campaigns", "Advanced geographical targeting", "Continuous A/B variants", "Dedicated account manager"] },
   ];
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     setIsProcessing(true);
-    setTimeout(async () => {
-      if (checkoutMode === 'credits') {
-        buyCredits(selectedPack * 100);
-        addToast(`Successfully topped up ${selectedPack * 100} credits!`, "success");
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          checkoutMode,
+          selectedPack,
+          selectedSub,
+          userId: user?.id
+        })
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        addToast("Connecting to Stripe...", "info");
+        setTimeout(async () => {
+          if (checkoutMode === 'credits') {
+            buyCredits(selectedPack * 100);
+            addToast(`Successfully topped up ${selectedPack * 100} credits!`, "success");
+          } else {
+            await upgradeSubscription(selectedSub);
+            addToast(`Successfully upgraded to the ${selectedSub.toUpperCase()} Plan!`, "success");
+          }
+          setIsProcessing(false);
+          router.push('/studio');
+        }, 1500);
       } else {
-        await upgradeSubscription(selectedSub);
-        addToast(`Successfully upgraded to the ${selectedSub.toUpperCase()} Plan!`, "success");
+        addToast(data.error || "Payment session error.", "error");
+        setIsProcessing(false);
       }
+    } catch (e) {
+      console.error(e);
+      addToast("Payment gateway connection error.", "error");
       setIsProcessing(false);
-      router.push('/studio');
-    }, 2000);
+    }
   };
 
   const getSummaryLabel = () => {

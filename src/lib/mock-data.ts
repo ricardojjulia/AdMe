@@ -18,7 +18,7 @@ const CONTENT_TEMPLATES = [
 
 const CTA_LABELS = ["Shop Now", "Learn More", "Sign Up", "Book Now", "Watch Trailer"];
 const COLORS = ["#40c9ff", "#f4a261", "#9f7aea", "#34d399", "#f87171"];
-const CATEGORIES = ["Tech", "Local", "Travel", "Style", "Food", "Design", "Outdoors", "Gaming", "Wellness", "Beauty", "Finance"];
+const CATEGORIES = ["Tech & SaaS", "Local Eateries", "Faith & Books", "Auto under $40k", "Veteran-owned", "Home & Garden", "Wellness & Health", "Gaming", "Finance"];
 
 export function generateMockAds(count: number = 10, userLocation?: { lat: number; lng: number }): Ad[] {
     return Array.from({ length: count }).map((_, i) => {
