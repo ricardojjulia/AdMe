@@ -17,6 +17,9 @@ export default function StudioDashboard() {
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'newest' | 'views' | 'clicks' | 'ctr' | 'duration'>('newest');
   const [isExporting, setIsExporting] = useState(false);
+  const [campaignsList, setCampaignsList] = useState<any[]>([]);
+  const [engagementsList, setEngagementsList] = useState<any[]>([]);
+  const [simulatingId, setSimulatingId] = useState<string | null>(null);
 
   const adCredits = user?.adCreditsBalance || 0;
   const currentPlan = user?.subscriptionTier || 'free';
@@ -158,48 +161,8 @@ export default function StudioDashboard() {
         engagements = mockEngs;
       }
 
-      // Map campaigns with engagement metrics
-      const mappedAds = campaigns.map(ad => {
-        const adEngagements = engagements.filter(e => e.ad_id === ad.id);
-        const views = adEngagements.filter(e => e.engagement_type === 'view');
-        const clicks = adEngagements.filter(e => e.engagement_type === 'click');
-        const likes = adEngagements.filter(e => e.engagement_type === 'like');
-
-        const totalDuration = views.reduce((sum, e) => sum + (Number(e.view_duration_seconds) || 0), 0);
-        const avgDuration = views.length > 0 ? parseFloat((totalDuration / views.length).toFixed(1)) : 0;
-        const ctr = views.length > 0 ? parseFloat(((clicks.length / views.length) * 100).toFixed(1)) : 0;
-
-        // Calculate Attention Retention Breakdown
-        const short = views.filter(e => (e.view_duration_seconds || 0) < 2).length;
-        const medium = views.filter(e => (e.view_duration_seconds || 0) >= 2 && (e.view_duration_seconds || 0) < 5).length;
-        const long = views.filter(e => (e.view_duration_seconds || 0) >= 5 && (e.view_duration_seconds || 0) < 10).length;
-        const deep = views.filter(e => (e.view_duration_seconds || 0) >= 10).length;
-        const totalViews = views.length || 1;
-
-        const attentionBreakdown = {
-          short: Math.round((short / totalViews) * 100),
-          medium: Math.round((medium / totalViews) * 100),
-          long: Math.round((long / totalViews) * 100),
-          deep: Math.round((deep / totalViews) * 100)
-        };
-
-        return {
-          id: ad.id,
-          headline: ad.headline,
-          status: 'Active',
-          impressions: views.length,
-          clicks: clicks.length,
-          likes: likes.length,
-          avgDuration,
-          ctr,
-          attentionBreakdown,
-          campaignId: ad.campaign_id,
-          variationName: ad.variation_name,
-          isBoosted: ad.is_boosted
-        };
-      });
-
-      setActiveAds(mappedAds);
+      setCampaignsList(campaigns);
+      setEngagementsList(engagements);
 
       // Fetch received leads
       const { data: leadsData, error: leadsError } = await supabase
@@ -256,49 +219,7 @@ export default function StudioDashboard() {
           .channel('public:engagements')
           .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'engagements' }, (payload) => {
             const newEngagement = payload.new;
-            setActiveAds(prevAds => prevAds.map(ad => {
-              if (ad.id === newEngagement.ad_id) {
-                if (newEngagement.engagement_type === 'view') {
-                  const viewDuration = Number(newEngagement.view_duration_seconds) || 0;
-                  const newImpressions = ad.impressions + 1;
-                  const newTotalDuration = (ad.avgDuration * ad.impressions) + viewDuration;
-                  const newAvgDuration = parseFloat((newTotalDuration / newImpressions).toFixed(1));
-                  
-                  const bracket = viewDuration < 2 ? 'short' : (viewDuration < 5 ? 'medium' : (viewDuration < 10 ? 'long' : 'deep'));
-                  const breakdownCopy = { ...ad.attentionBreakdown };
-                  
-                  const total = 100;
-                  const oldAmount = Math.round(breakdownCopy[bracket] * (ad.impressions / newImpressions));
-                  const newAmount = oldAmount + Math.round(100 / newImpressions);
-                  
-                  breakdownCopy[bracket] = Math.min(100, newAmount);
-                  
-                  const sum = Object.values(breakdownCopy).reduce((s: any, v: any) => s + v, 0) as number;
-                  if (sum > 0) {
-                    Object.keys(breakdownCopy).forEach(k => {
-                      breakdownCopy[k] = Math.round((breakdownCopy[k] / sum) * 100);
-                    });
-                  }
-                  
-                  return { 
-                    ...ad, 
-                    impressions: newImpressions, 
-                    avgDuration: newAvgDuration, 
-                    ctr: parseFloat(((ad.clicks / newImpressions) * 100).toFixed(1)),
-                    attentionBreakdown: breakdownCopy
-                  };
-                }
-                if (newEngagement.engagement_type === 'click') {
-                  const newClicks = ad.clicks + 1;
-                  return { 
-                    ...ad, 
-                    clicks: newClicks,
-                    ctr: parseFloat(((newClicks / Math.max(1, ad.impressions)) * 100).toFixed(1))
-                  };
-                }
-              }
-              return ad;
-            }));
+            setEngagementsList(prev => [...prev, newEngagement]);
           })
           .subscribe();
       }
@@ -306,12 +227,124 @@ export default function StudioDashboard() {
     loadData();
   }, [user]);
 
+  // Compute activeAds based on campaignsList and engagementsList
+  useEffect(() => {
+    if (campaignsList.length === 0) return;
+
+    const mappedAds = campaignsList.map(ad => {
+      const adEngagements = engagementsList.filter(e => e.ad_id === ad.id);
+      const views = adEngagements.filter(e => e.engagement_type === 'view');
+      const clicks = adEngagements.filter(e => e.engagement_type === 'click');
+      const likes = adEngagements.filter(e => e.engagement_type === 'like');
+
+      const totalDuration = views.reduce((sum, e) => sum + (Number(e.view_duration_seconds) || 0), 0);
+      const avgDuration = views.length > 0 ? parseFloat((totalDuration / views.length).toFixed(1)) : 0;
+      const ctr = views.length > 0 ? parseFloat(((clicks.length / views.length) * 100).toFixed(1)) : 0;
+
+      // Calculate Attention Retention Breakdown
+      const short = views.filter(e => (e.view_duration_seconds || 0) < 2).length;
+      const medium = views.filter(e => (e.view_duration_seconds || 0) >= 2 && (e.view_duration_seconds || 0) < 5).length;
+      const long = views.filter(e => (e.view_duration_seconds || 0) >= 5 && (e.view_duration_seconds || 0) < 10).length;
+      const deep = views.filter(e => (e.view_duration_seconds || 0) >= 10).length;
+      const totalViews = views.length || 1;
+
+      const attentionBreakdown = {
+        short: Math.round((short / totalViews) * 100),
+        medium: Math.round((medium / totalViews) * 100),
+        long: Math.round((long / totalViews) * 100),
+        deep: Math.round((deep / totalViews) * 100)
+      };
+
+      return {
+        id: ad.id,
+        headline: ad.headline,
+        status: 'Active',
+        impressions: views.length,
+        clicks: clicks.length,
+        likes: likes.length,
+        avgDuration,
+        ctr,
+        attentionBreakdown,
+        campaignId: ad.campaign_id,
+        variationName: ad.variation_name,
+        isBoosted: ad.is_boosted
+      };
+    });
+
+    setActiveAds(mappedAds);
+  }, [campaignsList, engagementsList]);
+
   const handleExport = () => {
     setIsExporting(true);
     setTimeout(() => {
       setIsExporting(false);
       addToast("Analytics report compiled successfully! Downloaded: adme_campaigns_report_2026.csv", "success");
     }, 1500);
+  };
+
+  const handleSimulate = async (adId: string, type: 'bounce' | 'deep' | 'click') => {
+    if (simulatingId) return;
+    setSimulatingId(adId);
+
+    const newEngs: any[] = [];
+    if (type === 'bounce') {
+      newEngs.push({
+        id: crypto.randomUUID(),
+        ad_id: adId,
+        engagement_type: 'view',
+        view_duration_seconds: parseFloat((0.5 + Math.random() * 1.2).toFixed(1)),
+        created_at: new Date().toISOString()
+      });
+    } else if (type === 'deep') {
+      newEngs.push({
+        id: crypto.randomUUID(),
+        ad_id: adId,
+        engagement_type: 'view',
+        view_duration_seconds: parseFloat((10.5 + Math.random() * 5.0).toFixed(1)),
+        created_at: new Date().toISOString()
+      });
+    } else if (type === 'click') {
+      const viewId = crypto.randomUUID();
+      newEngs.push({
+        id: viewId,
+        ad_id: adId,
+        engagement_type: 'view',
+        view_duration_seconds: parseFloat((3.0 + Math.random() * 4.0).toFixed(1)),
+        created_at: new Date().toISOString()
+      });
+      newEngs.push({
+        id: crypto.randomUUID(),
+        ad_id: adId,
+        engagement_type: 'click',
+        created_at: new Date().toISOString()
+      });
+    }
+
+    const hasSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here';
+    if (hasSupabase) {
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        
+        const { error } = await supabase.from('engagements').insert(newEngs.map(e => ({
+          ad_id: e.ad_id,
+          engagement_type: e.engagement_type,
+          view_duration_seconds: e.view_duration_seconds
+        })));
+        
+        if (error) throw error;
+        addToast(`Simulated ${type} event written to Supabase!`, "success");
+      } catch (err) {
+        console.error("Failed to write simulation to Supabase:", err);
+        addToast("Database error. Running local simulation instead.", "info");
+        setEngagementsList(prev => [...prev, ...newEngs]);
+      }
+    } else {
+      setEngagementsList(prev => [...prev, ...newEngs]);
+      addToast(`Simulated ${type} event added locally!`, "success");
+    }
+
+    setSimulatingId(null);
   };
 
   const getAttentionQuality = (avg: number) => {
@@ -529,6 +562,50 @@ export default function StudioDashboard() {
                                   </div>
                                 </div>
                               )}
+
+                              {/* Audience Behavior Simulator widget */}
+                              <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                flexWrap: 'wrap',
+                                marginTop: '0.5rem',
+                                padding: '0.6rem 0.85rem',
+                                background: 'rgba(255, 255, 255, 0.02)',
+                                borderRadius: '6px',
+                                border: '1px dashed hsl(var(--border) / 0.8)'
+                              }}>
+                                <span style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', fontWeight: 'bold', display: 'flex', alignItems: 'center', marginRight: '0.25rem' }}>
+                                  🤖 SIMULATE EVENT:
+                                </span>
+                                <button 
+                                  type="button" 
+                                  onClick={() => handleSimulate(ad.id, 'bounce')}
+                                  className="btn"
+                                  style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: 'rgba(239, 68, 68, 0.12)', color: 'rgb(248, 113, 113)', border: '1px solid rgba(239, 68, 68, 0.25)', height: 'auto', borderRadius: '4px', cursor: 'pointer' }}
+                                  disabled={simulatingId === ad.id}
+                                >
+                                  {simulatingId === ad.id ? '...' : 'Bounce (<2s)'}
+                                </button>
+                                <button 
+                                  type="button" 
+                                  onClick={() => handleSimulate(ad.id, 'deep')}
+                                  className="btn"
+                                  style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: 'rgba(16, 185, 129, 0.12)', color: 'rgb(110, 231, 183)', border: '1px solid rgba(16, 185, 129, 0.25)', height: 'auto', borderRadius: '4px', cursor: 'pointer' }}
+                                  disabled={simulatingId === ad.id}
+                                >
+                                  {simulatingId === ad.id ? '...' : 'Deep Read (10s+)'}
+                                </button>
+                                <button 
+                                  type="button" 
+                                  onClick={() => handleSimulate(ad.id, 'click')}
+                                  className="btn"
+                                  style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: 'rgba(245, 158, 11, 0.12)', color: 'rgb(251, 191, 36)', border: '1px solid rgba(245, 158, 11, 0.25)', height: 'auto', borderRadius: '4px', cursor: 'pointer' }}
+                                  disabled={simulatingId === ad.id}
+                                >
+                                  {simulatingId === ad.id ? '...' : 'Click (CTR+)'}
+                                </button>
+                              </div>
                             </div>
                           );
                         })}
