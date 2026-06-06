@@ -22,6 +22,68 @@ export default function ProfilePage() {
   const [walletAds, setWalletAds] = useState<Ad[]>([]);
   const [loadingWallet, setLoadingWallet] = useState(false);
 
+  const handleExportData = () => {
+    if (!user) return;
+    const dataPackage = {
+      anonymousUID: user.id,
+      role: user.role,
+      rewardsBalance: user.rewardsBalance,
+      subscriptionTier: user.subscriptionTier || 'free',
+      currentStreak: user.currentStreak,
+      preferences: preferences,
+      savedAdsCount: savedAds.length,
+      vouchers: coupons.map(c => ({ name: c.name, code: c.code, date: c.created_at })),
+      exportedAt: new Date().toISOString(),
+      platform: "AdMe Privacy-First Ledger"
+    };
+
+    const blob = new Blob([JSON.stringify(dataPackage, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `adme_anonymous_profile_${user.id.substring(0, 8)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    addToast("Data package exported successfully!", "success");
+  };
+
+  const handleForgetMe = async () => {
+    if (!user) return;
+    if (!confirm("Are you sure you want to delete your anonymous profile footprint? This will clear all preferences, coupons, and reset your local settings.")) {
+      return;
+    }
+
+    const hasSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here';
+    if (hasSupabase && !localStorage.getItem('adme_demo_persona_id')) {
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          await supabase.from('user_preferences').delete().eq('user_id', session.user.id);
+          await supabase.from('users').update({
+            rewards_balance: 0,
+            current_streak: 0,
+            last_active_date: null
+          }).eq('id', session.user.id);
+          await supabase.auth.signOut();
+        }
+      } catch (e) {
+        console.error("Failed to purge Supabase data:", e);
+      }
+    }
+
+    localStorage.clear();
+    addToast("Data purged! Returning to default state.", "success");
+    
+    setTimeout(() => {
+      window.location.href = "/";
+    }, 1000);
+  };
+
   useEffect(() => {
     if (!user) {
       router.push('/');
@@ -341,6 +403,58 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
+
+            {/* Privacy & Consent Ledger Card */}
+            <div className={styles.controlCard} style={{ gridColumn: '1 / -1', marginTop: '0.5rem' }}>
+              <div>
+                <h3 className={styles.controlGroupTitle}>🛡️ Privacy Ledger & Consent Control</h3>
+                <p className={styles.controlGroupDesc}>
+                  As a privacy-first platform, your real identity is never exposed. Review your anonymous profile ledger and manage your consent.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'hsl(var(--muted)/0.2)', padding: '1rem', borderRadius: '6px', border: '1px solid hsl(var(--border)/0.5)', fontSize: '0.85rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'hsl(var(--muted-foreground))' }}>Anonymous UID:</span>
+                  <code style={{ color: 'hsl(var(--primary))', fontWeight: 'bold' }}>{user.id}</code>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'hsl(var(--muted-foreground))' }}>Shared Preferences:</span>
+                  <span style={{ color: 'white' }}>{preferences.length > 0 ? preferences.join(', ') : 'None'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'hsl(var(--muted-foreground))' }}>Saved Wallet Offers:</span>
+                  <span style={{ color: 'white' }}>{savedAds.length} offers</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'hsl(var(--muted-foreground))' }}>Voucher Coupons:</span>
+                  <span style={{ color: 'white' }}>{coupons.length} vouchers</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={handleExportData}
+                  className="btn"
+                  style={{ flexGrow: 1, padding: '0.6rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}
+                >
+                  📥 Export Anonymous Data Package
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={handleForgetMe}
+                  className="btn"
+                  style={{ flexGrow: 1, padding: '0.6rem', fontSize: '0.85rem', background: 'rgba(239, 68, 68, 0.15)', color: 'rgb(248, 113, 113)', border: '1px solid rgba(239, 68, 68, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}
+                  onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)'}
+                  onMouseOut={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'}
+                >
+                  ⚠️ Forget Me & Purge Footprint
+                </button>
+              </div>
+            </div>
+
           </div>
         </section>
       )}

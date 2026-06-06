@@ -63,6 +63,17 @@
 - Verified Next.js compilation successfully via `npm run build`.
 - Created feature branch `feature/phase10-behavior-simulator`, committed, merged to `main`, and pushed changes to GitHub.
 
+## [2026-06-06T19:28:43-04:00] User Request
+**User**: do it
+
+**Action**:
+- Created `handleExportData` in [profile/page.tsx](file:///Users/rjulia/programs/AdMe/src/app/profile/page.tsx) to package user profile stats and vouchers in an anonymous JSON download payload.
+- Created `handleForgetMe` in [profile/page.tsx](file:///Users/rjulia/programs/AdMe/src/app/profile/page.tsx) to purge preferences, clear localStorage settings, sign out of Supabase, and restore a fresh launch context.
+- Added a full-width **Privacy Ledger & Consent Control** card under the Ad Controls settings tab showing UID information and actions.
+- Verified compilation builds cleanly via `npm run build`.
+- Created feature branch `feature/phase11-privacy-ledger`, committed, merged to `main`, and pushed changes to GitHub.
+
+
 
 
 
