@@ -60,7 +60,7 @@ Meta and TikTok monitor every click, scroll, and keystroke. AdMe stores **zero p
 
 ## 🛡️ Architecture & Visual Design
 
-To understand the core mechanics, system topology, security boundaries, and data flow pipelines of the AdMe platform, refer to the visual **[ARCHITECTURE.md](file:///Users/rjulia/programs/AdMe/ARCHITECTURE.md)** guide. It features interactive Mermaid diagrams for:
+To understand the core mechanics, system topology, security boundaries, and data flow pipelines of the AdMe platform, refer to the visual **[ARCHITECTURE.md](./ARCHITECTURE.md)** guide. It features interactive Mermaid diagrams for:
 *   **System Architecture Map**: Frontend route guards, Edge layouts, and Supabase service blocks.
 *   **Ledger Balance RPC Flow**: RLS rules, and server-side balance updates using `SECURITY DEFINER` constraints.
 *   **GDPR Cascade Erasure**: Automatic account purges and PostgreSQL cascades on user deletion.
@@ -149,9 +149,9 @@ To run the full Playwright E2E browser test suite:
 npm run test:e2e
 ```
 
-Refer to the [deployment_guide.md](file:///Users/rjulia/programs/AdMe/deployment_guide.md) for detailed instructions on production deployment and configuration.
+Refer to the [deployment_guide.md](./deployment_guide.md) for detailed instructions on production deployment and configuration.
 
 ---
 
 ## 📄 License
-This project is licensed under the **MIT License** - see the [LICENSE](file:///Users/rjulia/programs/AdMe/LICENSE) file for details.
+This project is licensed under the **MIT License** - see the [LICENSE](./LICENSE) file for details.
