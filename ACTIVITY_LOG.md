@@ -108,3 +108,14 @@
 - Documented all security, analytics, and testing changes in [CHANGELOG.md](file:///Users/rjulia/programs/AdMe/CHANGELOG.md) and added testing details to [README.md](file:///Users/rjulia/programs/AdMe/README.md).
 - Executed local build compiling Next.js statically (`npm run build`), unit tests (`npm run test`), and Playwright E2E browser tests (`npm run test:e2e`), passing 100% cleanly.
 
+## [2026-06-07T09:23:00-04:00] User Request
+**User**: lets document this in the repo, README and Changelog, let's also bump the version up one major, and let's generate visual architecture diagrams for the software
+
+**Action**:
+- Bumped package version to `2.0.0` (Major Release) in [package.json](file:///Users/rjulia/programs/AdMe/package.json).
+- Released the security, privacy, and automated testing compliance updates under version `[2.0.0] - 2026-06-07` in [CHANGELOG.md](file:///Users/rjulia/programs/AdMe/CHANGELOG.md).
+- Created a comprehensive [ARCHITECTURE.md](file:///Users/rjulia/programs/AdMe/ARCHITECTURE.md) design document containing visual Mermaid diagrams detailing high-level system mapping, SECURITY DEFINER balance ledger RPC pathways, GDPR erasure cascading triggers, sticky A/B split-testing feed pipeline, and cryptographic viewport heartbeats.
+- Updated [README.md](file:///Users/rjulia/programs/AdMe/README.md) with a v2.0.0 release badge and link reference to the architecture guide.
+- Staged, committed, and pushed changes to remote `origin/main`.
+
+

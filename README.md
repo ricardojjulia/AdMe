@@ -1,5 +1,6 @@
 # AdMe ── The World's First Privacy-First, Permission-Based Advertising Marketplace
 
+[![Release: v2.0.0](https://img.shields.io/badge/Release-v2.0.0-blue.svg?style=flat)](https://github.com/ricardojjulia/AdMe/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Framework: Next.js 16](https://img.shields.io/badge/Next.js-16.0.8-black.svg?style=flat&logo=nextdotjs)](https://nextjs.org/)
 [![Database: Supabase](https://img.shields.io/badge/Database-Supabase-blueviolet.svg?style=flat&logo=supabase)](https://supabase.com/)
@@ -54,6 +55,17 @@ Meta and TikTok monitor every click, scroll, and keystroke. AdMe stores **zero p
 *   **Campaign Builder**: Self-serve campaign wizard supporting targeting filters, formatting, and budgeting.
 *   **A/B Test Variations**: Built-in support to run headline and design variants to test effectiveness.
 *   **Real-time Analytics**: Live reporting of views, clicks, and CTR (Click-Through Rate) utilizing Supabase Realtime subscriptions.
+
+---
+
+## 🛡️ Architecture & Visual Design
+
+To understand the core mechanics, system topology, security boundaries, and data flow pipelines of the AdMe platform, refer to the visual **[ARCHITECTURE.md](file:///Users/rjulia/programs/AdMe/ARCHITECTURE.md)** guide. It features interactive Mermaid diagrams for:
+*   **System Architecture Map**: Frontend route guards, Edge layouts, and Supabase service blocks.
+*   **Ledger Balance RPC Flow**: RLS rules, and server-side balance updates using `SECURITY DEFINER` constraints.
+*   **GDPR Cascade Erasure**: Automatic account purges and PostgreSQL cascades on user deletion.
+*   **Sticky A/B Splits Pipeline**: Hashed user-variation mapping.
+*   **Cryptographic Viewport Heartbeats**: HMAC-signed dwelled tracking endpoint flows.
 
 ---
 
