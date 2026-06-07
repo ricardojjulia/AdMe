@@ -67,6 +67,7 @@ export function GeofenceAlert() {
 
     async function checkProximity() {
       if (!location) return;
+      console.log("[GeofenceAlert] Checking proximity. Location:", location, "SavedAds:", savedAds);
       if (savedAds.length === 0) {
         if (alerts.length > 0) {
           setAlerts([]);
@@ -80,21 +81,28 @@ export function GeofenceAlert() {
       if (hasSupabase) {
         try {
           const supabase = createClient();
-          const { data } = await supabase
+          const fetchPromise = supabase
             .from('ads')
             .select('*')
             .in('id', savedAds);
+            
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Supabase query timeout")), 500)
+          );
+
+          const { data } = await Promise.race([fetchPromise, timeoutPromise]) as any;
           if (data) {
-            adsDetails = data.map(ad => ({
+            adsDetails = data.map((ad: any) => ({
               id: ad.id,
               brandName: ad.advertiser_name,
               headline: ad.headline,
               lat: ad.latitude,
               lng: ad.longitude
             }));
+            console.log("[GeofenceAlert] Loaded ads from Supabase:", adsDetails);
           }
         } catch (e) {
-          console.error("Failed to query ads for geofencing", e);
+          console.warn("[GeofenceAlert] Supabase query failed or timed out, using fallback:", e);
         }
       }
 
@@ -111,10 +119,12 @@ export function GeofenceAlert() {
 
       // Calculate distances
       const activeAlerts: ActiveAlert[] = [];
+      console.log("[GeofenceAlert] Evaluating ads details:", adsDetails);
       
       adsDetails.forEach(ad => {
         if (ad.lat != null && ad.lng != null && !dismissedAds.includes(ad.id)) {
           const distance = calculateDistanceMiles(location.lat, location.lng, ad.lat, ad.lng);
+          console.log(`[GeofenceAlert] Ad: ${ad.brandName}, Distance: ${distance.toFixed(4)} miles`);
           // Trigger alert if within 0.25 miles (approx 1320 feet)
           if (distance <= 0.25) {
             // Check if user has a coupon redeemed for this brand
@@ -134,6 +144,7 @@ export function GeofenceAlert() {
         }
       });
 
+      console.log("[GeofenceAlert] Active alerts generated:", activeAlerts);
       setAlerts(activeAlerts);
     }
 

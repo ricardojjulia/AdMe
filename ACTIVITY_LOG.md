@@ -94,3 +94,17 @@
 - Installed `vitest` and `vite-tsconfig-paths` devDependencies, configured NPM test scripts, and created unit tests in [abTest.test.ts](file:///Users/rjulia/programs/AdMe/src/components/abTest.test.ts).
 - Verified tests pass successfully (`npm run test`) and Next.js builds cleanly (`npm run build`).
 - Committed and pushed all changes to GitHub.
+
+## [2026-06-07T09:10:00-04:00] User Request
+**User**: There are a lot of commits, changes, update to changelog and README as well as versioning up, that needs to be done, please do it, then commit, merge and push
+
+**Action**:
+- Fixed the geofencing proximity deal alert in E2E tests by ensuring static mock ads are prepended to the generated mock feed, enabling matching coordinates and mock IDs when simulating hotspot locations.
+- Fixed unauthorized client-side redirects during page hydration in [UserProvider](file:///Users/rjulia/programs/AdMe/src/lib/UserContext.tsx) by initializing `user`, `preferences`, and setting states synchronously from `localStorage`.
+- Corrected the `performABSplitTest` algorithm in [Feed.tsx](file:///Users/rjulia/programs/AdMe/src/components/Feed.tsx) to filter the original array instead of rearranging ungrouped ads, which prevents grouped ads from being sliced out of the feed and preserves sorting orders.
+- Fixed TypeScript compiler type errors in [GeofenceAlert.tsx](file:///Users/rjulia/programs/AdMe/src/components/GeofenceAlert.tsx) and [mock-data.ts](file:///Users/rjulia/programs/AdMe/src/lib/mock-data.ts) to ensure strict type compatibility and clean builds.
+- Refactored [adme.spec.ts](file:///Users/rjulia/programs/AdMe/tests/e2e/adme.spec.ts) to use reliable page reload navigation promises and precise ad article selectors, solving sidebar layout match collisions.
+- Bumped the application semver to `1.3.0` in [package.json](file:///Users/rjulia/programs/AdMe/package.json), matching the latest roadmap progression.
+- Documented all security, analytics, and testing changes in [CHANGELOG.md](file:///Users/rjulia/programs/AdMe/CHANGELOG.md) and added testing details to [README.md](file:///Users/rjulia/programs/AdMe/README.md).
+- Executed local build compiling Next.js statically (`npm run build`), unit tests (`npm run test`), and Playwright E2E browser tests (`npm run test:e2e`), passing 100% cleanly.
+

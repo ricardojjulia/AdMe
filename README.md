@@ -126,6 +126,19 @@ To compile the TypeScript project and generate static pages:
 npm run build
 ```
 
+### 4. Running Tests
+To run unit and integration tests (Vitest):
+```bash
+npm run test
+```
+
+To run the full Playwright E2E browser test suite:
+```bash
+npm run test:e2e
+```
+
+Refer to the [deployment_guide.md](file:///Users/rjulia/programs/AdMe/deployment_guide.md) for detailed instructions on production deployment and configuration.
+
 ---
 
 ## 📄 License

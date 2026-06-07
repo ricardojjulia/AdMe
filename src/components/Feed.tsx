@@ -14,24 +14,6 @@ interface FeedProps {
 }
 
 export function performABSplitTest(ads: Ad[], userId: string | null): Ad[] {
-  const groups = ads.reduce((acc, ad) => {
-    const cid = ad.campaignId;
-    if (!cid) {
-      acc['un-grouped'] = acc['un-grouped'] || [];
-      acc['un-grouped'].push(ad);
-    } else {
-      acc[cid] = acc[cid] || [];
-      acc[cid].push(ad);
-    }
-    return acc;
-  }, {} as Record<string, Ad[]>);
-
-  const selectedAds: Ad[] = [];
-  
-  if (groups['un-grouped']) {
-    selectedAds.push(...groups['un-grouped']);
-  }
-  
   let deviceId = userId;
   if (!deviceId && typeof window !== 'undefined') {
     deviceId = localStorage.getItem('adme_device_uid');
@@ -41,24 +23,35 @@ export function performABSplitTest(ads: Ad[], userId: string | null): Ad[] {
     }
   }
   if (!deviceId) deviceId = 'anon-default';
+
+  // Group all variations by campaign ID to select the winning variation for each campaign
+  const campaignWinners: Record<string, string> = {}; // campaignId -> winning ad id
+  const campaignGroups: Record<string, Ad[]> = {};
   
-  Object.keys(groups).forEach(key => {
-    if (key !== 'un-grouped') {
-      const variations = groups[key];
-      if (variations.length > 0) {
-        const str = `${deviceId}:${key}`;
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-          hash = (hash << 5) - hash + str.charCodeAt(i);
-          hash |= 0;
-        }
-        const index = Math.abs(hash) % variations.length;
-        selectedAds.push(variations[index]);
-      }
+  ads.forEach(ad => {
+    if (ad.campaignId) {
+      campaignGroups[ad.campaignId] = campaignGroups[ad.campaignId] || [];
+      campaignGroups[ad.campaignId].push(ad);
     }
   });
 
-  return selectedAds;
+  Object.keys(campaignGroups).forEach(cid => {
+    const variations = campaignGroups[cid];
+    const str = `${deviceId}:${cid}`;
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash << 5) - hash + str.charCodeAt(i);
+      hash |= 0;
+    }
+    const index = Math.abs(hash) % variations.length;
+    campaignWinners[cid] = variations[index].id;
+  });
+
+  // Filter the original ads array to keep un-grouped ads and only the winning variations
+  return ads.filter(ad => {
+    if (!ad.campaignId) return true;
+    return campaignWinners[ad.campaignId] === ad.id;
+  });
 }
 
 export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {

@@ -288,3 +288,32 @@
   text-align: right;
 }
 
+.abTestSummaryCard {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.abNeutral {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: hsl(var(--border) / 0.5);
+  color: hsl(var(--muted-foreground));
+}
+
+.abLeading {
+  background: rgba(99, 102, 241, 0.06);
+  border-color: rgba(99, 102, 241, 0.25);
+  color: rgb(224, 231, 255);
+}
+
+.abWinner {
+  background: rgba(16, 185, 129, 0.06);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: rgb(209, 250, 229);
+}
+

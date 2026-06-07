@@ -20,8 +20,102 @@ const CTA_LABELS = ["Shop Now", "Learn More", "Sign Up", "Book Now", "Watch Trai
 const COLORS = ["#40c9ff", "#f4a261", "#9f7aea", "#34d399", "#f87171"];
 const CATEGORIES = ["Tech & SaaS", "Local Eateries", "Faith & Books", "Auto under $40k", "Veteran-owned", "Home & Garden", "Wellness & Health", "Gaming", "Finance"];
 
+const STATIC_MOCK_ADS: Ad[] = [
+  {
+    id: '10101010-1010-1010-1010-101010101010',
+    category: 'Veteran-owned',
+    formatType: 'native',
+    advertiser: {
+      name: 'Valor Brews',
+      avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=ValorBrews'
+    },
+    content: {
+      headline: 'Veteran-Owned Craft Coffee',
+      text: 'Get fresh, locally-roasted craft coffee delivered right to your door. Veterans get 15% off.',
+      mediaUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&q=80&w=800',
+      mediaType: 'image',
+      primaryColor: '#8B4513'
+    },
+    cta: {
+      label: 'Shop Now',
+      url: 'https://valor.brew'
+    },
+    metrics: { likes: 1240, shares: 320 },
+    location: { lat: 34.0195, lng: -118.4912 }
+  },
+  {
+    id: '30303030-3030-3030-3030-303030303030',
+    category: 'Local Eateries',
+    formatType: 'native',
+    advertiser: {
+      name: 'The Green Kitchen',
+      avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=GreenKitchen'
+    },
+    content: {
+      headline: 'Organic bowls $5 off',
+      text: 'Clean eating made simple. Try our new avocado and quinoa protein bowl with organic dressing.',
+      mediaUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=800',
+      mediaType: 'image',
+      primaryColor: '#2e7d32'
+    },
+    cta: {
+      label: 'Order Now',
+      url: 'https://greenkitchen.menu'
+    },
+    metrics: { likes: 980, shares: 145 },
+    location: { lat: 34.0122, lng: -118.4922 }
+  },
+  {
+    id: '40404040-4040-4040-4040-404040404040',
+    category: 'Auto under $40k',
+    formatType: 'native',
+    advertiser: {
+      name: 'Nomad Motors',
+      avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=NomadMotors'
+    },
+    content: {
+      headline: 'EVs starting at $34,900',
+      text: 'Go electric without breaking the bank. The new Nomad EV features 300mi range and autopilot.',
+      mediaUrl: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&q=80&w=800',
+      mediaType: 'image',
+      primaryColor: '#1a73e8'
+    },
+    cta: {
+      label: 'Explore',
+      url: 'https://nomadmotors.ev'
+    },
+    metrics: { likes: 3420, shares: 890 },
+    location: { lat: 34.0522, lng: -118.2437 }
+  },
+  {
+    id: '20202020-2020-2020-2020-202020202020',
+    category: 'Faith & Books',
+    formatType: 'native',
+    advertiser: {
+      name: 'Beacon Publishing',
+      avatar: 'https://api.dicebear.com/7.x/shapes/svg?seed=BeaconPublishing'
+    },
+    content: {
+      headline: 'Discover New Hope',
+      text: 'A collection of stories about resilience, hope, and community. Get the bestseller softcover today.',
+      mediaUrl: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=800',
+      mediaType: 'image',
+      primaryColor: '#673ab7'
+    },
+    cta: {
+      label: 'Buy Book',
+      url: 'https://beaconpublishing.shop'
+    },
+    metrics: { likes: 450, shares: 98 },
+    location: { lat: 37.7749, lng: -122.4194 }
+  }
+];
+
 export function generateMockAds(count: number = 10, userLocation?: { lat: number; lng: number }): Ad[] {
-    return Array.from({ length: count }).map((_, i) => {
+    const staticAds = STATIC_MOCK_ADS.map(ad => ({ ...ad }));
+    const randomCount = Math.max(0, count - staticAds.length);
+
+    const randomAds = Array.from({ length: randomCount }).map((_, i) => {
         const template = CONTENT_TEMPLATES[Math.floor(Math.random() * CONTENT_TEMPLATES.length)];
         const advertiser = ADVERTISERS[Math.floor(Math.random() * ADVERTISERS.length)];
         const ctaUrl = advertiser.url ?? "https://adme.app";
@@ -44,7 +138,7 @@ export function generateMockAds(count: number = 10, userLocation?: { lat: number
         return {
             id: `ad-${Date.now()}-${i}`,
             category,
-            formatType,
+            formatType: formatType as 'social' | 'native' | 'carousel',
             advertiser: {
                 name: advertiser.name,
                 avatar: advertiser.avatar,
@@ -58,7 +152,7 @@ export function generateMockAds(count: number = 10, userLocation?: { lat: number
                     `https://picsum.photos/seed/${Math.random()}/800/1000`,
                     `https://picsum.photos/seed/${Math.random()}/800/1000`
                 ] : undefined,
-                mediaType: 'image',
+                mediaType: 'image' as 'image' | 'video',
                 primaryColor: COLORS[Math.floor(Math.random() * COLORS.length)],
             },
             cta: {
@@ -70,6 +164,8 @@ export function generateMockAds(count: number = 10, userLocation?: { lat: number
                 shares: Math.floor(Math.random() * 1200) + 40,
             },
             location,
-        };
+        } as Ad;
     });
+
+    return [...staticAds, ...randomAds];
 }

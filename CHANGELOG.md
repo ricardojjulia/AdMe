@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-06-07
+
+### Added
+- **Hardened Row-Level Security (RLS)**: Enforced strict Supabase policies on engagements, preferences, reports, and ad records.
+- **Service Role RPC for Rewards**: Secured rewards balance updates using a database function restricted to service role execution, paired with an database trigger protecting balance updates.
+- **Cascading GDPR Footprint Erasure**: Created a database trigger on user deletion that automatically cascades to clear Auth metadata, engagements, leads, reports, and preferences.
+- **Cryptographic Heartbeat Dwell-Time Tracking**: Implemented secure HMAC-signed dwell-time heartbeats (`/api/engagement/init` and `/api/engagement/heartbeat`) to prevent analytics spoofing.
+- **Visual Z-Test Campaign Comparison**: Built a side-by-side significance card in the Ad Studio using normal CDF calculations to evaluate A/B test campaign performance.
+- **Consistent Split Testing**: Created deterministic user/device ID hashing to ensure consistent variation presentation in the feed.
+- **E2E Playwright Test Suite**: Created robust end-to-end browser tests verifying user flow, simulated location proximity deal triggers, and GDPR erasure.
+- **Deployment Architecture Guide**: Added `deployment_guide.md` covering staging setup, database schema migration, and build verification.
+
+### Fixed
+- Fixed asynchronous loading state mismatches in `UserProvider` to avoid unauthorized routing redirects during initial hydration.
+- Corrected A/B testing array order preservation to prevent filtered split test variations from being sliced out of the feed.
+
 ## [1.2.0] - 2026-06-06
 
 ### Added

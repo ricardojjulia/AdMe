@@ -63,22 +63,37 @@ export function useEngagementAnalytics(adId: string) {
     };
 
     useEffect(() => {
+        let heartbeatInterval: any = null;
+        let activeToken: string | null = null;
         const isIntersectingRef = { current: false };
         const startTimeRef = { current: null as number | null };
 
-        const handleViewExit = () => {
+        const handleViewExit = async () => {
             isIntersectingRef.current = false;
-            if (startTimeRef.current !== null) {
+            if (heartbeatInterval) {
+                clearInterval(heartbeatInterval);
+                heartbeatInterval = null;
+            }
+
+            if (startTimeRef.current !== null && activeToken) {
                 const durationMs = Date.now() - startTimeRef.current;
                 const durationSec = parseFloat((durationMs / 1000).toFixed(1));
                 startTimeRef.current = null;
                 
                 console.log(`[Analytics] Ad ${adId} viewed for ${durationSec} seconds on exit.`);
                 
-                // Only log if they viewed for at least 0.5s to avoid scroll noise
                 if (durationSec >= 0.5) {
-                    logAction('view', 0, undefined, durationSec);
+                    try {
+                        await fetch('/api/engagement/heartbeat', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ token: activeToken, duration: durationSec })
+                        });
+                    } catch (e) {
+                        console.error("Failed to send final exit heartbeat:", e);
+                    }
                 }
+                activeToken = null;
             }
         };
 
@@ -88,7 +103,35 @@ export function useEngagementAnalytics(adId: string) {
                     isIntersectingRef.current = true;
                     startTimeRef.current = Date.now();
                     
-                    // Trigger the 2-second points reward timeout if not already viewed in this session/device
+                    const userId = user?.id || 'anonymous_device';
+                    fetch('/api/engagement/init', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ adId, userId })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.token && isIntersectingRef.current) {
+                            activeToken = data.token;
+                            let elapsed = 0;
+                            heartbeatInterval = setInterval(async () => {
+                                if (isIntersectingRef.current && activeToken) {
+                                    elapsed += 3;
+                                    try {
+                                        await fetch('/api/engagement/heartbeat', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ token: activeToken, duration: elapsed })
+                                        });
+                                    } catch (err) {
+                                        console.error("Failed to transmit heartbeat:", err);
+                                    }
+                                }
+                            }, 3000);
+                        }
+                    })
+                    .catch(err => console.error("Init engagement failed:", err));
+
                     const currentStart = startTimeRef.current;
                     setTimeout(() => {
                         if (
@@ -107,7 +150,6 @@ export function useEngagementAnalytics(adId: string) {
                         }
                     }, 2000);
                 } else {
-                    // Exiting viewport
                     handleViewExit();
                 }
             },

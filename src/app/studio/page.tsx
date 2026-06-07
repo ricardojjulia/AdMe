@@ -7,6 +7,36 @@ import styles from "./page.module.css";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+function normalCDF(x: number): number {
+  const t = 1 / (1 + 0.2316419 * Math.abs(x));
+  const d = 0.3989423 * Math.exp(-x * x / 2);
+  const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+  return x >= 0 ? 1 - p : p;
+}
+
+function calculateZTest(impressionsA: number, clicksA: number, impressionsB: number, clicksB: number) {
+  if (impressionsA === 0 || impressionsB === 0) return { pValue: 1, confidence: 0, isSignificant: false };
+  
+  const pA = clicksA / impressionsA;
+  const pB = clicksB / impressionsB;
+  const pCombined = (clicksA + clicksB) / (impressionsA + impressionsB);
+  
+  if (pCombined === 0 || pCombined === 1) return { pValue: 1, confidence: 0, isSignificant: false };
+  
+  const se = Math.sqrt(pCombined * (1 - pCombined) * (1 / impressionsA + 1 / impressionsB));
+  if (se === 0) return { pValue: 1, confidence: 0, isSignificant: false };
+  
+  const z = (pA - pB) / se;
+  const pValue = 2 * (1 - normalCDF(Math.abs(z)));
+  const confidence = Math.round((1 - pValue) * 100);
+  
+  return {
+    pValue,
+    confidence: Math.max(0, Math.min(99, confidence)),
+    isSignificant: confidence >= 95
+  };
+}
+
 export default function StudioDashboard() {
   const { user, switchRole } = useUser();
   const { addToast } = useToast();
@@ -493,6 +523,45 @@ export default function StudioDashboard() {
               ) : (
                 sortedGroups.map(([cid, adsGroup]) => {
                   const ads = adsGroup as any[];
+                  
+                  // Compute A/B statistics if split test group
+                  let abTestCard = null;
+                  if (ads.length > 1) {
+                    const adA = ads.find(a => a.variationName === 'A') || ads[0];
+                    const adB = ads.find(a => a.variationName === 'B') || ads[1];
+                    const zResult = calculateZTest(adA.impressions, adA.clicks, adB.impressions, adB.clicks);
+                    
+                    const ctrDiff = (adA.ctr - adB.ctr).toFixed(1);
+                    const isALeading = adA.ctr > adB.ctr;
+                    const isBLeading = adB.ctr > adA.ctr;
+                    
+                    let statusText = "Equal performance. Collecting more data...";
+                    let cardClass = styles.abNeutral;
+                    if (zResult.isSignificant) {
+                      statusText = `🏆 Variation ${isALeading ? 'A' : 'B'} is a statistically significant winner!`;
+                      cardClass = styles.abWinner;
+                    } else if (isALeading || isBLeading) {
+                      statusText = `📈 Variation ${isALeading ? 'A' : 'B'} is leading by ${Math.abs(Number(ctrDiff))}% (${zResult.confidence}% confidence)`;
+                      cardClass = styles.abLeading;
+                    }
+                    
+                    abTestCard = (
+                      <div className={`${styles.abTestSummaryCard} ${cardClass}`} style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span>📊 A/B Statistics Report:</span>
+                          <span style={{ fontSize: '0.8rem', padding: '0.1rem 0.4rem', borderRadius: '4px', background: 'hsl(var(--background)/0.3)' }}>
+                            {zResult.isSignificant ? 'Significant Result' : 'Tentative Trend'}
+                          </span>
+                        </div>
+                        <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.85rem', lineHeight: '1.4' }}>{statusText}</p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.5rem', fontSize: '0.8rem', opacity: 0.9 }}>
+                          <div>Variation A CTR: <strong>{adA.ctr}%</strong> ({adA.clicks}/{adA.impressions})</div>
+                          <div>Variation B CTR: <strong>{adB.ctr}%</strong> ({adB.clicks}/{adB.impressions})</div>
+                        </div>
+                      </div>
+                    );
+                  }
+
                   return (
                     <div key={cid} style={{ padding: '1.5rem', borderBottom: '1px solid hsl(var(--border) / 0.5)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
@@ -501,6 +570,8 @@ export default function StudioDashboard() {
                         </span>
                         {ads[0].isBoosted && <span style={{ background: 'hsl(var(--primary)/0.2)', color: 'hsl(var(--primary))', padding: '0.1rem 0.4rem', borderRadius: '0.25rem', fontSize: '0.75rem', fontWeight: 'bold' }}>⚡ Boosted</span>}
                       </div>
+
+                      {abTestCard}
 
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         {ads.map(ad => {

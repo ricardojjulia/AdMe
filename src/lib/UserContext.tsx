@@ -112,12 +112,44 @@ export const DEMO_PERSONAS = [
 ];
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window !== 'undefined') {
+      const demoPersonaId = localStorage.getItem('adme_demo_persona_id');
+      if (demoPersonaId) {
+        const persona = DEMO_PERSONAS.find(p => p.id === demoPersonaId);
+        if (persona) {
+          return {
+            id: persona.id,
+            name: persona.name,
+            avatar: persona.avatar,
+            rewardsBalance: persona.rewardsBalance,
+            role: persona.role,
+            adCreditsBalance: persona.adCreditsBalance,
+            currentStreak: persona.currentStreak,
+            lastActiveDate: persona.lastActiveDate,
+            subscriptionTier: persona.subscriptionTier || 'free',
+            subscriptionRenewal: null
+          };
+        }
+      }
+    }
+    return null;
+  });
+
   const [coupons, setCoupons] = useState<any[]>([]);
 
-  const [preferences, setPreferences] = useState<string[]>([
-    "Tech & SaaS", "Local Eateries", "Faith & Books", "Veteran-owned"
-  ]);
+  const [preferences, setPreferences] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const demoPersonaId = localStorage.getItem('adme_demo_persona_id');
+      if (demoPersonaId) {
+        const persona = DEMO_PERSONAS.find(p => p.id === demoPersonaId);
+        if (persona) {
+          return persona.preferences;
+        }
+      }
+    }
+    return ["Tech & SaaS", "Local Eateries", "Faith & Books", "Veteran-owned"];
+  });
 
   const [savedAds, setSavedAds] = useState<string[]>([]);
   const [reportedAds, setReportedAds] = useState<string[]>([]);
@@ -125,9 +157,33 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isSupabaseEnabled, setIsSupabaseEnabled] = useState(false);
 
-  const [adFrequency, setAdFrequency] = useState<'low' | 'balanced' | 'high'>('balanced');
-  const [deliveryChannels, setDeliveryChannels] = useState<{ feed: boolean; geofenced: boolean; push: boolean }>({ feed: true, geofenced: true, push: true });
-  const [quietHours, setQuietHours] = useState<{ enabled: boolean; start: string; end: string }>({ enabled: false, start: "22:00", end: "08:00" });
+  const [adFrequency, setAdFrequency] = useState<'low' | 'balanced' | 'high'>(() => {
+    if (typeof window !== 'undefined') {
+      const savedFrequency = localStorage.getItem("adme_ad_frequency") as 'low' | 'balanced' | 'high' | null;
+      if (savedFrequency) return savedFrequency;
+    }
+    return 'balanced';
+  });
+
+  const [deliveryChannels, setDeliveryChannels] = useState<{ feed: boolean; geofenced: boolean; push: boolean }>(() => {
+    if (typeof window !== 'undefined') {
+      const savedChannels = localStorage.getItem("adme_delivery_channels");
+      if (savedChannels) {
+        try { return JSON.parse(savedChannels); } catch (e) {}
+      }
+    }
+    return { feed: true, geofenced: true, push: true };
+  });
+
+  const [quietHours, setQuietHours] = useState<{ enabled: boolean; start: string; end: string }>(() => {
+    if (typeof window !== 'undefined') {
+      const savedQuietHours = localStorage.getItem("adme_quiet_hours");
+      if (savedQuietHours) {
+        try { return JSON.parse(savedQuietHours); } catch (e) {}
+      }
+    }
+    return { enabled: false, start: "22:00", end: "08:00" };
+  });
 
   useEffect(() => {
     const loadData = async () => {
