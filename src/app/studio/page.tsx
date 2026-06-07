@@ -25,8 +25,14 @@ export default function StudioDashboard() {
   const currentPlan = user?.subscriptionTier || 'free';
 
   useEffect(() => {
+    if (user && user.role !== 'business') {
+      router.push('/');
+    }
+  }, [user, router]);
+
+  useEffect(() => {
     async function loadData() {
-      if (!user) return;
+      if (!user || user.role !== 'business') return;
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
       

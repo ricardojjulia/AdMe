@@ -13,7 +13,7 @@ interface FeedProps {
   activeTab?: string;
 }
 
-function performABSplitTest(ads: Ad[]): Ad[] {
+export function performABSplitTest(ads: Ad[], userId: string | null): Ad[] {
   const groups = ads.reduce((acc, ad) => {
     const cid = ad.campaignId;
     if (!cid) {
@@ -32,11 +32,29 @@ function performABSplitTest(ads: Ad[]): Ad[] {
     selectedAds.push(...groups['un-grouped']);
   }
   
+  let deviceId = userId;
+  if (!deviceId && typeof window !== 'undefined') {
+    deviceId = localStorage.getItem('adme_device_uid');
+    if (!deviceId) {
+      deviceId = crypto.randomUUID();
+      localStorage.setItem('adme_device_uid', deviceId);
+    }
+  }
+  if (!deviceId) deviceId = 'anon-default';
+  
   Object.keys(groups).forEach(key => {
     if (key !== 'un-grouped') {
       const variations = groups[key];
-      const selected = variations[Math.floor(Math.random() * variations.length)];
-      selectedAds.push(selected);
+      if (variations.length > 0) {
+        const str = `${deviceId}:${key}`;
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+          hash = (hash << 5) - hash + str.charCodeAt(i);
+          hash |= 0;
+        }
+        const index = Math.abs(hash) % variations.length;
+        selectedAds.push(variations[index]);
+      }
     }
   });
 
@@ -46,7 +64,7 @@ function performABSplitTest(ads: Ad[]): Ad[] {
 export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
-  const { preferences, reportedAds, skippedAds, location, adFrequency, deliveryChannels } = useUser();
+  const { user, preferences, reportedAds, skippedAds, location, adFrequency, deliveryChannels } = useUser();
 
   useEffect(() => {
     setLoading(true);
@@ -114,7 +132,7 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
             });
 
             // Filter out duplicate variations via split testing
-            mappedAds = performABSplitTest(mappedAds);
+            mappedAds = performABSplitTest(mappedAds, user?.id || null);
 
             setAds(mappedAds);
             setLoading(false);
@@ -174,7 +192,7 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
       });
 
       // Filter out duplicate variations via split testing
-      filtered = performABSplitTest(filtered);
+      filtered = performABSplitTest(filtered, user?.id || null);
       
       if (searchQuery.trim() !== '') {
         const q = searchQuery.toLowerCase();

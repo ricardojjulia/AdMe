@@ -52,7 +52,7 @@ export default function ProfilePage() {
 
   const handleForgetMe = async () => {
     if (!user) return;
-    if (!confirm("Are you sure you want to delete your anonymous profile footprint? This will clear all preferences, coupons, and reset your local settings.")) {
+    if (!confirm("Are you sure you want to delete your anonymous profile footprint? This will permanently erase all your data, preferences, coupons, history, and reset your account.")) {
       return;
     }
 
@@ -63,12 +63,8 @@ export default function ProfilePage() {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
-          await supabase.from('user_preferences').delete().eq('user_id', session.user.id);
-          await supabase.from('users').update({
-            rewards_balance: 0,
-            current_streak: 0,
-            last_active_date: null
-          }).eq('id', session.user.id);
+          const { error } = await supabase.from('users').delete().eq('id', session.user.id);
+          if (error) throw error;
           await supabase.auth.signOut();
         }
       } catch (e) {
@@ -77,7 +73,7 @@ export default function ProfilePage() {
     }
 
     localStorage.clear();
-    addToast("Data purged! Returning to default state.", "success");
+    addToast("All data permanently purged! Returning to landing page.", "success");
     
     setTimeout(() => {
       window.location.href = "/";

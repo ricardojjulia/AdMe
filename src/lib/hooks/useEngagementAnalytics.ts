@@ -88,17 +88,22 @@ export function useEngagementAnalytics(adId: string) {
                     isIntersectingRef.current = true;
                     startTimeRef.current = Date.now();
                     
-                    // Trigger the 2-second points reward timeout if not already viewed in this session
+                    // Trigger the 2-second points reward timeout if not already viewed in this session/device
                     const currentStart = startTimeRef.current;
                     setTimeout(() => {
                         if (
                             isIntersectingRef.current && 
-                            startTimeRef.current === currentStart && 
-                            !hasViewedRef.current
+                            startTimeRef.current === currentStart
                         ) {
-                            hasViewedRef.current = true;
-                            console.log(`[Analytics] Ad ${adId} viewed for 2+ continuous seconds. Awarding points.`);
-                            logAction('view_reward', 1);
+                            const rewardKey = `adme_ad_view_rewarded_${adId}`;
+                            const alreadyRewarded = typeof window !== 'undefined' && !!localStorage.getItem(rewardKey);
+                            if (!alreadyRewarded) {
+                                if (typeof window !== 'undefined') {
+                                    localStorage.setItem(rewardKey, 'true');
+                                }
+                                console.log(`[Analytics] Ad ${adId} viewed for 2+ continuous seconds. Awarding points.`);
+                                logAction('view_reward', 1);
+                            }
                         }
                     }, 2000);
                 } else {

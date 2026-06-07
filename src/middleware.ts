@@ -31,20 +31,40 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Define protected routes
-  const protectedRoutes = ['/rewards', '/studio']
-  const isProtectedRoute = protectedRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
+  const role = user?.user_metadata?.account_type || 'consumer';
 
-  if (isProtectedRoute && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+  // Protect /rewards (only for consumers)
+  if (request.nextUrl.pathname.startsWith('/rewards')) {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
+    if (role !== 'consumer') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/studio'
+      return NextResponse.redirect(url)
+    }
   }
 
-  // Redirect to feed if logged in and trying to access login page
+  // Protect /studio (only for business accounts)
+  if (request.nextUrl.pathname.startsWith('/studio')) {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
+    if (role !== 'business') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/'
+      return NextResponse.redirect(url)
+    }
+  }
+
+  // Redirect if logged in and trying to access login page
   if (user && request.nextUrl.pathname === '/login') {
     const url = request.nextUrl.clone()
-    url.pathname = '/'
+    url.pathname = role === 'business' ? '/studio' : '/'
     return NextResponse.redirect(url)
   }
 

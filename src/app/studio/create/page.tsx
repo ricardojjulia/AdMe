@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@/lib/UserContext";
@@ -16,6 +16,12 @@ export default function CreateAdPage() {
   const { user } = useUser();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user && user.role !== 'business') {
+      router.push('/');
+    }
+  }, [user, router]);
   const [error, setError] = useState("");
   const [isABTest, setIsABTest] = useState(false);
 

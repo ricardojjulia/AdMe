@@ -261,17 +261,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const addReward = async (amount: number, actionName: string = "Earned Reward") => {
     setUser((prev) => prev ? { ...prev, rewardsBalance: prev.rewardsBalance + amount } : prev);
     
-    if (user) {
-      const supabase = createClient();
-      await supabase.from('users')
-        .update({ rewards_balance: user.rewardsBalance + amount })
-        .eq('id', user.id);
-        
-      await supabase.from('reward_history').insert({
-        user_id: user.id,
-        action: actionName,
-        points: amount
-      });
+    if (isSupabaseEnabled && user) {
+      try {
+        const supabase = createClient();
+        const { error } = await supabase.rpc('add_reward_points', {
+          points: amount,
+          action_name: actionName
+        });
+        if (error) throw error;
+      } catch (e) {
+        console.error("Failed to add reward in Supabase via RPC:", e);
+      }
     }
   };
 
@@ -447,11 +447,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const cleanName = name.replace(/[^a-zA-Z0-9]/g, "").substring(0, 6).toUpperCase();
     const randomHex = Math.random().toString(16).substring(2, 6).toUpperCase();
     const generatedCode = `${cleanName}-${randomHex}`;
+    const couponId = crypto.randomUUID();
 
     setUser(prev => prev ? { ...prev, rewardsBalance: Math.max(0, prev.rewardsBalance - cost) } : prev);
 
     const newCoupon = {
-      id: crypto.randomUUID(),
+      id: couponId,
       user_id: user?.id || '00000000-0000-0000-0000-000000000001',
       code: generatedCode,
       name: name,
@@ -462,28 +463,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     setCoupons(prev => [newCoupon, ...prev]);
 
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here' && user) {
+    if (isSupabaseEnabled && user) {
       try {
         const supabase = createClient();
-        await supabase.from('users').update({
-          rewards_balance: Math.max(0, user.rewardsBalance - cost)
-        }).eq('id', user.id);
-
-        await supabase.from('reward_history').insert({
-          user_id: user.id,
-          action: `Redeemed ${name}`,
-          points: -cost
+        const { data, error } = await supabase.rpc('redeem_perk_coupon', {
+          perk_name: name,
+          cost_points: cost,
+          generated_code: generatedCode,
+          coupon_id: couponId
         });
-
-        await supabase.from('coupons').insert({
-          id: newCoupon.id,
-          user_id: user.id,
-          code: generatedCode,
-          name: name,
-          cost_points: cost
-        });
+        if (error) throw error;
+        return data || generatedCode;
       } catch (e) {
-        console.error("Failed to redeem perk in Supabase", e);
+        console.error("Failed to redeem perk coupon in Supabase via RPC:", e);
       }
     }
 
@@ -512,12 +504,32 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const selectPersona = async (id: string | null) => {
     if (!id) {
       localStorage.removeItem('adme_demo_persona_id');
-      if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here') {
+      if (isSupabaseEnabled) {
         const supabase = createClient();
         await supabase.auth.signOut();
       }
     } else {
       localStorage.setItem('adme_demo_persona_id', id);
+      if (isSupabaseEnabled) {
+        try {
+          const supabase = createClient();
+          let email = '';
+          if (id === 'a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0e1') email = 'sarah@adme.demo';
+          else if (id === 'a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0e2') email = 'marcus@adme.demo';
+          else if (id === 'a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0e3') email = 'elena@adme.demo';
+          else if (id === '00000000-0000-0000-0000-000000000001') email = 'valor@adme.demo';
+          else if (id === 'a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0f5') email = 'workstation@adme.demo';
+          
+          if (email) {
+            await supabase.auth.signInWithPassword({
+              email,
+              password: 'password123'
+            });
+          }
+        } catch (e) {
+          console.error("Failed to authenticate demo persona on Supabase:", e);
+        }
+      }
     }
     window.location.reload();
   };
