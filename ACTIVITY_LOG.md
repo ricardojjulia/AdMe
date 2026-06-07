@@ -79,3 +79,18 @@
 **Action**:
 - Updated [CHANGELOG.md](file:///Users/rjulia/programs/AdMe/CHANGELOG.md) to document the comprehensive set of Phase 9 (Value-Exchange Interaction Units), Phase 10 (Ad Studio Audience Behavior Simulator), and Phase 11 (Privacy Ledger & Consent Settings) implementations under version `1.2.0`.
 - Staged, committed, and pushed changes to GitHub.
+
+## [2026-06-07T08:31:44-04:00] User Request
+**User**: do all of the actionabe remediation steps, take a software factory approach
+
+**Action**:
+- Created database migration [20260607160000_hardened_security.sql](file:///Users/rjulia/programs/AdMe/supabase/migrations/20260607160000_hardened_security.sql) containing RLS policies for all tables, RPC ledger handlers `add_reward_points` and `redeem_perk_coupon`, restriction triggers on balance columns, cascade deletion triggers for auth user cleanup, and seeds for demo auth users.
+- Updated [middleware.ts](file:///Users/rjulia/programs/AdMe/src/middleware.ts) to enforce route-level authorization based on `account_type` metadata.
+- Updated [UserContext.tsx](file:///Users/rjulia/programs/AdMe/src/lib/UserContext.tsx) to sign in demo personas using auth sessions and invoke secure RPC functions for rewards ledger adjustments.
+- Added client-side defense-in-depth role checks in [studio/page.tsx](file:///Users/rjulia/programs/AdMe/src/app/studio/page.tsx) and [studio/create/page.tsx](file:///Users/rjulia/programs/AdMe/src/app/studio/create/page.tsx).
+- Refactored `handleForgetMe` in [profile/page.tsx](file:///Users/rjulia/programs/AdMe/src/app/profile/page.tsx) to trigger complete cascade deletes by executing a single database deletion.
+- Implemented consistent user/device ID hashing in [Feed.tsx](file:///Users/rjulia/programs/AdMe/src/components/Feed.tsx) for sticky A/B test splits.
+- Prevented ad scroll farming in [useEngagementAnalytics.ts](file:///Users/rjulia/programs/AdMe/src/lib/hooks/useEngagementAnalytics.ts) using persistent `localStorage` rewarded view indicators.
+- Installed `vitest` and `vite-tsconfig-paths` devDependencies, configured NPM test scripts, and created unit tests in [abTest.test.ts](file:///Users/rjulia/programs/AdMe/src/components/abTest.test.ts).
+- Verified tests pass successfully (`npm run test`) and Next.js builds cleanly (`npm run build`).
+- Committed and pushed all changes to GitHub.
