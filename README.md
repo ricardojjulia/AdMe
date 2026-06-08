@@ -11,6 +11,17 @@ AdMe is a revolutionary discovery platform built to fix digital advertising for 
 
 ---
 
+## 🌐 Live Demo Environment
+
+You can try the fully deployed production application immediately in the cloud:
+
+*   **Production Application**: [https://adme-psi.vercel.app](https://adme-psi.vercel.app)
+*   **Database & API Backend**: Powered by a hosted [Supabase](https://supabase.com) PostgreSQL database instance.
+
+*Note: The demo environments are configured with preloaded demo personas (Sarah the Developer, Marcus the Local Foodie, Elena the New Consumer, and Valor Brews Business Owner) accessible directly via the Persona switcher in the interface header.*
+
+---
+
 ## 🎯 The Core Problems We Solve
 
 ### 1. Ad Relevance Without Surveillance (Consumers)
@@ -100,7 +111,7 @@ The project follows a standard Next.js App Router hierarchy backed by Supabase:
 │   │   ├── UserContext.tsx  # Global state provider (consumer vs. business roles)
 │   │   └── ToastContext.tsx # Notification alerts system
 │   ├── types/               # TypeScript interface declarations
-│   └── middleware.ts        # Next.js session validation and route guards
+│   └── proxy.ts             # Next.js session validation and route guards (formerly middleware.ts)
 ```
 
 ---
