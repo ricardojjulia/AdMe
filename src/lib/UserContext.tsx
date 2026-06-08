@@ -38,7 +38,7 @@ interface UserContextType {
   coupons: any[];
   redeemPerk: (name: string, cost: number) => Promise<string>;
   setLocation: (loc: { lat: number; lng: number } | null) => void;
-  selectPersona: (id: string | null) => Promise<void>;
+  selectPersona: (id: string | null, redirectPath?: string) => Promise<void>;
   adFrequency: 'low' | 'balanced' | 'high';
   deliveryChannels: { feed: boolean; geofenced: boolean; push: boolean };
   quietHours: { enabled: boolean; start: string; end: string };
@@ -557,7 +557,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const selectPersona = async (id: string | null) => {
+  const selectPersona = async (id: string | null, redirectPath?: string) => {
     if (!id) {
       localStorage.removeItem('adme_demo_persona_id');
       if (isSupabaseEnabled) {
@@ -587,7 +587,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
       }
     }
-    window.location.reload();
+    if (redirectPath) {
+      window.location.href = redirectPath;
+    } else {
+      window.location.reload();
+    }
   };
 
   return (

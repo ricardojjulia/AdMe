@@ -6,6 +6,8 @@ import { useToast } from "@/lib/ToastContext";
 import styles from "./page.module.css";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { StudioAnalyticsCharts } from "@/components/StudioAnalyticsCharts";
+import { AuctionSimulator } from "@/components/AuctionSimulator";
 
 function normalCDF(x: number): number {
   const t = 1 / (1 + 0.2316419 * Math.abs(x));
@@ -50,6 +52,7 @@ export default function StudioDashboard() {
   const [campaignsList, setCampaignsList] = useState<any[]>([]);
   const [engagementsList, setEngagementsList] = useState<any[]>([]);
   const [simulatingId, setSimulatingId] = useState<string | null>(null);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
 
   const adCredits = user?.adCreditsBalance || 0;
   const currentPlan = user?.subscriptionTier || 'free';
@@ -120,7 +123,10 @@ export default function StudioDashboard() {
             campaign_id: "campaign-1",
             variation_name: "A",
             is_boosted: true,
-            created_at: new Date(Date.now() - 86400000 * 3).toISOString()
+            created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+            daily_budget: 1000,
+            credits_spent_today: 750,
+            max_cpc_bid: 20
           },
           {
             id: "campaign-1-var-b",
@@ -140,7 +146,10 @@ export default function StudioDashboard() {
             campaign_id: "campaign-1",
             variation_name: "B",
             is_boosted: true,
-            created_at: new Date(Date.now() - 86400000 * 3).toISOString()
+            created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+            daily_budget: 1000,
+            credits_spent_today: 950,
+            max_cpc_bid: 25
           },
           {
             id: "campaign-2",
@@ -160,7 +169,10 @@ export default function StudioDashboard() {
             campaign_id: "campaign-2",
             variation_name: "A",
             is_boosted: false,
-            created_at: new Date(Date.now() - 86400000 * 7).toISOString()
+            created_at: new Date(Date.now() - 86400000 * 7).toISOString(),
+            daily_budget: 1500,
+            credits_spent_today: 250,
+            max_cpc_bid: 15
           }
         ];
 
@@ -303,12 +315,33 @@ export default function StudioDashboard() {
         attentionBreakdown,
         campaignId: ad.campaign_id,
         variationName: ad.variation_name,
-        isBoosted: ad.is_boosted
+        isBoosted: ad.is_boosted,
+        dailyBudget: ad.daily_budget ?? 1000,
+        creditsSpentToday: ad.credits_spent_today ?? 0,
+        maxCpcBid: ad.max_cpc_bid ?? 15,
+        category: ad.category
       };
     });
 
     setActiveAds(mappedAds);
   }, [campaignsList, engagementsList]);
+
+  const selectedCampaign = activeAds.find(ad => ad.campaignId === selectedCampaignId || ad.id === selectedCampaignId);
+
+  const handleBidUpdate = (newBid: number) => {
+    setActiveAds(prev => prev.map(ad => {
+      if (ad.campaignId === selectedCampaignId || ad.id === selectedCampaignId) {
+        return { ...ad, maxCpcBid: newBid };
+      }
+      return ad;
+    }));
+    setCampaignsList(prev => prev.map(c => {
+      if (c.campaign_id === selectedCampaignId || c.id === selectedCampaignId) {
+        return { ...c, max_cpc_bid: newBid };
+      }
+      return c;
+    }));
+  };
 
   const handleExport = () => {
     setIsExporting(true);
@@ -506,6 +539,14 @@ export default function StudioDashboard() {
         </button>
       </div>
 
+      {!loading && activeAds.length > 0 && (
+        <StudioAnalyticsCharts 
+          campaigns={activeAds} 
+          engagements={engagementsList} 
+          selectedCampaignId={selectedCampaignId} 
+        />
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem', marginTop: '1rem' }}>
         <div>
           {/* Campaigns Section */}
@@ -562,8 +603,20 @@ export default function StudioDashboard() {
                     );
                   }
 
+                  const isSelected = selectedCampaignId === cid;
                   return (
-                    <div key={cid} style={{ padding: '1.5rem', borderBottom: '1px solid hsl(var(--border) / 0.5)' }}>
+                    <div 
+                      key={cid} 
+                      onClick={() => setSelectedCampaignId(isSelected ? null : cid)}
+                      style={{ 
+                        padding: '1.5rem', 
+                        borderBottom: '1px solid hsl(var(--border) / 0.5)',
+                        cursor: 'pointer',
+                        background: isSelected ? 'rgba(27, 246, 147, 0.03)' : 'transparent',
+                        borderLeft: isSelected ? '4px solid hsl(var(--primary))' : '4px solid transparent',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
                         <span style={{ fontWeight: 'bold', color: 'hsl(var(--muted-foreground))', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                           {ads.length > 1 ? 'A/B Split-Test Group' : 'Standard Campaign'}
@@ -576,6 +629,11 @@ export default function StudioDashboard() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         {ads.map(ad => {
                           const quality = getAttentionQuality(ad.avgDuration);
+                          const elapsedFraction = typeof window !== 'undefined' ? (new Date().getHours() * 60 + new Date().getMinutes()) / 1440.0 : 0.5;
+                          const spentFraction = ad.dailyBudget > 0 ? ad.creditsSpentToday / ad.dailyBudget : 0;
+                          const isExhausted = ad.creditsSpentToday >= ad.dailyBudget;
+                          const isPaced = spentFraction > elapsedFraction;
+
                           return (
                             <div key={ad.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                               <div className={styles.campaignRow} style={{ borderBottom: 'none', padding: '0', background: 'transparent' }}>
@@ -584,19 +642,37 @@ export default function StudioDashboard() {
                                     {ads.length > 1 && <span style={{ marginRight: '0.5rem', background: 'hsl(var(--primary)/0.2)', color: 'hsl(var(--primary))', padding: '0.1rem 0.4rem', borderRadius: '0.25rem', fontSize: '0.8rem' }}>Var {ad.variationName}</span>}
                                     {ad.headline}
                                   </div>
-                                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginTop: '0.25rem' }}>
+                                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginTop: '0.25rem', flexWrap: 'wrap' }}>
                                     <div className={styles.campaignStatus}>
                                       <span className={styles.statusDot}></span> {ad.status}
                                     </div>
                                     <span className={`${styles.qualityBadge} ${quality.style}`}>
                                       {quality.label} ({ad.avgDuration}s avg)
                                     </span>
+                                    {isExhausted ? (
+                                      <span style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '0.1rem 0.4rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                                        🔴 Budget Exhausted
+                                      </span>
+                                    ) : isPaced ? (
+                                      <span style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '0.1rem 0.4rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                                        ⚖️ Pacemaker Paced
+                                      </span>
+                                    ) : (
+                                      <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '0.1rem 0.4rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                                        🟢 Spending Normal
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
                                 <div className={styles.campaignMetrics}>
                                   <div><strong>{ad.impressions}</strong> Views</div>
                                   <div><strong>{ad.clicks}</strong> Clicks</div>
                                   <div><strong>{ad.ctr}%</strong> CTR</div>
+                                  <div><strong>★ {ad.maxCpcBid}</strong> Bid</div>
+                                  <div style={{ borderLeft: '1px solid hsl(var(--border)/0.5)', paddingLeft: '0.75rem', marginLeft: '0.25rem', textAlign: 'left' }}>
+                                    <div style={{ fontSize: '0.85rem' }}>Pacing: <strong>{ad.creditsSpentToday}/{ad.dailyBudget}</strong> ★</div>
+                                    <div style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))' }}>spent today</div>
+                                  </div>
                                 </div>
                               </div>
 
@@ -725,7 +801,28 @@ export default function StudioDashboard() {
         </div>
 
         {/* Aggregated Trends */}
-        <aside>
+        <aside style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          {selectedCampaign ? (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 style={{ margin: 0 }}>Campaign Auction</h3>
+                <button 
+                  onClick={() => setSelectedCampaignId(null)}
+                  className="btn"
+                  style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', background: 'rgba(255,255,255,0.08)', color: 'white', border: '1px solid rgba(255,255,255,0.15)', height: 'auto', borderRadius: '4px' }}
+                >
+                  Clear Selection
+                </button>
+              </div>
+              <AuctionSimulator campaign={selectedCampaign} onBidUpdate={handleBidUpdate} />
+            </div>
+          ) : (
+            <div className="glass" style={{ padding: '1.5rem', borderRadius: 'var(--radius)', border: '1px dashed hsl(var(--border))', textAlign: 'center', color: 'hsl(var(--muted-foreground))' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>⚖️</div>
+              <p style={{ margin: 0, fontSize: '0.85rem' }}>Select any active campaign to enter the live category auction board and adjust your bidding.</p>
+            </div>
+          )}
+
           <section className={styles.campaignsSection}>
             <h3>Local Vibes (Aggregate Trends)</h3>
             <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.85rem', marginBottom: '1rem' }}>

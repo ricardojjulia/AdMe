@@ -42,15 +42,12 @@ export function useEngagementAnalytics(adId: string) {
                 
                 // Only write to engagements if it's not a temporary UI view reward type
                 if (type !== 'view_reward') {
-                    const insertPayload: any = { 
-                        user_id: user.id, 
-                        ad_id: adId, 
-                        engagement_type: type 
-                    };
-                    if (type === 'view' && typeof viewDurationSeconds === 'number') {
-                        insertPayload.view_duration_seconds = viewDurationSeconds;
-                    }
-                    await supabase.from('engagements').insert(insertPayload);
+                    const durationVal = (type === 'view' && typeof viewDurationSeconds === 'number') ? viewDurationSeconds : null;
+                    await supabase.rpc('record_ad_engagement', {
+                        target_ad_id: adId,
+                        eng_type: type,
+                        duration_sec: durationVal
+                    });
                 }
                 
                 if (type === 'like') {

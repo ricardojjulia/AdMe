@@ -45,6 +45,8 @@ export default function CreateAdPage() {
     const ctaLabel = formData.get("ctaLabel") as string;
     const ctaUrl = formData.get("ctaUrl") as string;
     const isBoosted = formData.get("isBoosted") === "on";
+    const dailyBudget = parseInt(formData.get("dailyBudget") as string) || 1000;
+    const maxCpcBid = parseInt(formData.get("maxCpcBid") as string) || 15;
 
     const supabase = createClient();
     
@@ -65,7 +67,10 @@ export default function CreateAdPage() {
       likes: 0,
       shares: 0,
       campaign_id: campaignId,
-      is_boosted: isBoosted
+      is_boosted: isBoosted,
+      daily_budget: dailyBudget,
+      credits_spent_today: 0,
+      max_cpc_bid: maxCpcBid
     };
 
     const adsToInsert = [
@@ -167,6 +172,18 @@ export default function CreateAdPage() {
           <label style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <span>CTA Label</span>
             <input name="ctaLabel" required placeholder="e.g. Shop Now" style={{ padding: '0.75rem', borderRadius: '0.5rem', background: 'hsl(var(--input))', border: 'none', color: 'white' }} />
+          </label>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <span>Daily Budget (Credits)</span>
+            <input name="dailyBudget" type="number" min="100" defaultValue="1000" required placeholder="1000" style={{ padding: '0.75rem', borderRadius: '0.5rem', background: 'hsl(var(--input))', border: 'none', color: 'white' }} />
+          </label>
+
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <span>Max CPC Bid (Credits)</span>
+            <input name="maxCpcBid" type="number" min="15" max="100" defaultValue="15" required placeholder="15" style={{ padding: '0.75rem', borderRadius: '0.5rem', background: 'hsl(var(--input))', border: 'none', color: 'white' }} />
           </label>
         </div>
 

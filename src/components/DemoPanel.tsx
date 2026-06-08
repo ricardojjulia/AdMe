@@ -21,16 +21,10 @@ export function DemoPanel() {
 
   if (!mounted) return null;
 
-  const handlePersonaSelect = (persona: typeof DEMO_PERSONAS[0]) => {
-    localStorage.setItem("adme_demo_persona_id", persona.id);
+  const handlePersonaSelect = async (persona: typeof DEMO_PERSONAS[0]) => {
     setIsOpen(false);
-    
-    // Redirect based on role
-    if (persona.role === "business") {
-      window.location.href = "/studio";
-    } else {
-      window.location.href = "/";
-    }
+    const redirectPath = persona.role === "business" ? "/studio" : "/";
+    await selectPersona(persona.id, redirectPath);
   };
 
   const handleClear = async () => {

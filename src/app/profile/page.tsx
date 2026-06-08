@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/lib/UserContext";
@@ -400,6 +400,14 @@ export default function ProfilePage() {
               )}
             </div>
 
+            {/* Delivery Timeline Visualizer Card */}
+            <div className={styles.controlCard} style={{ gridColumn: '1 / -1', marginTop: '0.5rem' }}>
+              <FeedDensityVisualizer 
+                adFrequency={adFrequency}
+                quietHours={quietHours}
+              />
+            </div>
+
             {/* Privacy & Consent Ledger Card */}
             <div className={styles.controlCard} style={{ gridColumn: '1 / -1', marginTop: '0.5rem' }}>
               <div>
@@ -455,5 +463,205 @@ export default function ProfilePage() {
         </section>
       )}
     </main>
+  );
+}
+
+function isHourInInterval(hour: number, start: string, end: string) {
+  const currentStr = `${String(hour).padStart(2, '0')}:00`;
+  if (start <= end) {
+    return currentStr >= start && currentStr <= end;
+  } else {
+    return currentStr >= start || currentStr <= end;
+  }
+}
+
+interface VisualizerProps {
+  adFrequency: 'low' | 'balanced' | 'high';
+  quietHours: { enabled: boolean; start: string; end: string };
+}
+
+export function FeedDensityVisualizer({ adFrequency, quietHours }: VisualizerProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [simHour, setSimHour] = useState(new Date().getHours());
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const w = canvas.width;
+    const h = canvas.height;
+
+    // Draw background grid
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < w; x += w / 12) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+
+    // Determine target heights
+    const maxVal = adFrequency === 'low' ? 30 : (adFrequency === 'balanced' ? 60 : 90);
+
+    // Draw timeline graph
+    ctx.beginPath();
+    ctx.moveTo(0, h);
+
+    const points: { x: number; y: number; isMuted: boolean }[] = [];
+
+    for (let hour = 0; hour <= 24; hour++) {
+      const x = (hour / 24) * w;
+      const isMuted = quietHours.enabled && isHourInInterval(hour % 24, quietHours.start, quietHours.end);
+      const val = isMuted ? 0 : maxVal + Math.sin(hour * 0.8) * 8; // add a subtle wave effect
+      const y = h - (val / 100) * (h - 20) - 5;
+      points.push({ x, y, isMuted });
+    }
+
+    // Draw shaded area
+    ctx.fillStyle = 'rgba(52, 211, 153, 0.08)';
+    ctx.beginPath();
+    ctx.moveTo(0, h);
+    points.forEach(p => {
+      ctx.lineTo(p.x, p.isMuted ? h : p.y);
+    });
+    ctx.lineTo(w, h);
+    ctx.closePath();
+    ctx.fill();
+
+    // Draw line
+    ctx.strokeStyle = 'rgb(52, 211, 153)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    points.forEach((p, idx) => {
+      if (idx === 0) ctx.moveTo(p.x, p.isMuted ? h : p.y);
+      else ctx.lineTo(p.x, p.isMuted ? h : p.y);
+    });
+    ctx.stroke();
+
+    // Draw quiet hours shaded blocks in red
+    if (quietHours.enabled) {
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.12)';
+      ctx.strokeStyle = 'rgba(239, 68, 68, 0.2)';
+      ctx.lineWidth = 1;
+      
+      let startX: number | null = null;
+      for (let hour = 0; hour <= 24; hour++) {
+        const isMuted = isHourInInterval(hour % 24, quietHours.start, quietHours.end);
+        const x = (hour / 24) * w;
+        if (isMuted) {
+          if (startX === null) startX = x;
+        } else {
+          if (startX !== null) {
+            ctx.fillRect(startX, 0, x - startX, h);
+            ctx.beginPath();
+            ctx.moveTo(startX, 0); ctx.lineTo(startX, h);
+            ctx.moveTo(x, 0); ctx.lineTo(x, h);
+            ctx.stroke();
+            startX = null;
+          }
+        }
+      }
+      if (startX !== null) {
+        ctx.fillRect(startX, 0, w - startX, h);
+        ctx.stroke();
+      }
+    }
+
+    // Draw current slider time line marker
+    const markerX = (simHour / 24) * w;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(markerX, 0);
+    ctx.lineTo(markerX, h);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Draw simulated point dot
+    const isCurrentMuted = quietHours.enabled && isHourInInterval(simHour, quietHours.start, quietHours.end);
+    const currentVal = isCurrentMuted ? 0 : maxVal + Math.sin(simHour * 0.8) * 8;
+    const markerY = h - (currentVal / 100) * (h - 20) - 5;
+    ctx.fillStyle = isCurrentMuted ? 'rgb(239, 68, 68)' : 'rgb(52, 211, 153)';
+    ctx.beginPath();
+    ctx.arc(markerX, markerY, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+  }, [simHour, adFrequency, quietHours]);
+
+  const isCurrentMuted = quietHours.enabled && isHourInInterval(simHour, quietHours.start, quietHours.end);
+  const statusLabel = isCurrentMuted ? "🔴 Muted (Quiet Hours)" : "🟢 Active Delivery";
+  const exposureLevel = adFrequency === 'low' ? "~3 ads (Low)" : (adFrequency === 'balanced' ? "~6 ads (Balanced)" : "~10 ads (High)");
+  const availabilityPct = isCurrentMuted ? 0 : (adFrequency === 'low' ? 30 : (adFrequency === 'balanced' ? 60 : 90));
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 'bold' }}>Delivery Simulator & Feed Density Visualizer</h3>
+        <span style={{ fontSize: '0.8rem', color: isCurrentMuted ? 'rgb(248, 113, 113)' : 'rgb(52, 211, 153)', fontWeight: 'bold' }}>
+          {statusLabel}
+        </span>
+      </div>
+
+      <div style={{ position: 'relative' }}>
+        <canvas 
+          ref={canvasRef} 
+          width={400} 
+          height={100} 
+          style={{ 
+            width: '100%', 
+            height: '100px',
+            background: 'rgba(0, 0, 0, 0.2)', 
+            borderRadius: '6px', 
+            border: '1px solid rgba(255,255,255,0.06)',
+            display: 'block' 
+          }} 
+        />
+        <div style={{ position: 'absolute', top: '4px', left: '6px', fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)' }}>Density %</div>
+        <div style={{ position: 'absolute', bottom: '2px', left: '6px', fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)' }}>00:00</div>
+        <div style={{ position: 'absolute', bottom: '2px', left: '50%', transform: 'translateX(-50%)', fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)' }}>12:00</div>
+        <div style={{ position: 'absolute', bottom: '2px', right: '6px', fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)' }}>24:00</div>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>
+          <span>Simulated Time Slider:</span>
+          <span style={{ fontWeight: 'bold', color: 'white' }}>{String(simHour).padStart(2, '0')}:00</span>
+        </div>
+        <input 
+          type="range" 
+          min="0" 
+          max="23" 
+          value={simHour} 
+          onChange={(e) => setSimHour(parseInt(e.target.value))}
+          style={{ 
+            width: '100%', 
+            height: '6px', 
+            borderRadius: '3px',
+            background: 'rgba(255,255,255,0.1)',
+            outline: 'none',
+            cursor: 'pointer',
+            WebkitAppearance: 'none'
+          }}
+        />
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.25rem' }}>
+        <div className="glass" style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ fontSize: '0.65rem', color: 'hsl(var(--muted-foreground))' }}>Estimated Daily Ads</div>
+          <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'white', marginTop: '0.15rem' }}>{exposureLevel}</div>
+        </div>
+        <div className="glass" style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ fontSize: '0.65rem', color: 'hsl(var(--muted-foreground))' }}>Time availability</div>
+          <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: isCurrentMuted ? 'rgb(248, 113, 113)' : 'rgb(52, 211, 153)', marginTop: '0.15rem' }}>
+            {availabilityPct}% Delivery
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

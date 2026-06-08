@@ -1,6 +1,6 @@
 # AdMe ── The World's First Privacy-First, Permission-Based Advertising Marketplace
 
-[![Release: v2.0.0](https://img.shields.io/badge/Release-v2.0.0-blue.svg?style=flat)](https://github.com/ricardojjulia/AdMe/releases)
+[![Release: v3.0.0](https://img.shields.io/badge/Release-v3.0.0-blue.svg?style=flat)](https://github.com/ricardojjulia/AdMe/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Framework: Next.js 16](https://img.shields.io/badge/Next.js-16.0.8-black.svg?style=flat&logo=nextdotjs)](https://nextjs.org/)
 [![Database: Supabase](https://img.shields.io/badge/Database-Supabase-blueviolet.svg?style=flat&logo=supabase)](https://supabase.com/)
@@ -41,18 +41,22 @@ Meta and TikTok monitor every click, scroll, and keystroke. AdMe stores **zero p
 
 ### 1. Unified Consumer Experience
 *   **Voluntary, Curated Feed**: Ad recommendations driven entirely by user-toggled categories.
-*   **Ad Wallet**: A local deal wallet where users save interesting drops, deals, or coupon cards to redeem later.
-*   **Gamified Streaks**: Daily action milestones that reward consistent interaction.
-*   **Proximity-based Proximity Filtering**: Localised feed calculation displaying campaigns within a 25-mile radius.
+*   **Client-Side Contextual Ad Injection**: A smart-blending feed that dynamically interleaves mock organic social posts and matching category ads client-side, ensuring user profiling queries are never sent to the server.
+*   **Local Differential Privacy (LDP) Shield**: Toggles 30% randomized response perturbation (double-coin-flip math) for preference database synchronization, offering mathematically provable plausible deniability while honoring reward points truthfully.
+*   **Ad Wallet & Proximity Scratch Cards**: Save interesting drops, and play canvas-based scratch-off "Gift Card Drops" inside geofence alerts to claim a +50 point bonus and reveal voucher codes.
+*   **Gamified Preference Swipe Polls**: Tinder-style swipeable card deck that awards users with points for refining their interest profiles.
 *   **Value Exchange (Reward Points)**: Users earn `AdPoints` for voluntary interaction (watching a demo, reviewing an ad, visiting a page), redeemable for gift cards, local business discounts, or charitable giving.
 
 ### 2. Premium Ad Formats
 *   **Native Ads**: Clean layouts organically blended into the feed.
 *   **Carousel Ads**: Multi-media horizontal swipe cards with smooth micro-animations.
+*   **Canvas-based Compass Proximity Maps**: GPS compass tracking and route animations rendered dynamically on `<canvas>` inside localized deal alert cards.
 *   **Interactive Comments**: Community feedback loops on ad campaigns.
 
-### 3. Business Ad Studio
-*   **Campaign Builder**: Self-serve campaign wizard supporting targeting filters, formatting, and budgeting.
+### 3. Business Ad Studio & Pacing
+*   **Campaign Builder**: Self-serve campaign wizard supporting targeting filters, formatting, and daily budgeting.
+*   **Advertiser Budget Pacemaker**: Time-based campaign pacing that matches the daily elapsed time fraction against campaign spend fraction, throttling ad displays when spending velocity is too high.
+*   **Interactive Feed Density Visualizer**: An animated 24h timeline canvas graph slider displaying muted quiet hours slots, delivery cadence, and pacing score simulator controls.
 *   **A/B Test Variations**: Built-in support to run headline and design variants to test effectiveness.
 *   **Real-time Analytics**: Live reporting of views, clicks, and CTR (Click-Through Rate) utilizing Supabase Realtime subscriptions.
 

@@ -30,4 +30,8 @@ export interface Ad {
     isBoosted?: boolean;
     campaignId?: string;
     variationName?: string;
+    dailyBudget?: number;
+    creditsSpentToday?: number;
+    ownerId?: string;
+    maxCpcBid?: number;
 }

@@ -169,3 +169,100 @@ export function generateMockAds(count: number = 10, userLocation?: { lat: number
 
     return [...staticAds, ...randomAds];
 }
+
+export interface OrganicPost {
+  id: string;
+  author: {
+    name: string;
+    avatar: string;
+  };
+  content: string;
+  category: string;
+  likes: number;
+  createdAt: string;
+  mediaUrl?: string;
+}
+
+const MOCK_ORGANIC_TEMPLATES = [
+  {
+    author: "Alex Rivers",
+    avatar: "A",
+    content: "Just spent 3 hours refactoring our database queries. Found a query with a nested O(n^2) map that was slowing down page loads. Down to 42ms now! #coding #developer",
+    category: "Tech & SaaS",
+    likes: 312
+  },
+  {
+    author: "Jordan Lee",
+    avatar: "J",
+    content: "Finally tried the fresh sourdough at the little bakery down the lane. Still warm from the oven! Supporting local family-owned shops is always worth the walk.",
+    category: "Local Eateries",
+    likes: 85,
+    mediaUrl: "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?auto=format&fit=crop&q=80&w=800"
+  },
+  {
+    author: "Taylor Brooks",
+    avatar: "TB",
+    content: "Just finished reading 'The Great Resilience'. Truly life-affirming. The chapters on community-building in rural towns hit home. Highly recommend for your weekend reading list.",
+    category: "Faith & Books",
+    likes: 64
+  },
+  {
+    author: "Morgan Chen",
+    avatar: "MC",
+    content: "Been research testing some electric cars under $40k. Surprised at how many affordable options are coming out with 250+ miles range now. Range anxiety is officially dead.",
+    category: "Auto under $40k",
+    likes: 189
+  },
+  {
+    author: "Sam Miller",
+    avatar: "SM",
+    content: "Super proud of our local veteran-owned grocery today. They just sponsored the school sports day and set up free fruit stalls. That's real community spirit in action.",
+    category: "Veteran-owned",
+    likes: 245
+  },
+  {
+    author: "Dana Moss",
+    avatar: "DM",
+    content: "Planted some organic heirloom tomatoes in the backyard garden bed today. Hopefully, they sprout before the summer heat. Garden therapy is the best therapy.",
+    category: "Home & Garden",
+    likes: 120,
+    mediaUrl: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&q=80&w=800"
+  },
+  {
+    author: "Casey Winters",
+    avatar: "CW",
+    content: "Started morning meditation and a 5k jog at dawn. Amazing how much more focused and calm you feel during the workday. Small steps, big rewards. #wellness #dailygoals",
+    category: "Wellness & Health",
+    likes: 172
+  },
+  {
+    author: "Riley Knight",
+    avatar: "RK",
+    content: "Streamed the championship matches last night! That final boss raid strategy was insane. Can't wait to try that setup with my guild tonight.",
+    category: "Gaming",
+    likes: 420
+  },
+  {
+    author: "Skyler Banks",
+    avatar: "SB",
+    content: "Highly recommend setting up automated monthly allocations into your index funds. It takes the emotional swings out of investing and builds long-term health. Keep it simple.",
+    category: "Finance",
+    likes: 215
+  }
+];
+
+export function generateMockOrganicPosts(): OrganicPost[] {
+  return MOCK_ORGANIC_TEMPLATES.map((item, idx) => ({
+    id: `post-${idx}`,
+    author: {
+      name: item.author,
+      avatar: item.avatar
+    },
+    content: item.content,
+    category: item.category,
+    likes: item.likes,
+    createdAt: new Date(Date.now() - idx * 3600000).toISOString(),
+    mediaUrl: item.mediaUrl
+  }));
+}
+

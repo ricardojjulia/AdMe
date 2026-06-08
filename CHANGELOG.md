@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-06-07
+
+### Added
+- **Client-Side Contextual Ad Injection**: Implemented smart-blending feed matching category tagging of mock organic posts and ads to protect preference mapping.
+- **Local Differential Privacy (LDP) for Polls**: Added a 30% randomized response coin-flip math toggle providing database-level plausible deniability of user preferences while paying out point rewards truthfully.
+- **Proximity Deal Scratch-to-Reveal**: Created a canvas-based interactive scratch-off voucher reveal widget rewarding users with a +50 point bonus upon completion.
+- **Interactive Feed Density Visualizer**: Developed an animated 24h timeline canvas graph slider plotting active delivery waves, quiet hours, and real-time cadence scoring.
+- **Zero-Knowledge Preference Matching**: Relocated category filtering entirely client-side to prevent profiling leaks through database server queries. Global ads are retrieved and shuffled using the Fisher-Yates randomizer before filtering.
+- **Advertiser Budget Pacemaker**: Introduced daily budget pacing controls that compare elapsed time fractions with campaign spend fractions to smoothly throttle ad distribution across a 24-hour cycle.
+- **Canvas GPS Compass Navigation**: Designed a custom HTML5 canvas component within geofence alert cards displaying users' real-time walking path, bearing compass, and glowing hotspots.
+- **Gamified Tinder-style Polls**: Created a Tinder-style swipeable card deck widget in the Rewards Hub, allowing users to earn points while adding or removing ad preference categories with fluid angle/inertia animations.
+- **Authenticated Demo Switcher Alignment**: Standardized demo switcher navigation, ensuring local Supabase session authentication cookies are properly generated and resolved before executing role-based page updates.
+
+### Fixed
+- Fixed Playwright E2E testing button selector collisions via strict exact matching constraints.
+
 ## [2.0.0] - 2026-06-07
 
 ### Added

@@ -4,6 +4,16 @@
 -- Note: Cascade handles dependencies
 TRUNCATE TABLE public.users, public.ads, public.user_preferences, public.engagements, public.ad_reports, public.leads CASCADE;
 
+-- Seed auth users with bcrypt-hashed password 'password123'
+INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, raw_user_meta_data, raw_app_meta_data, aud, role, confirmation_token, email_change, email_change_token_current, email_change_token_new, phone_change, phone_change_token, reauthentication_token, recovery_token, created_at, updated_at)
+VALUES
+('00000000-0000-0000-0000-000000000000', 'a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0e1', 'sarah@adme.demo', '$2a$10$sGcVglm3isHcR6pw1oXlp.DbdBB1pvSbywl9SVHQ6i3MUuuHumcBy', now(), '{"full_name": "Sarah (Tech Dev)", "account_type": "consumer"}'::jsonb, '{"provider": "email", "providers": ["email"]}'::jsonb, 'authenticated', 'authenticated', '', '', '', '', '', '', '', '', now(), now()),
+('00000000-0000-0000-0000-000000000000', 'a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0e2', 'marcus@adme.demo', '$2a$10$sGcVglm3isHcR6pw1oXlp.DbdBB1pvSbywl9SVHQ6i3MUuuHumcBy', now(), '{"full_name": "Marcus (Local Foodie)", "account_type": "consumer"}'::jsonb, '{"provider": "email", "providers": ["email"]}'::jsonb, 'authenticated', 'authenticated', '', '', '', '', '', '', '', '', now(), now()),
+('00000000-0000-0000-0000-000000000000', 'a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0e3', 'elena@adme.demo', '$2a$10$sGcVglm3isHcR6pw1oXlp.DbdBB1pvSbywl9SVHQ6i3MUuuHumcBy', now(), '{"full_name": "Elena (New Consumer)", "account_type": "consumer"}'::jsonb, '{"provider": "email", "providers": ["email"]}'::jsonb, 'authenticated', 'authenticated', '', '', '', '', '', '', '', '', now(), now()),
+('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000001', 'valor@adme.demo', '$2a$10$sGcVglm3isHcR6pw1oXlp.DbdBB1pvSbywl9SVHQ6i3MUuuHumcBy', now(), '{"full_name": "Valor Brews (Business)", "account_type": "business"}'::jsonb, '{"provider": "email", "providers": ["email"]}'::jsonb, 'authenticated', 'authenticated', '', '', '', '', '', '', '', '', now(), now()),
+('00000000-0000-0000-0000-000000000000', 'a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0f5', 'workstation@adme.demo', '$2a$10$sGcVglm3isHcR6pw1oXlp.DbdBB1pvSbywl9SVHQ6i3MUuuHumcBy', now(), '{"full_name": "WorkStation (Business)", "account_type": "business"}'::jsonb, '{"provider": "email", "providers": ["email"]}'::jsonb, 'authenticated', 'authenticated', '', '', '', '', '', '', '', '', now(), now())
+ON CONFLICT (id) DO NOTHING;
+
 -- 2. Insert dummy business owner and 15 anonymous consumers
 -- Owner ID matches default test UUID from migrations
 INSERT INTO public.users (id, name, avatar, rewards_balance, role, ad_credits_balance, subscription_tier)
@@ -74,18 +84,18 @@ INSERT INTO public.user_preferences (user_id, category) VALUES
 ('a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0f5', 'Veteran-owned');
 
 -- 4. Seed sample Campaigns (with proximity boosting and layout variations)
-INSERT INTO public.ads (id, category, format_type, advertiser_name, advertiser_avatar, headline, content_text, media_url, media_type, primary_color, cta_label, cta_url, likes, shares, latitude, longitude, owner_id, is_boosted) VALUES
+INSERT INTO public.ads (id, category, format_type, advertiser_name, advertiser_avatar, headline, content_text, media_url, media_type, primary_color, cta_label, cta_url, likes, shares, latitude, longitude, owner_id, is_boosted, max_cpc_bid) VALUES
 -- Boosted Local Ad (Veteran-owned coffee shop)
-('10101010-1010-1010-1010-101010101010', 'Veteran-owned', 'native', 'Valor Brews', 'VB', 'Veteran-Owned Craft Coffee', 'Support our team. Freshly roasted micro-batches delivered straight to your door.', 'https://images.unsplash.com/photo-1507133750040-4a8f57021571?w=800&q=80', 'image', '#ffb703', 'Get Coffee', 'https://valorbrews.com', 432, 57, 34.0195, -118.4912, '00000000-0000-0000-0000-000000000001', TRUE),
+('10101010-1010-1010-1010-101010101010', 'Veteran-owned', 'native', 'Valor Brews', 'VB', 'Veteran-Owned Craft Coffee', 'Support our team. Freshly roasted micro-batches delivered straight to your door.', 'https://images.unsplash.com/photo-1507133750040-4a8f57021571?w=800&q=80', 'image', '#ffb703', 'Get Coffee', 'https://valorbrews.com', 432, 57, 34.0195, -118.4912, '00000000-0000-0000-0000-000000000001', TRUE, 20),
 
 -- Standard Ad (Faith & Books)
-('20202020-2020-2020-2020-202020202020', 'Faith & Books', 'social', 'Beacon Publishing', 'BP', 'Discover New Hope', 'A collection of writings to rebuild faith, community, and daily inspiration. Available in paperback and digital.', 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&q=80', 'image', '#2a9d8f', 'Read Chapter', 'https://beaconpublishing.com', 124, 11, 37.7749, -122.4194, '00000000-0000-0000-0000-000000000001', FALSE),
+('20202020-2020-2020-2020-202020202020', 'Faith & Books', 'social', 'Beacon Publishing', 'BP', 'Discover New Hope', 'A collection of writings to rebuild faith, community, and daily inspiration. Available in paperback and digital.', 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&q=80', 'image', '#2a9d8f', 'Read Chapter', 'https://beaconpublishing.com', 124, 11, 37.7749, -122.4194, '00000000-0000-0000-0000-000000000001', FALSE, 15),
 
 -- Boosted Ad (Local eateries)
-('30303030-3030-3030-3030-303030303030', 'Local Eateries', 'social', 'The Green Kitchen', 'GK', 'Organic bowls $5 off', 'Try our local California harvest bowls. Real food, local ingredients. Santa Monica location.', 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80', 'image', '#2b9348', 'Order Bowl', 'https://greenkitchensm.com', 289, 44, 34.0122, -118.4922, '00000000-0000-0000-0000-000000000001', TRUE),
+('30303030-3030-3030-3030-303030303030', 'Local Eateries', 'social', 'The Green Kitchen', 'GK', 'Organic bowls $5 off', 'Try our local California harvest bowls. Real food, local ingredients. Santa Monica location.', 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80', 'image', '#2b9348', 'Order Bowl', 'https://greenkitchensm.com', 289, 44, 34.0122, -118.4922, '00000000-0000-0000-0000-000000000001', TRUE, 35),
 
 -- Standard Ad (Auto under 40k)
-('40404040-4040-4040-4040-404040404040', 'Auto under $40k', 'carousel', 'Nomad Motors', 'NM', 'EVs starting at $34,900', 'Explore the compact Voyager EV. 280-mile range. Financing starting at 2.9% APR.', 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=800&q=80', 'image', '#457b9d', 'Book Test Drive', 'https://nomadmotors.com', 95, 8, 34.0522, -118.2437, '00000000-0000-0000-0000-000000000001', FALSE);
+('40404040-4040-4040-4040-404040404040', 'Auto under $40k', 'carousel', 'Nomad Motors', 'NM', 'EVs starting at $34,900', 'Explore the compact Voyager EV. 280-mile range. Financing starting at 2.9% APR.', 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=800&q=80', 'image', '#457b9d', 'Book Test Drive', 'https://nomadmotors.com', 95, 8, 34.0522, -118.2437, '00000000-0000-0000-0000-000000000001', FALSE, 45);
 
 -- 5. Seed incoming inquiry Leads (Anonymous inquiries)
 INSERT INTO public.leads (id, ad_id, user_id, message, contact_info, created_at) VALUES
