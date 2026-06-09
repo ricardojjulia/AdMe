@@ -11,15 +11,22 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@localization-governance/cli": "file:./tarballs/localization-governance-cli-0.1.0.tgz",
+    "@localization-governance/core": "file:./tarballs/localization-governance-core-0.1.0.tgz",
+    "@localization-governance/provider-google": "file:./tarballs/localization-governance-provider-google-0.1.0.tgz",
+    "@localization-governance/storage-filesystem": "file:./tarballs/localization-governance-storage-filesystem-0.1.0.tgz",
+    "@localization-governance/storage-postgres": "file:./tarballs/localization-governance-storage-postgres-0.1.0.tgz",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.105.1",
     "next": "16.0.8",
+    "pg": "^8.21.0",
     "react": "19.2.1",
     "react-dom": "19.2.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
     "@types/node": "^20",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
@@ -28,5 +35,8 @@
     "typescript": "^5",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.8"
+  },
+  "overrides": {
+    "@localization-governance/core": "file:./tarballs/localization-governance-core-0.1.0.tgz"
   }
 }

@@ -1,0 +1,12 @@
+{
+  "app_name": "AdMe",
+  "welcome_message": "Welcome back, {name}!",
+  "points_balance": "You have {points} reward points.",
+  "scratch_card_title": "Play Scratch Card",
+  "redeem_points": "Redeem Points",
+  "privacy_shield_enabled": "Privacy Shield is enabled",
+  "ad_credits": "Credits: {credits}",
+  "campaign_status": "Campaign Status: {status}",
+  "likes_count_one": "1 love",
+  "likes_count_other": "{count} loves"
+}

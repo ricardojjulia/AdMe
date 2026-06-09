@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2026-06-09
+
+### Added
+- **Portable Localization Governance Framework**: Integrated the tenant-bound localization workflow from ChurchCore Care, supporting immutable translation versions and states: `draft` -> `translated` -> `validated` -> `in_linguistic_review` -> `approved` -> `active` -> `stale`.
+- **Supabase Postgres Storage Adapter**: Added new SQL migrations and configured `@localization-governance/storage-postgres` bound strictly to tenant ID `'adme'`.
+- **Row-Level Security (RLS) Policies**: Enabled RLS on all localization governance tables, defining select policies for public access.
+- **Reviewer Assignment & Separation of Duties**: Enforced explicit reviewer role assignments (`linguistic`, `domain`) to prevent unauthorized reviews and satisfy separation of duties policies.
+- **Automatic Translation & Validation Suite**: Integrated validation checks for key coverage, blank values, exact placeholder matching, plural forms, and glossary terms.
+- **Source-Change Staleness & Rollbacks**: Implemented automatic staleness propagation for approved/active versions on source updates and atomic rollback capabilities.
+- **Fast-Expiry UI Translation Helper**: Implemented `translateUi` and `getActiveCatalog` with a 5-second fast-expiry in-memory cache to prevent database bottlenecks.
+- **CLI Runner Integration**: Added `localization-governance.config.mjs` config connecting the CLI to local/production Postgres instances.
+- **Comprehensive Integration Tests**: Implemented a comprehensive test suite in `tests/localization/governance.test.ts` verifying all requirements.
+
 ## [3.0.0] - 2026-06-07
 
 ### Added

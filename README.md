@@ -168,5 +168,90 @@ Refer to the [deployment_guide.md](./deployment_guide.md) for detailed instructi
 
 ---
 
+## 🌍 Localization Governance Framework
+
+AdMe integrates a portable, tenant-bound localization governance framework built using packed npm tarballs of `@localization-governance/*`. This enforces a strict validation and review lifecycle for translation catalogs, preventing bad strings or incomplete formats from reaching users.
+
+### 📦 Staged Tarballs & Overrides
+The core libraries are installed locally via packed tarballs situated in the `tarballs/` directory:
+- `@localization-governance/core`
+- `@localization-governance/storage-postgres`
+- `@localization-governance/provider-google`
+- `@localization-governance/cli`
+
+To ensure dependency cycles resolve correctly, standard `overrides` are configured in `package.json`:
+```json
+"overrides": {
+  "@localization-governance/core": "file:./tarballs/localization-governance-core-0.1.0.tgz"
+}
+```
+
+### ⚙️ Database Migration
+Localization states are persisted in a Supabase PostgreSQL instance using the `storage-postgres` adapter. The database tables are created via the additive migration:
+- `supabase/migrations/20260609000000_localization_governance.sql`
+
+All database queries are bound to the product tenant ID (`'adme'`) to support multi-tenant isolation.
+
+### 🛠️ CLI Operations & Commands
+The CLI reads settings from the local `localization-governance.config.mjs` config file and connects directly using the `DATABASE_URL` environment variable.
+
+#### 1. Create a Locale
+Initialize support for a new BCP 47 locale (e.g. `es-ES` Spanish):
+```bash
+npx locgov locale create es-ES
+```
+
+#### 2. Create and Populate a Catalog Draft
+Drafts can be created programmatically or via the adapter. In the background, automated provider translations can be requested:
+```bash
+npx locgov translate es-ES --version <version_id> --provider google --scope missing
+```
+
+#### 3. Run Validation Checks
+Validate formatting placeholders, plural forms matching counts/names, required glossary terms, and empty translations:
+```bash
+npx locgov validate es-ES --version <version_id>
+```
+
+#### 4. Request Linguistic and Domain Review
+Before a catalog can be approved, it must be validated and explicitly reviewed by assigned reviewers:
+```bash
+# Request review transition (validated -> in_linguistic_review)
+npx locgov review request es-ES --version <version_id>
+
+# Submit assigned reviewer decision
+npx locgov review submit es-ES --version <version_id> --role linguistic --decision approved --comment "Grammar looks correct"
+```
+
+#### 5. Approve Version
+Transition the catalog to `approved` state after satisfying policy constraints (separation of duties requires separate linguistic and domain approvals if configured):
+```bash
+npx locgov approve es-ES --version <version_id>
+```
+
+#### 6. Activate and Deploy Catalogs Atomically
+Deploy the catalog version to production. This updates the active pointer atomically:
+```bash
+npx locgov activate es-ES --version <version_id>
+```
+
+#### 7. Atomic Rollbacks
+Roll back to a previously active catalog version immediately in case of emergency:
+```bash
+npx locgov rollback es-ES --to <version_id>
+```
+
+#### 8. Verify Status & CI Policy
+Check the state of localized catalogs and evaluate policy compliance in CI pipelines:
+```bash
+# Get status report (outputs JSON with --json)
+npx locgov status es-ES --json
+
+# Evaluate CI pipeline policy status
+npx locgov ci
+```
+
+---
+
 ## 📄 License
 This project is licensed under the **MIT License** - see the [LICENSE](./LICENSE) file for details.
