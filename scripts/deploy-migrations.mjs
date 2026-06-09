@@ -11,17 +11,29 @@ async function main() {
     process.exit(1);
   }
 
-  console.log('Deploying localization governance migrations to remote database...');
+  console.log('Deploying all database migrations in sequence to remote database...');
   const pool = getPool();
 
   try {
-    const migrationPath = path.resolve('supabase/migrations/20260609000000_localization_governance.sql');
-    console.log(`Reading migration file: ${migrationPath}`);
-    const sqlContent = fs.readFileSync(migrationPath, 'utf8');
+    const migrationsDir = path.resolve('supabase/migrations');
+    const files = fs.readdirSync(migrationsDir)
+      .filter((file) => file.endsWith('.sql'))
+      .sort(); // Sort alphabetically (by timestamp prefix) to maintain dependency order
 
-    console.log('Executing SQL migration script on remote database...');
-    await pool.query(sqlContent);
-    console.log('Migrations deployed successfully!');
+    console.log(`Found ${files.length} migrations to deploy.`);
+
+    for (const file of files) {
+      const filePath = path.join(migrationsDir, file);
+      console.log(`Applying migration: ${file}`);
+      const sqlContent = fs.readFileSync(filePath, 'utf8');
+
+      // We run each migration file
+      // Note: we can split statements or run them as a single query block
+      await pool.query(sqlContent);
+      console.log(`Migration ${file} applied successfully.`);
+    }
+
+    console.log('All migrations deployed successfully!');
   } catch (error) {
     console.error('Failed to deploy migrations:', error);
     process.exit(1);
