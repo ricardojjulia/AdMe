@@ -31,6 +31,45 @@ export async function closePool() {
   }
 }
 
+// Wraps node-postgres pool or client query methods to automatically stringify
+// objects/arrays when passed as params, avoiding native Postgres array parser exceptions on JSONB columns.
+export function wrapPoolOrClient(client: any) {
+  if (!client || client._wrappedForJson) return client;
+
+  const originalQuery = client.query;
+  client.query = function (sql: any, params?: any[], ...args: any[]) {
+    if (params && Array.isArray(params)) {
+      const sanitizedParams = params.map((param) => {
+        if (
+          param !== null &&
+          typeof param === 'object' &&
+          !(param instanceof Date) &&
+          !Buffer.isBuffer(param)
+        ) {
+          return JSON.stringify(param);
+        }
+        return param;
+      });
+      return originalQuery.call(this, sql, sanitizedParams, ...args);
+    }
+    return originalQuery.call(this, sql, params, ...args);
+  };
+
+  if (typeof client.connect === 'function') {
+    const originalConnect = client.connect;
+    client.connect = async function (...connectArgs: any[]) {
+      const conn = await originalConnect.apply(this, connectArgs);
+      if (conn) {
+        wrapPoolOrClient(conn);
+      }
+      return conn;
+    };
+  }
+
+  client._wrappedForJson = true;
+  return client;
+}
+
 // Structured audit logger
 export function auditGovernanceAction(
   action: string,
@@ -150,8 +189,9 @@ export function createAdMeLocalizationGovernance({
     throw new GovernanceError('storage_failure', 'tenantId is required.');
   }
 
-  const storage = createPostgresStorage({ client, tenantId });
-  const assignmentRepository = createReviewerAssignmentRepository({ client });
+  const wrappedClient = wrapPoolOrClient(client);
+  const storage = createPostgresStorage({ client: wrappedClient, tenantId });
+  const assignmentRepository = createReviewerAssignmentRepository({ client: wrappedClient });
 
   const providers: Record<string, any> = {};
   if (provider) {
