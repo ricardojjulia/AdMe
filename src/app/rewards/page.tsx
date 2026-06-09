@@ -80,19 +80,19 @@ export default function RewardsPage() {
         // Optimistic UI update
         setHistory(prev => [{
           id: Date.now(),
-          action: `Redeemed ${perk.name} (Code: ${code})`,
+          action: t('history_redeemed', { name: perk.name, code }),
           points: `-${perk.cost}`,
           date: new Date().toLocaleDateString()
         }, ...prev]);
 
-        addToast(`Successfully claimed: ${perk.name}! Code is stored in your wallet.`, "success");
+        addToast(t('redeem_success_toast', { name: perk.name }), "success");
         setConfirmPerk(null);
       } catch (err) {
         console.error(err);
-        addToast("Failed to redeem reward.", "error");
+        addToast(t('redeem_failed_toast'), "error");
       }
     } else {
-      addToast("Insufficient rewards balance.", "error");
+      addToast(t('insufficient_points_toast'), "error");
     }
   };
 
@@ -102,24 +102,30 @@ export default function RewardsPage() {
     name: ad.headline || `${ad.advertiser_name} local promo`,
     cost: 350 + (idx * 50),
     emoji: "🎟️",
-    category: "Local Deals",
-    description: `Claim a discount voucher from local merchant ${ad.advertiser_name}.`
+    category: t("cat_local_deals"),
+    description: t("perk_local_desc", { brand: ad.advertiser_name })
   }));
 
   // Perks list
   const perks = [
-    { id: "coffee", name: "$5 Coffee Gift Card", cost: 500, emoji: "☕", category: "Food & Drink", description: "Grab a warm cup of coffee on us." },
-    { id: "adfree", name: "1 Ad-Free Day", cost: 1000, emoji: "Premium Perks", category: "Premium Perks", description: "Mute all ad placements in your feed for 24 hours." },
-    { id: "amazon", name: "$10 Amazon Card", cost: 2000, emoji: "🛍️", category: "Shopping", description: "Save on your next Amazon purchase." },
-    { id: "uber", name: "$15 Uber Eats Voucher", cost: 3000, emoji: "🍔", category: "Food & Drink", description: "Order takeout delivered straight to your door." },
+    { id: "coffee", name: t("perk_coffee_name"), cost: 500, emoji: "☕", category: t("cat_food_drink"), description: t("perk_coffee_desc") },
+    { id: "adfree", name: t("perk_adfree_name"), cost: 1000, emoji: "🎁", category: t("cat_premium_perks"), description: t("perk_adfree_desc") },
+    { id: "amazon", name: t("perk_amazon_name"), cost: 2000, emoji: "🛍️", category: t("cat_shopping"), description: t("perk_amazon_desc") },
+    { id: "uber", name: t("perk_uber_name"), cost: 3000, emoji: "🍔", category: t("cat_food_drink"), description: t("perk_uber_desc") },
     ...localDiscounts
   ];
 
   // Filters logic
-  const categories = ["All", "Food & Drink", "Shopping", "Local Deals", "Premium Perks"];
+  const categories = [
+    { key: "All", label: t("cat_all") },
+    { key: "Food & Drink", label: t("cat_food_drink") },
+    { key: "Shopping", label: t("cat_shopping") },
+    { key: "Local Deals", label: t("cat_local_deals") },
+    { key: "Premium Perks", label: t("cat_premium_perks") }
+  ];
   
   const filteredPerks = perks.filter(perk => {
-    const matchesCategory = selectedCategory === "All" || perk.category === selectedCategory;
+    const matchesCategory = selectedCategory === "All" || perk.category === categories.find(c => c.key === selectedCategory)?.label;
     const matchesSearch = perk.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           perk.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesAffordable = !affordableOnly || balance >= perk.cost;
@@ -129,34 +135,30 @@ export default function RewardsPage() {
   return (
     <main className={`container ${styles.shell} animate-fade-in`}>
       <header className={styles.header}>
-        <Link href="/" className={styles.backBtn}>← Back to Feed</Link>
-        <h1>Rewards Hub & Marketplace</h1>
+        <Link href="/" className={styles.backBtn}>← {t('back_to_feed')}</Link>
+        <h1>{t('rewards_title')}</h1>
       </header>
 
       <div className={styles.grid}>
         <section className={`${styles.balanceCard} glass`}>
           <div className={styles.balanceContent}>
-            <h2>{locale === 'es-PR' ? 'Balance disponible' : 'Available Balance'}</h2>
+            <h2>{t('available_balance')}</h2>
             <div className={styles.balanceAmount}>
               <span className={styles.currency}>★</span>
               {balance.toLocaleString()}
             </div>
             <p className={styles.balanceSubtext}>
-              {locale === 'es-PR' 
-                ? `Tienes ${savedAds.length} ofertas guardadas pendientes de canjear.` 
-                : `You have ${savedAds.length} saved offers pending redemption.`}
+              {t('saved_offers_redemption', { count: savedAds.length })}
             </p>
           </div>
         </section>
 
         <section className={styles.historySection}>
-          <h3>Recent History</h3>
+          <h3>{t('recent_history')}</h3>
           <div className={`${styles.historyList} glass`}>
             {history.length === 0 ? (
               <p style={{padding: '1rem'}}>
-                {locale === 'es-PR' 
-                  ? 'Sin historial aún. ¡Comienza a interactuar con anuncios para ganar puntos!' 
-                  : 'No history yet. Start engaging with ads to earn points!'}
+                {t('history_empty')}
               </p>
             ) : null}
             {history.map((item) => (
@@ -184,15 +186,15 @@ export default function RewardsPage() {
       <section className={styles.storeSection} style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '2rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '0.5rem' }}>
           <div>
-            <h3>AdPoints Marketplace</h3>
-            <p className={styles.storeSubtext} style={{ margin: 0 }}>Redeem your attention for real value.</p>
+            <h3>{t('marketplace_title')}</h3>
+            <p className={styles.storeSubtext} style={{ margin: 0 }}>{t('marketplace_subtitle')}</p>
           </div>
 
           {/* Search box & Toggles */}
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <input 
               type="text" 
-              placeholder="Search rewards..." 
+              placeholder={t('search_rewards')} 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
@@ -214,7 +216,7 @@ export default function RewardsPage() {
                 onChange={(e) => setAffordableOnly(e.target.checked)}
                 style={{ transform: 'scale(1.1)' }}
               />
-              Affordable Only
+              {t('affordable_only')}
             </label>
           </div>
         </div>
@@ -223,20 +225,20 @@ export default function RewardsPage() {
         <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem', marginBottom: '1.25rem' }}>
           {categories.map(cat => (
             <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
+              key={cat.key}
+              onClick={() => setSelectedCategory(cat.key)}
               className="btn"
               style={{
                 padding: '0.4rem 0.85rem',
                 fontSize: '0.8rem',
                 height: 'auto',
-                background: selectedCategory === cat ? 'hsl(var(--primary))' : 'rgba(255,255,255,0.05)',
-                color: selectedCategory === cat ? 'black' : 'white',
-                border: selectedCategory === cat ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                background: selectedCategory === cat.key ? 'hsl(var(--primary))' : 'rgba(255,255,255,0.05)',
+                color: selectedCategory === cat.key ? 'black' : 'white',
+                border: selectedCategory === cat.key ? 'none' : '1px solid rgba(255,255,255,0.1)',
                 whiteSpace: 'nowrap'
               }}
             >
-              {cat}
+              {cat.label}
             </button>
           ))}
         </div>
@@ -246,7 +248,7 @@ export default function RewardsPage() {
           {filteredPerks.length === 0 ? (
             <div style={{ gridColumn: '1 / -1', padding: '3rem 0', textAlign: 'center', color: 'hsl(var(--muted-foreground))' }}>
               <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🔍</div>
-              No matching perks found. Try adjusting your filters.
+              {t('marketplace_empty')}
             </div>
           ) : (
             filteredPerks.map((perk) => (
@@ -269,7 +271,7 @@ export default function RewardsPage() {
                   onClick={() => setConfirmPerk(perk)}
                   style={{ width: '100%', marginTop: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
                 >
-                  {locale === 'es-PR' ? `${t('redeem_points')} (${perk.cost} ★)` : `Redeem for ${perk.cost} ★`}
+                  {t('redeem_cost_btn', { cost: perk.cost })}
                 </button>
               </div>
             ))
@@ -305,9 +307,9 @@ export default function RewardsPage() {
           }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>{confirmPerk.emoji}</div>
-              <h3 style={{ margin: 0, color: 'white' }}>Confirm Redemption</h3>
+              <h3 style={{ margin: 0, color: 'white' }}>{t('confirm_redemption')}</h3>
               <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
-                You are about to redeem {confirmPerk.name}
+                {t('confirm_redemption_desc', { name: confirmPerk.name })}
               </p>
             </div>
 
@@ -322,15 +324,15 @@ export default function RewardsPage() {
               fontSize: '0.85rem'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'hsl(var(--muted-foreground))' }}>Current Balance:</span>
+                <span style={{ color: 'hsl(var(--muted-foreground))' }}>{t('current_balance')}</span>
                 <span>★ {balance}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
-                <span style={{ color: 'hsl(var(--muted-foreground))' }}>Voucher Cost:</span>
+                <span style={{ color: 'hsl(var(--muted-foreground))' }}>{t('voucher_cost')}</span>
                 <span style={{ color: '#ef4444' }}>- ★ {confirmPerk.cost}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.25rem', fontWeight: 'bold' }}>
-                <span style={{ color: 'white' }}>Remaining Balance:</span>
+                <span style={{ color: 'white' }}>{t('remaining_balance')}</span>
                 <span style={{ color: 'hsl(var(--primary))' }}>★ {balance - confirmPerk.cost}</span>
               </div>
             </div>
@@ -341,14 +343,14 @@ export default function RewardsPage() {
                 className="btn"
                 style={{ flex: 1, padding: '0.6rem', fontSize: '0.9rem', height: 'auto', background: 'hsl(var(--primary))', color: 'black' }}
               >
-                Yes, Redeem
+                {t('yes_redeem')}
               </button>
               <button 
                 onClick={() => setConfirmPerk(null)}
                 className="btn"
                 style={{ flex: 1, padding: '0.6rem', fontSize: '0.9rem', height: 'auto', background: 'rgba(255,255,255,0.08)', color: 'white', border: '1px solid rgba(255,255,255,0.15)' }}
               >
-                Cancel
+                {t('cancel')}
               </button>
             </div>
           </div>

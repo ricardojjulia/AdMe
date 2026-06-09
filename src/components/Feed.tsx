@@ -58,7 +58,7 @@ export function performABSplitTest(ads: Ad[], userId: string | null): Ad[] {
 export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
   const [timeline, setTimeline] = useState<(Ad | OrganicPost)[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user, preferences, reportedAds, skippedAds, location, adFrequency, deliveryChannels } = useUser();
+  const { user, preferences, reportedAds, skippedAds, location, adFrequency, deliveryChannels, t } = useUser();
 
   useEffect(() => {
     setLoading(true);
@@ -263,7 +263,7 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
     return (
       <div className={styles.feed}>
         <div className={styles.empty}>
-          📴 Feed-based placements are disabled in your Ad Controls.
+          📴 {t('feed_disabled')}
         </div>
       </div>
     );
@@ -289,7 +289,7 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
     <div className={styles.feed}>
       {visibleItems.length === 0 && !loading && (
         <div className={styles.empty}>
-          No social posts or campaigns found. Try tuning your preferences!
+          {t('feed_empty')}
         </div>
       )}
 

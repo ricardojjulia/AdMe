@@ -11,7 +11,7 @@ interface ScratchCardProps {
 }
 
 export function ScratchCard({ rewardAmount, onComplete, brandName }: ScratchCardProps) {
-  const { locale } = useUser();
+  const { locale, t } = useUser();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [scratched, setScratched] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -39,12 +39,9 @@ export function ScratchCard({ rewardAmount, onComplete, brandName }: ScratchCard
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, width, height);
 
-    const isSpanish = locale === 'es-PR';
-    const dropText = isSpanish ? "🎁 REGALO DE INTERCAMBIO" : "🎁 VALUE EXCHANGE DROP";
-    const earnText = isSpanish 
-      ? `¡Rasca para ganar +${rewardAmount} puntos!` 
-      : `Scratch to earn +${rewardAmount} points!`;
-    const instructionText = isSpanish ? "Usa tu mouse o dedo" : "Use your mouse or finger";
+    const dropText = t("scratch_gift_drop");
+    const earnText = t("scratch_earn_points", { amount: rewardAmount });
+    const instructionText = t("scratch_instruction");
 
     // Add glowing text instructions
     ctx.fillStyle = "#1e293b";
@@ -157,10 +154,10 @@ export function ScratchCard({ rewardAmount, onComplete, brandName }: ScratchCard
     <div className={styles.scratchWrapper}>
       <div className={styles.rewardsBackground}>
         <div className={styles.rewardCrown}>🌟</div>
-        <div className={styles.rewardHeading}>{isSpanish ? "¡Recompensa desbloqueada!" : "Reward Unlocked!"}</div>
-        <div className={styles.rewardSub}>{isSpanish ? `Cupón de ${brandName} activo` : `${brandName} Coupon Active`}</div>
+        <div className={styles.rewardHeading}>{t("reward_unlocked")}</div>
+        <div className={styles.rewardSub}>{t("brand_coupon_active", { brand: brandName })}</div>
         <div className={styles.rewardNumber}>+{rewardAmount} pts</div>
-        <div className={styles.successLine}>{isSpanish ? "Añadido directamente a tu saldo" : "Added directly to your balance"}</div>
+        <div className={styles.successLine}>{t("added_to_balance")}</div>
       </div>
 
       {!scratched && (
@@ -180,7 +177,7 @@ export function ScratchCard({ rewardAmount, onComplete, brandName }: ScratchCard
 
       {!scratched && (
         <div className={styles.progressIndicator}>
-          {isSpanish ? "Revelado:" : "Revealed:"} {percentage}%
+          {t("revealed")} {percentage}%
         </div>
       )}
     </div>
@@ -202,7 +199,7 @@ interface QuizCardProps {
 }
 
 export function QuizCard({ rewardAmount, onComplete, brandName }: QuizCardProps) {
-  const { locale } = useUser();
+  const { locale, t } = useUser();
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -299,7 +296,7 @@ export function QuizCard({ rewardAmount, onComplete, brandName }: QuizCardProps)
         <div className={styles.quizContent}>
           <div className={styles.quizHeader}>
             <span className={styles.quizTag}>
-              ❓ {isSpanish ? `TRIVIA DE MARCA (+${rewardAmount} pts)` : `BRAND TRIVIA (+${rewardAmount} pts)`}
+              ❓ {t("brand_trivia_tag", { amount: rewardAmount })}
             </span>
             <span className={styles.brandTitle}>{brandName}</span>
           </div>
@@ -339,20 +336,20 @@ export function QuizCard({ rewardAmount, onComplete, brandName }: QuizCardProps)
                 onClick={handleSubmit}
                 disabled={selectedOption === null}
               >
-                {isSpanish ? "Enviar respuesta" : "Submit Answer"}
+                {t("submit_answer")}
               </button>
             ) : (
               !isCorrect && (
                 <div className={styles.failureRow}>
                   <span className={styles.failText}>
-                    {isSpanish ? "❌ Incorrecto. ¡Inténtalo de nuevo!" : "❌ Incorrect. Try again!"}
+                    {t("incorrect_retry")}
                   </span>
                   <button
                     type="button"
                     className={styles.retryBtn}
                     onClick={handleTryAgain}
                   >
-                    {isSpanish ? "Reintentar" : "Retry"}
+                    {t("retry")}
                   </button>
                 </div>
               )
@@ -362,10 +359,10 @@ export function QuizCard({ rewardAmount, onComplete, brandName }: QuizCardProps)
       ) : (
         <div className={styles.quizSuccess}>
           <div className={styles.successIcon}>🎉</div>
-          <h3 className={styles.successTitle}>{isSpanish ? "¡Trivia resuelta!" : "Trivia Solved!"}</h3>
-          <p className={styles.successSub}>{isSpanish ? "Gracias por prestar atención." : "Thank you for paying attention."}</p>
+          <h3 className={styles.successTitle}>{t("trivia_solved")}</h3>
+          <p className={styles.successSub}>{t("thanks_attention")}</p>
           <div className={styles.rewardNumber}>+{rewardAmount} pts</div>
-          <div className={styles.successLine}>{isSpanish ? "Puntos acreditados a tu cuenta" : "Points credited to your account"}</div>
+          <div className={styles.successLine}>{t("points_credited")}</div>
         </div>
       )}
     </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { OrganicPost } from "@/lib/mock-data";
+import { useUser } from "@/lib/UserContext";
 import styles from "./OrganicPostCard.module.css";
 
 interface OrganicPostCardProps {
@@ -9,6 +10,7 @@ interface OrganicPostCardProps {
 }
 
 export function OrganicPostCard({ post }: OrganicPostCardProps) {
+  const { t } = useUser();
   const [likes, setLikes] = useState(post.likes);
   const [hasLiked, setHasLiked] = useState(false);
 
@@ -30,7 +32,7 @@ export function OrganicPostCard({ post }: OrganicPostCardProps) {
           </div>
           <div className={styles.authorMeta}>
             <span className={styles.authorName}>{post.author.name}</span>
-            <span className={styles.timestamp}>Social Update</span>
+            <span className={styles.timestamp}>{t('social_update')}</span>
           </div>
         </div>
         <span className={styles.categoryBadge}>
@@ -65,12 +67,12 @@ export function OrganicPostCard({ post }: OrganicPostCardProps) {
 
         <button className={styles.actionBtn} aria-label="Comment on post">
           <span className={styles.icon}>💬</span>
-          <span>Comment</span>
+          <span>{t('comment')}</span>
         </button>
 
         <button className={styles.actionBtn} aria-label="Share post">
           <span className={styles.icon}>📤</span>
-          <span>Share</span>
+          <span>{t('share')}</span>
         </button>
       </footer>
     </article>

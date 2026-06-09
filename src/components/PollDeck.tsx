@@ -23,7 +23,7 @@ const POLL_QUESTIONS: PollQuestion[] = [
 ];
 
 export function PollDeck() {
-  const { preferences, togglePreference, addReward } = useUser();
+  const { preferences, togglePreference, addReward, locale, t } = useUser();
   const { addToast } = useToast();
   
   const [completedIds, setCompletedIds] = useState<string[]>([]);
@@ -97,9 +97,9 @@ export function PollDeck() {
       await addReward(10, `Preference Poll: ${activeQuestion.category}`);
       
       if (privacyPerturbed) {
-        addToast(`🛡️ Plausible Deniability Active: Your preference database sync was mathematically perturbed. +10 Points awarded!`, 'info');
+        addToast(t("ldp_active_toast", { amount: 10 }), 'info');
       } else {
-        addToast(`★ +10 Points awarded for voting!`, 'success');
+        addToast(t("voted_success_toast"), 'success');
       }
       
       // Mark as completed
@@ -150,7 +150,7 @@ export function PollDeck() {
     setCurrentIndex(0);
     setDragOffset({ x: 0, y: 0 });
     setFlyAwayDirection(null);
-    addToast("Preference polls deck reset!", "info");
+    addToast(t('reset_deck_toast'), "info");
   };
 
   // Calculate rotation and class based on drag
@@ -170,14 +170,14 @@ export function PollDeck() {
   return (
     <div className={styles.deckContainer}>
       <header className={styles.deckHeader}>
-        <h4>Vibe-check preferences</h4>
-        <p>Swipe cards to refine your ad categories and earn points instantly.</p>
+        <h4>{t('vibe_check_title')}</h4>
+        <p>{t('vibe_check_desc')}</p>
         
         <div className={styles.progressContainer}>
           <div className={styles.progressBarBg}>
             <div className={styles.progressBarFill} style={{ width: `${progressPercent}%` }}></div>
           </div>
-          <span className={styles.progressText}>{completedIds.length} / {POLL_QUESTIONS.length} Voted</span>
+          <span className={styles.progressText}>{t('voted_progress', { count: completedIds.length, total: POLL_QUESTIONS.length })}</span>
         </div>
       </header>
 
@@ -200,12 +200,12 @@ export function PollDeck() {
           >
             {/* NOPE Indicator overlay */}
             <div className={styles.stampNope} style={{ opacity: opacityNope }}>
-              NOPE
+              {t('nope')}
             </div>
             
             {/* LIKE Indicator overlay */}
             <div className={styles.stampLike} style={{ opacity: opacityLike }}>
-              AGREE
+              {t('agree')}
             </div>
 
             <div className={styles.cardHeader}>
@@ -214,21 +214,21 @@ export function PollDeck() {
             </div>
 
             <p className={styles.questionText}>
-              &ldquo;{activeQuestion.question}&rdquo;
+              &ldquo;{t(`${activeQuestion.id}_question`)}&rdquo;
             </p>
 
             <div className={styles.hintFooter}>
-              <span>👈 Drag Left to Disagree</span>
-              <span>Drag Right to Agree 👉</span>
+              <span>{t('disagree_instruction')}</span>
+              <span>{t('agree_instruction')}</span>
             </div>
           </div>
         ) : (
-          <div className={`${styles.emptyCard} glass`}>
+          <div className={styles.emptyCard} data-glass="true">
             <div className={styles.celebrationEmoji}>🎉</div>
-            <h4>Preferences Updated!</h4>
-            <p>You have finished all preference poll cards. Your vibes are completely synchronized.</p>
+            <h4>{t('preferences_updated')}</h4>
+            <p>{t('preferences_updated_desc')}</p>
             <button className="btn" onClick={resetDeck} style={{ marginTop: '1rem', background: 'white', color: 'black' }}>
-              Reset Cards Deck
+              {t('reset_deck')}
             </button>
           </div>
         )}
@@ -242,7 +242,7 @@ export function PollDeck() {
             disabled={!!flyAwayDirection}
             aria-label="Disagree"
           >
-            ❌ Disagree
+            ❌ {t('disagree')}
           </button>
           <button 
             onClick={() => handleSwipe('right')}
@@ -250,7 +250,7 @@ export function PollDeck() {
             disabled={!!flyAwayDirection}
             aria-label="Agree"
           >
-            💚 Agree
+            💚 {t('agree_label')}
           </button>
         </div>
       )}
@@ -259,13 +259,13 @@ export function PollDeck() {
       <div style={{ marginTop: '1.5rem', padding: '1rem', borderRadius: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid rgba(255, 255, 255, 0.08)', background: 'rgba(255, 255, 255, 0.02)' }}>
         <div style={{ paddingRight: '1rem' }}>
           <h5 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
-            <span>🛡️ Privacy Shield (Plausible Deniability)</span>
+            <span>🛡️ {t('privacy_shield_title')}</span>
             <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '0.25rem', background: enableLDP ? '#34d399' : 'rgba(255,255,255,0.1)', color: enableLDP ? '#064e3b' : 'inherit', fontWeight: 'bold' }}>
               {enableLDP ? 'ON' : 'OFF'}
             </span>
           </h5>
           <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))', lineHeight: '1.3' }}>
-            Applies client-side Local Differential Privacy (30% noise) to preference database entries, guaranteeing mathematical anonymity.
+            {t('privacy_shield_desc')}
           </p>
         </div>
         <label style={{ position: 'relative', display: 'inline-block', width: '42px', height: '24px', flexShrink: 0, cursor: 'pointer' }}>
@@ -275,7 +275,7 @@ export function PollDeck() {
             onChange={(e) => {
               setEnableLDP(e.target.checked);
               localStorage.setItem('adme_use_ldp', String(e.target.checked));
-              addToast(e.target.checked ? "Privacy Shield enabled!" : "Privacy Shield disabled.", "info");
+              addToast(e.target.checked ? t('privacy_shield_enabled_toast') : t('privacy_shield_disabled_toast'), "info");
             }}
             style={{ opacity: 0, width: 0, height: 0 }}
           />

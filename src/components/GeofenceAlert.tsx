@@ -26,6 +26,7 @@ interface ProximityMiniMapProps {
 
 export function ProximityMiniMap({ userLocation, targetLocation, brandColor = '#ffb703' }: ProximityMiniMapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { t } = useUser();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -184,7 +185,7 @@ export function ProximityMiniMap({ userLocation, targetLocation, brandColor = '#
         borderRadius: '3px',
         border: '1px solid rgba(255, 255, 255, 0.04)'
       }}>
-        🧭 Compass GPS Active
+        🧭 {t('compass_gps_active')}
       </div>
     </div>
   );
@@ -219,7 +220,7 @@ interface ScratchCardProps {
 }
 
 export function ScratchCard({ onComplete, brandName }: ScratchCardProps) {
-  const { locale } = useUser();
+  const { locale, t } = useUser();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [scratchedPercent, setScratchedPercent] = useState(0);
   const [completeTriggered, setCompleteTriggered] = useState(false);
@@ -239,13 +240,7 @@ export function ScratchCard({ onComplete, brandName }: ScratchCardProps) {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const isSpanish = locale === 'es-PR';
-    // Add overlay text
-    ctx.fillStyle = '#444444';
-    ctx.font = 'bold 11px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(isSpanish ? '¡Rasca aquí para ver la oferta!' : 'Scratch here to reveal deal!', canvas.width / 2, canvas.height / 2);
+    ctx.fillText(t('scratch_here'), canvas.width / 2, canvas.height / 2);
   }, [locale]);
 
   const getMousePos = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -339,7 +334,7 @@ export function ScratchCard({ onComplete, brandName }: ScratchCardProps) {
 }
 
 export function GeofenceAlert() {
-  const { location, savedAds, coupons, deliveryChannels, quietHours, addReward, locale } = useUser();
+  const { location, savedAds, coupons, deliveryChannels, quietHours, addReward, locale, t } = useUser();
   const { addToast } = useToast();
   const [alerts, setAlerts] = useState<ActiveAlert[]>([]);
   const [dismissedAds, setDismissedAds] = useState<string[]>([]);
@@ -472,7 +467,7 @@ export function GeofenceAlert() {
 
   const handleScratchComplete = async (alert: ActiveAlert) => {
     addReward(50, `Proximity Drop: ${alert.brandName}`);
-    addToast(`★ +50 Points awarded for claiming proximity deal!`, 'success');
+    addToast(t("points_awarded_proximity"), 'success');
     
     const generatedCode = `FREE-${alert.brandName.toUpperCase().replace(/\s+/g, '')}-VOUCHER`;
     setClaimedCoupons(prev => ({ ...prev, [alert.adId]: generatedCode }));
@@ -503,7 +498,7 @@ export function GeofenceAlert() {
 
   const handleCopy = (code: string) => {
     navigator.clipboard.writeText(code);
-    addToast("Voucher code copied to clipboard!", "success");
+    addToast(t("copied_to_clipboard"), "success");
   };
 
   if (alerts.length === 0) return null;
@@ -527,14 +522,14 @@ export function GeofenceAlert() {
               <span style={{ fontSize: '1.5rem' }}>📍</span>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '0.75rem', color: 'hsl(var(--primary))', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Proximity Deal Alert
+                  {t('proximity_deal_alert')}
                 </div>
                 <h4 style={{ margin: '0.15rem 0', fontSize: '0.95rem', fontWeight: 'bold' }}>{alert.brandName}</h4>
                 <p style={{ margin: 0, fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
                   {alert.headline}
                 </p>
                 <div style={{ fontSize: '0.8rem', marginTop: '0.35rem', color: 'white', fontWeight: '500' }}>
-                  🏃 {locale === 'es-PR' ? `A solo ${alert.distance} millas de ti (Brújula: ${bearing})!` : `Just ${alert.distance} miles away from you (Compass: ${bearing})!`}
+                  🏃 {t('proximity_distance_info', { distance: alert.distance, bearing })}
                 </div>
 
                 {location && (
@@ -555,15 +550,13 @@ export function GeofenceAlert() {
                       className="btn" 
                       style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                     >
-                      {locale === 'es-PR' ? 'Copiar código' : 'Copy Code'}
+                      {t('copy_code')}
                     </button>
                   </div>
                 ) : (
                   <div>
                     <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>
-                      {locale === 'es-PR' 
-                        ? '⚡ Caída de proximidad: ¡Rasca la tarjeta para desbloquear el cupón y reclamar +50 puntos de bono!' 
-                        : '⚡ Proximity Drop: Scratch card to unlock coupon & claim +50 bonus pts!'}
+                      {t('proximity_drop_desc')}
                     </p>
                     <ScratchCard 
                       brandName={alert.brandName}

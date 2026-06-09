@@ -14,7 +14,7 @@ interface Comment {
 }
 
 export function Comments({ adId }: { adId: string }) {
-  const { user } = useUser();
+  const { user, t } = useUser();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(true);
@@ -79,9 +79,9 @@ export function Comments({ adId }: { adId: string }) {
     <div style={{ padding: '1rem', borderTop: '1px solid hsl(var(--border))', background: 'hsl(var(--background)/0.5)', marginTop: '0.5rem' }}>
       <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
         {loading ? (
-          <div style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.85rem' }}>Loading comments...</div>
+          <div style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.85rem' }}>{t('loading_comments')}</div>
         ) : comments.length === 0 ? (
-          <div style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.85rem' }}>No comments yet. Be the first!</div>
+          <div style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.85rem' }}>{t('no_comments')}</div>
         ) : (
           comments.map(comment => (
             <div key={comment.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
@@ -107,15 +107,15 @@ export function Comments({ adId }: { adId: string }) {
             type="text" 
             value={newComment}
             onChange={e => setNewComment(e.target.value)}
-            placeholder="Add a comment..."
+            placeholder={t('add_comment_placeholder')}
             style={{ flex: 1, padding: '0.5rem 0.75rem', borderRadius: '1rem', border: '1px solid hsl(var(--border))', background: 'hsl(var(--input))', color: 'hsl(var(--foreground))', outline: 'none' }}
           />
           <button type="submit" disabled={!newComment.trim()} style={{ background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', border: 'none', borderRadius: '1rem', padding: '0 1rem', fontWeight: 500, cursor: newComment.trim() ? 'pointer' : 'not-allowed', opacity: newComment.trim() ? 1 : 0.5 }}>
-            Post
+            {t('post_comment')}
           </button>
         </form>
       ) : (
-        <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>Log in to comment.</div>
+        <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>{t('login_to_comment')}</div>
       )}
     </div>
   );

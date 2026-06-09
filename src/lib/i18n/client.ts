@@ -1,4 +1,5 @@
 import canonicalCatalog from './catalog.en-US.json';
+import spanishCatalog from './catalog.es-PR.json';
 
 export function normalizeLocale(locale: string): string {
   const trimmed = (locale || '').trim();
@@ -63,5 +64,6 @@ export async function getClientActiveCatalog(locale: string): Promise<Record<str
   }
 
   // Fallback to local catalog if REST fails (or offline)
-  return canonicalCatalog;
+  return norm === 'es-PR' ? spanishCatalog : canonicalCatalog;
 }
+

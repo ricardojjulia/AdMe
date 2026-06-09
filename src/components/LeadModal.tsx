@@ -13,7 +13,7 @@ interface LeadModalProps {
 }
 
 export function LeadModal({ isOpen, onClose, ad }: LeadModalProps) {
-  const { user, submitLead } = useUser();
+  const { user, submitLead, locale, t } = useUser();
   const { addToast } = useToast();
   const [message, setMessage] = useState("");
   const [contactInfo, setContactInfo] = useState("");
@@ -28,13 +28,13 @@ export function LeadModal({ isOpen, onClose, ad }: LeadModalProps) {
     setIsSubmitting(true);
     try {
       await submitLead(ad.id, message, contactInfo);
-      addToast("Inquiry sent anonymously!", "success");
+      addToast(t("inquiry_sent_success"), "success");
       setMessage("");
       setContactInfo("");
       onClose();
     } catch (err) {
       console.error(err);
-      addToast("Failed to submit inquiry. Please try again.", "error");
+      addToast(t("inquiry_sent_failed"), "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -50,31 +50,31 @@ export function LeadModal({ isOpen, onClose, ad }: LeadModalProps) {
         <button className={styles.closeBtn} onClick={onClose} aria-label="Close modal">✕</button>
         
         <header className={styles.header}>
-          <h3>Inquire about offer</h3>
-          <p className={styles.advertiser}>Campaign by {ad.advertiser.name}</p>
+          <h3>{t('inquire_title')}</h3>
+          <p className={styles.advertiser}>{t('campaign_by', { name: ad.advertiser.name })}</p>
         </header>
 
         <div className={styles.privacyAlert}>
-          🔒 **Privacy Guarantee**: Your query will be sent anonymously under user handle <span className={styles.uid}>{user?.name || "Anonymous"}</span>. The business will not see your email, phone, or name unless you write them below.
+          🔒 <span>{t('privacy_guarantee', { name: user?.name || t('anonymous') })}</span>
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit}>
           <label className={styles.field}>
-            <span>Message to business</span>
+            <span>{t('msg_to_business')}</span>
             <textarea 
               rows={4}
               required
-              placeholder="Hi, I'm interested in this offer. Could you share more details?"
+              placeholder={t('msg_placeholder')}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />
           </label>
 
           <label className={styles.field}>
-            <span>Callback info (optional)</span>
+            <span>{t('callback_info')}</span>
             <input 
               type="text"
-              placeholder="e.g. Email/Phone (only if you want a direct reply)"
+              placeholder={t('callback_placeholder')}
               value={contactInfo}
               onChange={(e) => setContactInfo(e.target.value)}
             />
@@ -86,7 +86,7 @@ export function LeadModal({ isOpen, onClose, ad }: LeadModalProps) {
             disabled={isSubmitting || !message.trim()}
             style={{ backgroundColor: ad.content.primaryColor, color: 'black', fontWeight: 'bold' }}
           >
-            {isSubmitting ? "Sending..." : "Submit Inquiry"}
+            {isSubmitting ? t('sending') : t('submit_inquiry')}
           </button>
         </form>
       </div>

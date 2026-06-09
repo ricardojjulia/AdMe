@@ -15,7 +15,7 @@ interface Coupon {
 }
 
 export function CouponWallet() {
-  const { coupons, user } = useUser();
+  const { coupons, user, locale, t } = useUser();
   const { addToast } = useToast();
   const [localCoupons, setLocalCoupons] = useState<Coupon[]>([]);
   const [activeCoupon, setActiveCoupon] = useState<Coupon | null>(null);
@@ -113,25 +113,27 @@ export function CouponWallet() {
         if (error) throw error;
       }
       
-      addToast("Coupon marked as redeemed successfully!", "success");
+      addToast(t("coupon_redeemed_success"), "success");
       setActiveCoupon(null);
     } catch (err) {
       console.error("Failed to update coupon status:", err);
-      addToast("Failed to update coupon in database.", "error");
+      addToast(t("coupon_update_failed"), "error");
     }
   };
 
   return (
     <section style={{ marginTop: '2rem' }}>
-      <h3>My Voucher Wallet</h3>
+      <h3>{t('coupon_wallet_title')}</h3>
       <p style={{ color: 'hsl(var(--muted-foreground))', margin: '-0.5rem 0 1rem 0' }}>
-        Show barcodes at checkout to claim your rewards in-store.
+        {t('coupon_wallet_desc')}
       </p>
 
       {localCoupons.length === 0 ? (
         <div className="glass" style={{ padding: '2rem', borderRadius: 'var(--radius)', textAlign: 'center', color: 'hsl(var(--muted-foreground))' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🎫</div>
-          <p style={{ margin: 0, fontSize: '0.9rem' }}>No redeemed vouchers yet. Use your points in the store below!</p>
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>
+            {t('coupon_wallet_empty')}
+          </p>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
@@ -166,7 +168,7 @@ export function CouponWallet() {
                   textTransform: 'uppercase',
                   border: '1px solid rgba(255,255,255,0.2)'
                 }}>
-                  Used
+                  {t('coupon_used_badge')}
                 </div>
               )}
 
@@ -174,7 +176,7 @@ export function CouponWallet() {
                 <div>
                   <h4 style={{ margin: 0, fontSize: '1.05rem', color: 'white' }}>{coupon.name}</h4>
                   <span style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>
-                    Redeemed on {new Date(coupon.created_at).toLocaleDateString()}
+                    {t('redeemed_on', { date: new Date(coupon.created_at).toLocaleDateString() })}
                   </span>
                 </div>
               </div>
@@ -190,7 +192,7 @@ export function CouponWallet() {
                     className="btn"
                     style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem', height: 'auto' }}
                   >
-                    View Barcode
+                    {t('view_barcode')}
                   </button>
                 )}
               </div>
@@ -227,7 +229,7 @@ export function CouponWallet() {
             border: '1px solid rgba(255,255,255,0.1)'
           }}>
             <div style={{ textAlign: 'center' }}>
-              <h3 style={{ margin: 0, color: 'white' }}>In-Store Scanner Voucher</h3>
+              <h3 style={{ margin: 0, color: 'white' }}>{t('in_store_voucher_title')}</h3>
               <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
                 {activeCoupon.name}
               </p>
@@ -252,14 +254,14 @@ export function CouponWallet() {
                 className="btn"
                 style={{ flex: 1, padding: '0.6rem', fontSize: '0.9rem', height: 'auto', background: 'hsl(var(--primary))', color: 'black' }}
               >
-                Mark as Used
+                {t('mark_as_used')}
               </button>
               <button 
                 onClick={() => setActiveCoupon(null)}
                 className="btn"
                 style={{ flex: 1, padding: '0.6rem', fontSize: '0.9rem', height: 'auto', background: 'rgba(255,255,255,0.08)', color: 'white', border: '1px solid rgba(255,255,255,0.15)' }}
               >
-                Close Wallet
+                {t('close_wallet')}
               </button>
             </div>
           </div>

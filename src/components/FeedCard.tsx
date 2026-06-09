@@ -48,7 +48,7 @@ export function FeedCard({ ad }: FeedCardProps) {
     addReward(50, `Value-Exchange: ${ad.advertiser.name}`);
     localStorage.setItem(`adme_interaction_completed_${ad.id}`, 'true');
     setIsInteractionCompleted(true);
-    addToast("Successfully completed! +50 points added to your balance.", "success");
+    addToast(t("reward_success_toast"), "success");
     
     setTimeout(() => {
       setActiveInteraction(false);
@@ -104,7 +104,7 @@ export function FeedCard({ ad }: FeedCardProps) {
 
   const handleSkip = () => {
     setIsSkipping(true);
-    addToast("Ad skipped. We'll show less of this.", "info");
+    addToast(t("ad_skipped_toast"), "info");
     setTimeout(() => {
       skipAd(ad.id);
     }, 400); // Wait for skip-out animation
@@ -131,14 +131,14 @@ export function FeedCard({ ad }: FeedCardProps) {
           <div>
             <p className={styles.name}>{ad.advertiser.name}</p>
             <p className={styles.meta}>
-              {ad.isBoosted && <span style={{ marginRight: '0.4rem', background: 'hsl(var(--primary)/0.2)', color: 'hsl(var(--primary))', padding: '0.1rem 0.3rem', borderRadius: '0.25rem', fontSize: '0.7rem', fontWeight: 'bold' }}>Featured</span>}
-              Sponsored · {ad.category}
-              {ad.distanceMiles !== undefined && ` · 📍 ${ad.distanceMiles.toFixed(1)} mi away`}
+              {ad.isBoosted && <span style={{ marginRight: '0.4rem', background: 'hsl(var(--primary)/0.2)', color: 'hsl(var(--primary))', padding: '0.1rem 0.3rem', borderRadius: '0.25rem', fontSize: '0.7rem', fontWeight: 'bold' }}>{t('featured')}</span>}
+              {t('sponsored')} · {ad.category}
+              {ad.distanceMiles !== undefined && ` · 📍 ${t('miles_away', { distance: ad.distanceMiles.toFixed(1) })}`}
             </p>
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <button type="button" className={styles.follow}>Follow</button>
+          <button type="button" className={styles.follow}>{t('follow')}</button>
           <div style={{ position: 'relative' }}>
             <button 
               onClick={() => setShowReportOptions(!showReportOptions)}
@@ -148,16 +148,21 @@ export function FeedCard({ ad }: FeedCardProps) {
             </button>
             {showReportOptions && (
               <div style={{ position: 'absolute', right: 0, top: '100%', background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '0.5rem', padding: '0.5rem', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: '150px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', padding: '0.25rem 0.5rem', color: 'hsl(var(--muted-foreground))' }}>Report Ad</div>
-                {['Spam', 'Offensive', 'Dangerous', 'Misleading'].map(reason => (
+                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', padding: '0.25rem 0.5rem', color: 'hsl(var(--muted-foreground))' }}>{t('report_ad')}</div>
+                {[
+                  { key: 'report_spam', label: 'Spam' },
+                  { key: 'report_offensive', label: 'Offensive' },
+                  { key: 'report_dangerous', label: 'Dangerous' },
+                  { key: 'report_misleading', label: 'Misleading' }
+                ].map(({ key, label }) => (
                   <button 
-                    key={reason}
-                    onClick={() => handleReport(reason)}
+                    key={key}
+                    onClick={() => handleReport(label)}
                     style={{ background: 'none', border: 'none', textAlign: 'left', padding: '0.5rem', cursor: 'pointer', borderRadius: '0.25rem', fontSize: '0.9rem', color: 'hsl(var(--foreground))' }}
                     onMouseOver={(e) => e.currentTarget.style.background = 'hsl(var(--muted))'}
                     onMouseOut={(e) => e.currentTarget.style.background = 'none'}
                   >
-                    {reason}
+                    {t(key)}
                   </button>
                 ))}
               </div>
@@ -170,13 +175,13 @@ export function FeedCard({ ad }: FeedCardProps) {
         <h3>{ad.content.headline}</h3>
         <p>{ad.content.text}</p>
         <div className={styles.badges}>
-          <span className={styles.badge}>Just in</span>
+          <span className={styles.badge}>{t('just_in')}</span>
           <span className={styles.badgeAccent}>{ad.cta.label}</span>
           
           {/* Value Exchange Interaction Badge */}
           {isInteractionCompleted ? (
             <span style={{ fontSize: '0.75rem', background: 'rgba(16, 185, 129, 0.15)', color: 'rgb(110, 231, 183)', padding: '0.2rem 0.5rem', borderRadius: '0.25rem', fontWeight: 'bold' }}>
-              ✅ Reward Claimed (+50 pts)
+              ✅ {t('reward_claimed')} (+50 pts)
             </span>
           ) : (
             <button
@@ -261,7 +266,7 @@ export function FeedCard({ ad }: FeedCardProps) {
             priority
           />
           <div className={styles.overlay}>
-            <span className={styles.overlayTag}>Immersive drop</span>
+            <span className={styles.overlayTag}>{t('immersive_drop')}</span>
             <a
               href={ad.cta.url}
               target="_blank"
@@ -293,7 +298,7 @@ export function FeedCard({ ad }: FeedCardProps) {
             onClick={() => toggleSavedAd(ad.id)}
             style={{ background: 'none', border: 'none', color: isSaved ? 'var(--primary)' : 'inherit', cursor: 'pointer', fontSize: 'inherit' }}
           >
-            {isSaved ? "★ Saved" : "☆ Save"}
+            {isSaved ? `★ ${t('saved')}` : `☆ ${t('save')}`}
           </button>
           <span>·</span>
           <button 
@@ -301,7 +306,7 @@ export function FeedCard({ ad }: FeedCardProps) {
             onClick={() => setIsLeadOpen(true)}
             style={{ background: 'none', border: 'none', color: 'hsl(var(--primary))', cursor: 'pointer', fontSize: 'inherit', fontWeight: 'bold' }}
           >
-            ✉ Contact
+            ✉ {t('contact')}
           </button>
         </div>
       </footer>

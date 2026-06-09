@@ -46,7 +46,7 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
     addReward(50, `Value-Exchange: ${ad.advertiser.name}`);
     localStorage.setItem(`adme_interaction_completed_${ad.id}`, 'true');
     setIsInteractionCompleted(true);
-    addToast("Successfully completed! +50 points added to your balance.", "success");
+    addToast(t("reward_success_toast"), "success");
     
     setTimeout(() => {
       setActiveInteraction(false);
@@ -93,7 +93,7 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
 
   const handleSkip = () => {
     setIsSkipping(true);
-    addToast("Ad skipped. We'll show less of this.", "info");
+    addToast(t("ad_skipped_toast"), "info");
     setTimeout(() => {
       skipAd(ad.id);
     }, 400);
@@ -165,16 +165,16 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
                 {ad.category}
               </span>
               <span className={styles.sponsor}>
-                {ad.isBoosted && <span style={{ marginRight: '0.4rem', background: 'hsl(var(--primary)/0.2)', color: 'hsl(var(--primary))', padding: '0.1rem 0.3rem', borderRadius: '0.25rem', fontSize: '0.7rem', fontWeight: 'bold' }}>Featured</span>}
-                • Sponsored by {ad.advertiser.name}
-                {ad.distanceMiles !== undefined && ` • 📍 ${ad.distanceMiles.toFixed(1)} mi away`}
+                {ad.isBoosted && <span style={{ marginRight: '0.4rem', background: 'hsl(var(--primary)/0.2)', color: 'hsl(var(--primary))', padding: '0.1rem 0.3rem', borderRadius: '0.25rem', fontSize: '0.7rem', fontWeight: 'bold' }}>{t('featured')}</span>}
+                • {t('sponsored')} · {ad.advertiser.name}
+                {ad.distanceMiles !== undefined && ` • 📍 ${t('miles_away', { distance: ad.distanceMiles.toFixed(1) })}`}
               </span>
             </div>
 
             {/* Value Exchange Interaction Badge */}
             {isInteractionCompleted ? (
               <span style={{ fontSize: '0.75rem', background: 'rgba(16, 185, 129, 0.15)', color: 'rgb(110, 231, 183)', padding: '0.2rem 0.5rem', borderRadius: '0.25rem', fontWeight: 'bold' }}>
-                ✅ Reward Claimed (+50 pts)
+                ✅ {t('reward_claimed')} (+50 pts)
               </span>
             ) : (
               <button
@@ -214,20 +214,25 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
               onClick={() => setShowReportOptions(!showReportOptions)}
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'hsl(var(--muted-foreground))', fontSize: '0.8rem', padding: '0', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
             >
-              ⚑ Report Ad
+              ⚑ {t('report_ad')}
             </button>
             {showReportOptions && (
               <div style={{ position: 'absolute', left: 0, bottom: '100%', marginBottom: '0.5rem', background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '0.5rem', padding: '0.5rem', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: '150px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', padding: '0.25rem 0.5rem', color: 'hsl(var(--muted-foreground))' }}>Report Ad</div>
-                {['Spam', 'Offensive', 'Dangerous', 'Misleading'].map(reason => (
+                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', padding: '0.25rem 0.5rem', color: 'hsl(var(--muted-foreground))' }}>{t('report_ad')}</div>
+                {[
+                  { key: 'report_spam', label: 'Spam' },
+                  { key: 'report_offensive', label: 'Offensive' },
+                  { key: 'report_dangerous', label: 'Dangerous' },
+                  { key: 'report_misleading', label: 'Misleading' }
+                ].map(({ key, label }) => (
                   <button 
-                    key={reason}
-                    onClick={() => handleReport(reason)}
+                    key={key}
+                    onClick={() => handleReport(label)}
                     style={{ background: 'none', border: 'none', textAlign: 'left', padding: '0.5rem', cursor: 'pointer', borderRadius: '0.25rem', fontSize: '0.9rem', color: 'hsl(var(--foreground))' }}
                     onMouseOver={(e) => e.currentTarget.style.background = 'hsl(var(--muted))'}
                     onMouseOut={(e) => e.currentTarget.style.background = 'none'}
                   >
-                    {reason}
+                    {t(key)}
                   </button>
                 ))}
               </div>
@@ -246,7 +251,7 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
               type="button" 
               className={`${styles.control} ${isSaved ? styles.saved : ''}`}
             >
-              ★ {isSaved ? "Saved" : "Save"}
+              ★ {isSaved ? t('saved') : t('save')}
             </button>
             <button 
               onClick={() => setIsLeadOpen(true)} 
@@ -254,7 +259,7 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
               className={styles.control}
               style={{ color: 'hsl(var(--primary))', fontWeight: 'bold' }}
             >
-              ✉ Contact
+              ✉ {t('contact')}
             </button>
             <button onClick={handleSkip} type="button" className={styles.control} aria-label="Skip ad" style={{marginLeft: 'auto'}}>✕</button>
           </div>

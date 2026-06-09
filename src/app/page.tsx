@@ -9,15 +9,8 @@ import { useUser } from "@/lib/UserContext";
 import { GeofenceAlert } from "@/components/GeofenceAlert";
 import styles from "./page.module.css";
 
-const spotlight = {
-  badge: "Spotlight drop",
-  brand: "Aurora Mobility",
-  headline: "Test drive the all-electric Verge at your doorstep.",
-  perks: ["Priority booking", "$200 accessory credit", "Concierge pickup"],
-};
-
-const topFilters = ["Tech & SaaS", "Local Eateries", "Faith & Books", "Auto under $40k", "Veteran-owned"];
-const sideFilters = ["Home & Garden", "Wellness & Health", "Gaming", "Finance"];
+const topFilters = ["Tech & SaaS", "Local Eateries", "Faith & Books", "Veteran-owned"];
+const sideFilters = ["Design", "Outdoors", "Gaming", "Wellness", "Beauty", "Finance"];
 
 export default function Home() {
   const { user, preferences, togglePreference, savedAds, switchRole, location, enableLocation, setLocation, locale, setLocale, t } = useUser();
@@ -25,17 +18,22 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
 
+  const spotlight = {
+    badge: t('spotlight_badge'),
+    brand: "Aurora Mobility",
+    headline: t('spotlight_headline'),
+    perks: [
+      t('spotlight_perk_1'),
+      t('spotlight_perk_2'),
+      t('spotlight_perk_3')
+    ],
+  };
+
   useEffect(() => {
     if (user && preferences.length === 0 && user.role !== 'business') {
       router.push('/onboarding');
     }
   }, [user, preferences, router]);
-
-  const insights = [
-    { label: "Live campaigns", value: "42", tone: "primary" },
-    { label: "Rewards in queue", value: `$${user?.rewardsBalance || 0}`, tone: "secondary" },
-    { label: "Saved offers", value: savedAds.length.toString(), tone: "muted" },
-  ];
 
   const handleTabClick = async (tab: string) => {
     if (tab === 'Local' && !location) {
@@ -65,14 +63,16 @@ export default function Home() {
           </div>
           <div>
             <p className={styles.brandTitle}>{t('app_name')}</p>
-            <p className={styles.brandTagline}>{user ? t('welcome_message', { name: user.name }) : 'Voluntary, beautiful ads built for you'}</p>
+            <p className={styles.brandTagline}>
+              {user ? t('welcome_message', { name: user.name }) : t('app_tagline')}
+            </p>
           </div>
         </div>
 
         <div className={styles.search}>
           <span aria-hidden className={styles.searchIcon}>⌕</span>
           <input 
-            placeholder="Search drops, perks, creators" 
+            placeholder={t('search_placeholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -98,7 +98,7 @@ export default function Home() {
                 onClick={() => switchRole(user?.role === 'consumer' ? 'business' : 'consumer')}
                 style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
               >
-                Switch to {user?.role === 'consumer' ? 'Business' : 'Consumer'}
+                {user?.role === 'consumer' ? t('switch_role_business') : t('switch_role_consumer')}
               </button>
               <button type="button" className={styles.iconButton} aria-label="Notifications">🔔</button>
               <Link href="/profile" className={styles.iconButton} aria-label="Saved" style={{ textDecoration: 'none' }}>★</Link>
@@ -110,12 +110,9 @@ export default function Home() {
 
       <section className={styles.hero}>
         <div className={styles.heroCopy}>
-          <div className={styles.eyebrow}>Curated for you</div>
-          <h1>Discover campaigns you actually asked to see.</h1>
-          <p>
-            Follow brands, toggle categories, and let the feed surprise you. Your attention is the currency—
-            pick where you want to spend it.
-          </p>
+          <div className={styles.eyebrow}>{t('hero_eyebrow')}</div>
+          <h1>{t('hero_title')}</h1>
+          <p>{t('hero_description')}</p>
 
           <div className={styles.filterRow}>
             {topFilters.map((filter) => {
@@ -128,7 +125,7 @@ export default function Home() {
                   onClick={() => togglePreference(filter)}
                   style={isActive ? { backgroundColor: 'var(--foreground)', color: 'var(--background)' } : {}}
                 >
-                  {filter}
+                  {t(filter)}
                 </button>
               );
             })}
@@ -153,7 +150,7 @@ export default function Home() {
                 {user && user.currentStreak > 0 && (
                   <div className={`${styles.insightCard} ${styles.secondary} hover-lift`}>
                     <span className={styles.insightValue}>🔥 {user.currentStreak}</span>
-                    <span className={styles.insightLabel}>Day Streak</span>
+                    <span className={styles.insightLabel}>{t('day_streak')}</span>
                   </div>
                 )}
               </>
@@ -165,7 +162,7 @@ export default function Home() {
               style={{ cursor: 'pointer' }}
             >
               <span className={styles.insightValue}>⟲</span>
-              <span className={styles.insightLabel}>Switch Role</span>
+              <span className={styles.insightLabel}>{t('switch_role')}</span>
             </div>
           </div>
         </div>
@@ -179,7 +176,7 @@ export default function Home() {
               <span key={perk} className={styles.perkChip}>{perk}</span>
             ))}
           </div>
-          <button type="button" className={styles.cta}>Preview offer</button>
+          <button type="button" className={styles.cta}>{t('preview_offer')}</button>
         </div>
       </section>
 
@@ -191,22 +188,24 @@ export default function Home() {
                 onClick={() => handleTabClick('For You')} 
                 className={`${styles.tab} ${activeTab === 'For You' ? styles.active : ''}`}
               >
-                For you
+                {t('tab_for_you')}
               </button>
               <button 
                 onClick={() => handleTabClick('Local')} 
                 className={`${styles.tab} ${activeTab === 'Local' ? styles.active : ''}`}
               >
-                Local {location ? '📍' : ''}
+                {t('tab_local')} {location ? '📍' : ''}
               </button>
               <button 
                 onClick={() => handleTabClick('Trending')} 
                 className={`${styles.tab} ${activeTab === 'Trending' ? styles.active : ''}`}
               >
-                Trending
+                {t('tab_trending')}
               </button>
             </div>
-            <div className={styles.pill}>Ad frequency: Balanced</div>
+            <div className={styles.pill}>
+              {t('ad_frequency_balanced')}
+            </div>
           </div>
           <Feed searchQuery={searchQuery} activeTab={activeTab} />
         </div>
@@ -214,8 +213,8 @@ export default function Home() {
         <aside className={styles.sidebar}>
           <div className={styles.sideCard}>
             <div className={styles.sideHeader}>
-              <h4>Tune your vibe</h4>
-              <span className={styles.sideMeta}>Realtime</span>
+              <h4>{t('tune_vibe')}</h4>
+              <span className={styles.sideMeta}>{t('realtime')}</span>
             </div>
             <div className={styles.sideGrid}>
               {sideFilters.map((item) => {
@@ -228,7 +227,7 @@ export default function Home() {
                     onClick={() => togglePreference(item)}
                     style={isActive ? { backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)', borderColor: 'var(--primary)' } : {}}
                   >
-                    {item}
+                    {t(item)}
                   </button>
                 );
               })}
@@ -237,8 +236,8 @@ export default function Home() {
 
           <div className={styles.sideCard}>
             <div className={styles.sideHeader}>
-              <h4>Brands you follow</h4>
-              <span className={styles.sideMeta}>5 new</span>
+              <h4>{t('brands_follow')}</h4>
+              <span className={styles.sideMeta}>{t('brands_new_count')}</span>
             </div>
             <div className={styles.brandList}>
               {["Lumen", "UrbanEat", "Shift Studio", "Wayfinder", "Monocle"].map((brand) => (
@@ -246,9 +245,9 @@ export default function Home() {
                   <div className={styles.brandAvatar}>{brand[0]}</div>
                   <div>
                     <p className={styles.brandName}>{brand}</p>
-                    <p className={styles.brandSubtext}>Fresh drops this week</p>
+                    <p className={styles.brandSubtext}>{t('fresh_drops')}</p>
                   </div>
-                  <button type="button" className={styles.followButton}>Following</button>
+                  <button type="button" className={styles.followButton}>{t('following')}</button>
                 </div>
               ))}
             </div>
@@ -257,12 +256,12 @@ export default function Home() {
           {/* Proximity Simulator Widget Card */}
           <div className={styles.sideCard}>
             <div className={styles.sideHeader}>
-              <h4>📍 Proximity Simulator</h4>
+              <h4>📍 {t('proximity_simulator')}</h4>
               <span className={styles.sideMeta}>Local Mock</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.75rem' }}>
               <p style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))', margin: '0 0 0.25rem 0', lineHeight: '1.3' }}>
-                Simulate walking near local hotspots to trigger geofenced deals.
+                {t('proximity_desc')}
               </p>
               <button 
                 type="button" 
@@ -270,7 +269,7 @@ export default function Home() {
                 className="btn" 
                 style={{ display: 'flex', justifyContent: 'flex-start', padding: '0.5rem 0.75rem', fontSize: '0.85rem', background: location?.lat === 34.0196 ? 'hsl(var(--primary)/0.2)' : 'hsl(var(--muted))', color: location?.lat === 34.0196 ? 'hsl(var(--primary))' : 'white', border: location?.lat === 34.0196 ? '1px solid hsl(var(--primary))' : '1px solid transparent', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: '500' }}
               >
-                ☕ At Valor Brews Coffee
+                {t('at_valor_brews')}
               </button>
               <button 
                 type="button" 
@@ -278,7 +277,7 @@ export default function Home() {
                 className="btn" 
                 style={{ display: 'flex', justifyContent: 'flex-start', padding: '0.5rem 0.75rem', fontSize: '0.85rem', background: location?.lat === 34.0123 ? 'hsl(var(--primary)/0.2)' : 'hsl(var(--muted))', color: location?.lat === 34.0123 ? 'hsl(var(--primary))' : 'white', border: location?.lat === 34.0123 ? '1px solid hsl(var(--primary))' : '1px solid transparent', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: '500' }}
               >
-                🥗 At The Green Kitchen
+                {t('at_green_kitchen')}
               </button>
               <button 
                 type="button" 
@@ -286,7 +285,7 @@ export default function Home() {
                 className="btn" 
                 style={{ display: 'flex', justifyContent: 'flex-start', padding: '0.5rem 0.75rem', fontSize: '0.85rem', background: location?.lat === 34.0523 ? 'hsl(var(--primary)/0.2)' : 'hsl(var(--muted))', color: location?.lat === 34.0523 ? 'hsl(var(--primary))' : 'white', border: location?.lat === 34.0523 ? '1px solid hsl(var(--primary))' : '1px solid transparent', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: '500' }}
               >
-                🚗 At Nomad Motors HQ
+                {t('at_nomad_motors')}
               </button>
               <button 
                 type="button" 
@@ -294,7 +293,7 @@ export default function Home() {
                 className="btn" 
                 style={{ display: 'flex', justifyContent: 'flex-start', padding: '0.5rem 0.75rem', fontSize: '0.85rem', background: location?.lat === 37.7750 ? 'hsl(var(--primary)/0.2)' : 'hsl(var(--muted))', color: location?.lat === 37.7750 ? 'hsl(var(--primary))' : 'white', border: location?.lat === 37.7750 ? '1px solid hsl(var(--primary))' : '1px solid transparent', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: '500' }}
               >
-                🌉 SF Downtown
+                {t('sf_downtown')}
               </button>
               {location && (
                 <button 
@@ -303,7 +302,7 @@ export default function Home() {
                   className="btn" 
                   style={{ padding: '0.5rem', fontSize: '0.85rem', background: 'hsl(var(--destructive)/0.2)', color: 'hsl(var(--destructive))', border: '1px solid hsl(var(--destructive)/0.4)', borderRadius: '0.5rem', cursor: 'pointer', marginTop: '0.25rem', fontWeight: 'bold' }}
                 >
-                  ❌ Clear Mock Location
+                  {t('clear_mock_location')}
                 </button>
               )}
             </div>
@@ -316,3 +315,4 @@ export default function Home() {
     </div>
   );
 }
+

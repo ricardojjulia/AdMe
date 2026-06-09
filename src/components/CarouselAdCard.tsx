@@ -16,7 +16,7 @@ interface CarouselAdCardProps {
 
 export function CarouselAdCard({ ad }: CarouselAdCardProps) {
   const { ref, logClick, logLike, isLiked } = useEngagementAnalytics(ad.id);
-  const { toggleSavedAd, savedAds, reportAd, skipAd } = useUser();
+  const { toggleSavedAd, savedAds, reportAd, skipAd, t } = useUser();
   const { addToast } = useToast();
   const isSaved = savedAds.includes(ad.id);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -78,7 +78,7 @@ export function CarouselAdCard({ ad }: CarouselAdCardProps) {
 
   const handleSkip = () => {
     setIsSkipping(true);
-    addToast("Ad skipped. We'll show less of this.", "info");
+    addToast(t("ad_skipped_toast"), "info");
     setTimeout(() => {
       skipAd(ad.id);
     }, 400);
@@ -99,9 +99,9 @@ export function CarouselAdCard({ ad }: CarouselAdCardProps) {
           <div>
             <p className={styles.name}>{ad.advertiser.name}</p>
             <p className={styles.meta}>
-              {ad.isBoosted && <span style={{ marginRight: '0.4rem', background: 'hsl(var(--primary)/0.2)', color: 'hsl(var(--primary))', padding: '0.1rem 0.3rem', borderRadius: '0.25rem', fontSize: '0.7rem', fontWeight: 'bold' }}>Featured</span>}
-              Sponsored · {ad.category}
-              {ad.distanceMiles !== undefined && ` · 📍 ${ad.distanceMiles.toFixed(1)} mi away`}
+              {ad.isBoosted && <span style={{ marginRight: '0.4rem', background: 'hsl(var(--primary)/0.2)', color: 'hsl(var(--primary))', padding: '0.1rem 0.3rem', borderRadius: '0.25rem', fontSize: '0.7rem', fontWeight: 'bold' }}>{t('featured')}</span>}
+              {t('sponsored')} · {ad.category}
+              {ad.distanceMiles !== undefined && ` · 📍 ${t('miles_away', { distance: ad.distanceMiles.toFixed(1) })}`}
             </p>
           </div>
         </div>
@@ -115,16 +115,21 @@ export function CarouselAdCard({ ad }: CarouselAdCardProps) {
             </button>
             {showReportOptions && (
               <div style={{ position: 'absolute', right: 0, top: '100%', background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '0.5rem', padding: '0.5rem', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: '150px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', padding: '0.25rem 0.5rem', color: 'hsl(var(--muted-foreground))' }}>Report Ad</div>
-                {['Spam', 'Offensive', 'Dangerous', 'Misleading'].map(reason => (
+                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', padding: '0.25rem 0.5rem', color: 'hsl(var(--muted-foreground))' }}>{t('report_ad')}</div>
+                {[
+                  { key: 'report_spam', label: 'Spam' },
+                  { key: 'report_offensive', label: 'Offensive' },
+                  { key: 'report_dangerous', label: 'Dangerous' },
+                  { key: 'report_misleading', label: 'Misleading' }
+                ].map(({ key, label }) => (
                   <button 
-                    key={reason}
-                    onClick={() => handleReport(reason)}
+                    key={key}
+                    onClick={() => handleReport(label)}
                     style={{ background: 'none', border: 'none', textAlign: 'left', padding: '0.5rem', cursor: 'pointer', borderRadius: '0.25rem', fontSize: '0.9rem', color: 'hsl(var(--foreground))' }}
                     onMouseOver={(e) => e.currentTarget.style.background = 'hsl(var(--muted))'}
                     onMouseOut={(e) => e.currentTarget.style.background = 'none'}
                   >
-                    {reason}
+                    {t(key)}
                   </button>
                 ))}
               </div>
@@ -187,7 +192,7 @@ export function CarouselAdCard({ ad }: CarouselAdCardProps) {
             onClick={() => toggleSavedAd(ad.id)}
             style={{ background: 'none', border: 'none', color: isSaved ? 'var(--primary)' : 'inherit', cursor: 'pointer', fontSize: 'inherit' }}
           >
-            {isSaved ? "★ Saved" : "☆ Save"}
+            {isSaved ? `★ ${t('saved')}` : `☆ ${t('save')}`}
           </button>
           <span style={{ margin: '0 0.5rem', color: 'hsl(var(--border))' }}>·</span>
           <button 
@@ -195,7 +200,7 @@ export function CarouselAdCard({ ad }: CarouselAdCardProps) {
             onClick={() => setIsLeadOpen(true)}
             style={{ background: 'none', border: 'none', color: 'hsl(var(--primary))', cursor: 'pointer', fontSize: 'inherit', fontWeight: 'bold' }}
           >
-            ✉ Contact Business
+            ✉ {t('contact')}
           </button>
         </div>
       </footer>

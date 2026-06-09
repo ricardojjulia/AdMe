@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { createClient } from "@/lib/supabase/client";
 import canonicalCatalog from "./i18n/catalog.en-US.json";
+import spanishCatalog from "./i18n/catalog.es-PR.json";
 
 interface User {
   id: string;
@@ -166,7 +167,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
         lookupKey = pluralKey;
       }
     }
-    const msg = catalog[lookupKey] || canonicalCatalog[lookupKey as keyof typeof canonicalCatalog] || key;
+    const msg = catalog[lookupKey] || 
+                (locale.startsWith('es') ? (spanishCatalog as Record<string, string>)[lookupKey] : undefined) ||
+                canonicalCatalog[lookupKey as keyof typeof canonicalCatalog] || 
+                key;
     return msg.replace(/\{([A-Za-z0-9_]+)\}/g, (match, name) => {
       return name in variables ? String(variables[name]) : match;
     });

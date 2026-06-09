@@ -47,12 +47,12 @@ export default function ProfilePage() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     
-    addToast("Data package exported successfully!", "success");
+    addToast(t('export_success_toast'), "success");
   };
 
   const handleForgetMe = async () => {
     if (!user) return;
-    if (!confirm("Are you sure you want to delete your anonymous profile footprint? This will permanently erase all your data, preferences, coupons, history, and reset your account.")) {
+    if (!confirm(t('forget_me_confirm'))) {
       return;
     }
 
@@ -73,7 +73,7 @@ export default function ProfilePage() {
     }
 
     localStorage.clear();
-    addToast("All data permanently purged! Returning to landing page.", "success");
+    addToast(t('purge_success_toast'), "success");
     
     setTimeout(() => {
       window.location.href = "/";
@@ -140,15 +140,15 @@ export default function ProfilePage() {
     <main className={`container ${styles.shell} animate-fade-in`}>
       <header className={styles.header}>
         <div className={styles.headerTop}>
-          <Link href="/" className={styles.backBtn}>← Back to Feed</Link>
+          <Link href="/" className={styles.backBtn}>← {t('back_to_feed')}</Link>
         </div>
-        <h1 className={styles.title}>Your Profile</h1>
+        <h1 className={styles.title}>{t('profile_title')}</h1>
         <div className={styles.userInfo}>
           <div className={styles.avatar}>{user.avatar}</div>
           <div>
             <h2 style={{ margin: 0, fontSize: '1.2rem' }}>{user.name}</h2>
             <div style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem' }}>
-              🔥 {user.currentStreak} Day Streak • ★ {savedAds.length} Saved
+              🔥 {user.currentStreak} {t('day_streak')} • ★ {savedAds.length} {t('saved')}
             </div>
           </div>
         </div>
@@ -159,26 +159,26 @@ export default function ProfilePage() {
           className={`${styles.tab} ${activeTab === 'Preferences' ? styles.active : ''}`}
           onClick={() => setActiveTab('Preferences')}
         >
-          Preferences
+          {t('tab_preferences')}
         </button>
         <button 
           className={`${styles.tab} ${activeTab === 'Wallet' ? styles.active : ''}`}
           onClick={() => setActiveTab('Wallet')}
         >
-          Ad Wallet
+          {t('tab_wallet')}
         </button>
         <button 
           className={`${styles.tab} ${activeTab === 'Controls' ? styles.active : ''}`}
           onClick={() => setActiveTab('Controls')}
         >
-          Ad Controls
+          {t('tab_controls')}
         </button>
       </div>
 
       {activeTab === 'Preferences' && (
         <section className={`${styles.section} animate-fade-in`}>
           <p style={{ color: 'hsl(var(--muted-foreground))', marginBottom: '1rem' }}>
-            Tune your algorithm. Select the categories you want to see in your feed.
+            {t('preferences_desc')}
           </p>
           <div className={styles.preferencesGrid}>
             {ALL_CATEGORIES.map((cat) => {
@@ -189,7 +189,7 @@ export default function ProfilePage() {
                   onClick={() => togglePreference(cat)}
                   className={`${styles.prefChip} ${isActive ? styles.active : ''} hover-lift`}
                 >
-                  {cat}
+                  {t(cat)}
                 </button>
               );
             })}
@@ -201,27 +201,27 @@ export default function ProfilePage() {
         <section className={`${styles.section} animate-fade-in`}>
           {/* Active Coupons Section */}
           <div style={{ marginBottom: '2rem' }}>
-            <h3 style={{ marginBottom: '0.75rem' }}>Your Active Vouchers & Coupons</h3>
+            <h3 style={{ marginBottom: '0.75rem' }}>{t('active_vouchers')}</h3>
             {coupons.length === 0 ? (
               <div style={{ padding: '1.5rem', background: 'hsl(var(--muted)/0.3)', border: '1px dashed hsl(var(--border))', borderRadius: 'var(--radius)', color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem', textAlign: 'center' }}>
-                🎟️ No active coupons yet. Go to the Rewards Hub to redeem your points!
+                🎟️ {t('no_active_coupons')}
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
                 {coupons.map((coupon) => (
                   <div key={coupon.id} className="glass" style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid hsl(var(--primary)/0.3)', display: 'flex', flexDirection: 'column', gap: '0.5rem', position: 'relative' }}>
-                    <div style={{ fontSize: '0.75rem', color: 'hsl(var(--primary))', fontWeight: 'bold', textTransform: 'uppercase' }}>Voucher</div>
+                    <div style={{ fontSize: '0.75rem', color: 'hsl(var(--primary))', fontWeight: 'bold', textTransform: 'uppercase' }}>{t('coupon_tag')}</div>
                     <h4 style={{ margin: 0, fontSize: '1rem' }}>{coupon.name}</h4>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.5rem' }}>
                       <code style={{ background: 'hsl(var(--muted))', padding: '0.2rem 0.5rem', borderRadius: '0.25rem', fontSize: '0.85rem', fontWeight: 'bold' }}>{coupon.code}</code>
                       <button 
                         onClick={() => {
                           navigator.clipboard.writeText(coupon.code);
-                          addToast("Coupon code copied!", "success");
+                          addToast(t('copied_toast'), "success");
                         }}
                         style={{ background: 'none', border: 'none', color: 'hsl(var(--primary))', cursor: 'pointer', fontSize: '0.8rem', textDecoration: 'underline' }}
                       >
-                        Copy
+                        {t('copy')}
                       </button>
                     </div>
                   </div>
@@ -230,16 +230,16 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <h3 style={{ marginBottom: '0.75rem' }}>Saved Offers & Drops</h3>
+          <h3 style={{ marginBottom: '0.75rem' }}>{t('saved_offers')}</h3>
           {savedAds.length === 0 ? (
             <div className={styles.emptyState}>
               <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>📭</div>
-              <h3>Your wallet is empty</h3>
-              <p>Save ads in the feed by clicking the ★ icon.</p>
-              <Link href="/" className="btn" style={{ marginTop: '1rem' }}>Explore Feed</Link>
+              <h3>{t('wallet_empty_title')}</h3>
+              <p>{t('wallet_empty_desc')}</p>
+              <Link href="/" className="btn" style={{ marginTop: '1rem' }}>{t('explore_feed')}</Link>
             </div>
           ) : loadingWallet ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: 'hsl(var(--muted-foreground))' }}>Loading your wallet...</div>
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'hsl(var(--muted-foreground))' }}>{t('loading_wallet')}</div>
           ) : (
             <div className={styles.walletGrid}>
               {walletAds.map((ad) => (
@@ -253,15 +253,15 @@ export default function ProfilePage() {
       {activeTab === 'Controls' && (
         <section className={`${styles.section} animate-fade-in`}>
           <p style={{ color: 'hsl(var(--muted-foreground))', marginBottom: '1rem' }}>
-            Customize your ad delivery settings, quiet hours, and channel notifications.
+            {t('controls_desc')}
           </p>
           
           <div className={styles.controlGrid}>
             {/* Ad Frequency */}
             <div className={styles.controlCard}>
               <div>
-                <h3 className={styles.controlGroupTitle}>Ad Insertion Frequency</h3>
-                <p className={styles.controlGroupDesc}>Control how often sponsored drops and native campaigns populate your feed.</p>
+                <h3 className={styles.controlGroupTitle}>{t('ad_frequency_title')}</h3>
+                <p className={styles.controlGroupDesc}>{t('ad_frequency_desc')}</p>
               </div>
               <div className={styles.freqSelector}>
                 <button 
@@ -269,41 +269,41 @@ export default function ProfilePage() {
                   className={`${styles.freqBtn} ${adFrequency === 'low' ? styles.active : ''}`}
                   onClick={() => updateAdControlSettings({ adFrequency: 'low' })}
                 >
-                  Low
+                  {t('low')}
                 </button>
                 <button 
                   type="button" 
                   className={`${styles.freqBtn} ${adFrequency === 'balanced' ? styles.active : ''}`}
                   onClick={() => updateAdControlSettings({ adFrequency: 'balanced' })}
                 >
-                  Balanced
+                  {t('balanced')}
                 </button>
                 <button 
                   type="button" 
                   className={`${styles.freqBtn} ${adFrequency === 'high' ? styles.active : ''}`}
                   onClick={() => updateAdControlSettings({ adFrequency: 'high' })}
                 >
-                  High
+                  {t('high')}
                 </button>
               </div>
               <div className={styles.freqExplain}>
-                {adFrequency === 'low' && "🐢 Low: Fewer ad insertions. Focuses only on highly matched preferences."}
-                {adFrequency === 'balanced' && "⚖️ Balanced: Standard delivery cadence."}
-                {adFrequency === 'high' && "🚀 High: Max drops. Optimized to build rewards fast."}
+                {adFrequency === 'low' && t('low_explain')}
+                {adFrequency === 'balanced' && t('balanced_explain')}
+                {adFrequency === 'high' && t('high_explain')}
               </div>
             </div>
 
             {/* Delivery Channels */}
             <div className={styles.controlCard}>
               <div>
-                <h3 className={styles.controlGroupTitle}>Delivery Channels</h3>
-                <p className={styles.controlGroupDesc}>Enable or disable direct ad placements by channel.</p>
+                <h3 className={styles.controlGroupTitle}>{t('delivery_channels_title')}</h3>
+                <p className={styles.controlGroupDesc}>{t('delivery_channels_desc')}</p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <div className={styles.channelRow}>
                   <div className={styles.channelLabel}>
-                    <span className={styles.channelName}>Feed-based Placements</span>
-                    <span className={styles.channelDesc}>Display native cards directly in your content feed.</span>
+                    <span className={styles.channelName}>{t('feed_placements')}</span>
+                    <span className={styles.channelDesc}>{t('feed_placements_desc')}</span>
                   </div>
                   <label className={styles.switch}>
                     <input 
@@ -319,8 +319,8 @@ export default function ProfilePage() {
 
                 <div className={styles.channelRow}>
                   <div className={styles.channelLabel}>
-                    <span className={styles.channelName}>📍 Geofenced Alerts</span>
-                    <span className={styles.channelDesc}>Receive proximity card pop-ups when walking near saved locations.</span>
+                    <span className={styles.channelName}>📍 {t('geofenced_alerts')}</span>
+                    <span className={styles.channelDesc}>{t('geofenced_alerts_desc')}</span>
                   </div>
                   <label className={styles.switch}>
                     <input 
@@ -336,8 +336,8 @@ export default function ProfilePage() {
 
                 <div className={styles.channelRow}>
                   <div className={styles.channelLabel}>
-                    <span className={styles.channelName}>Push Notifications</span>
-                    <span className={styles.channelDesc}>Simulated push delivery for real-time campaign alerts.</span>
+                    <span className={styles.channelName}>{t('push_notifications')}</span>
+                    <span className={styles.channelDesc}>{t('push_notifications_desc')}</span>
                   </div>
                   <label className={styles.switch}>
                     <input 
@@ -357,8 +357,8 @@ export default function ProfilePage() {
             <div className={styles.controlCard}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <h3 className={styles.controlGroupTitle}>Quiet Hours</h3>
-                  <p className={styles.controlGroupDesc}>Temporarily mute proximity triggers during specific times.</p>
+                  <h3 className={styles.controlGroupTitle}>{t('quiet_hours_title')}</h3>
+                  <p className={styles.controlGroupDesc}>{t('quiet_hours_desc')}</p>
                 </div>
                 <label className={styles.switch}>
                   <input 
@@ -375,7 +375,7 @@ export default function ProfilePage() {
               {quietHours.enabled && (
                 <div className={styles.timeInputRow}>
                   <div className={styles.timeField}>
-                    <label>Start Mute</label>
+                    <label>{t('start_mute')}</label>
                     <input 
                       type="time" 
                       className={styles.timeInput}
@@ -386,7 +386,7 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div className={styles.timeField}>
-                    <label>End Mute</label>
+                    <label>{t('end_mute')}</label>
                     <input 
                       type="time" 
                       className={styles.timeInput}
@@ -403,8 +403,8 @@ export default function ProfilePage() {
             {/* Language Preference */}
             <div className={styles.controlCard}>
               <div>
-                <h3 className={styles.controlGroupTitle}>Language Preference</h3>
-                <p className={styles.controlGroupDesc}>Choose your preferred language for the interface and ad content.</p>
+                <h3 className={styles.controlGroupTitle}>{t('lang_pref_title')}</h3>
+                <p className={styles.controlGroupDesc}>{t('lang_pref_desc')}</p>
               </div>
               <div style={{ marginTop: '0.75rem' }}>
                 <select
@@ -441,27 +441,27 @@ export default function ProfilePage() {
             {/* Privacy & Consent Ledger Card */}
             <div className={styles.controlCard} style={{ gridColumn: '1 / -1', marginTop: '0.5rem' }}>
               <div>
-                <h3 className={styles.controlGroupTitle}>🛡️ Privacy Ledger & Consent Control</h3>
+                <h3 className={styles.controlGroupTitle}>🛡️ {t('privacy_ledger_title')}</h3>
                 <p className={styles.controlGroupDesc}>
-                  As a privacy-first platform, your real identity is never exposed. Review your anonymous profile ledger and manage your consent.
+                  {t('privacy_ledger_desc')}
                 </p>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'hsl(var(--muted)/0.2)', padding: '1rem', borderRadius: '6px', border: '1px solid hsl(var(--border)/0.5)', fontSize: '0.85rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'hsl(var(--muted-foreground))' }}>Anonymous UID:</span>
+                  <span style={{ color: 'hsl(var(--muted-foreground))' }}>{t('anonymous_uid')}</span>
                   <code style={{ color: 'hsl(var(--primary))', fontWeight: 'bold' }}>{user.id}</code>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'hsl(var(--muted-foreground))' }}>Shared Preferences:</span>
+                  <span style={{ color: 'hsl(var(--muted-foreground))' }}>{t('shared_preferences')}</span>
                   <span style={{ color: 'white' }}>{preferences.length > 0 ? preferences.join(', ') : 'None'}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'hsl(var(--muted-foreground))' }}>Saved Wallet Offers:</span>
+                  <span style={{ color: 'hsl(var(--muted-foreground))' }}>{t('saved_wallet_offers')}</span>
                   <span style={{ color: 'white' }}>{savedAds.length} offers</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'hsl(var(--muted-foreground))' }}>Voucher Coupons:</span>
+                  <span style={{ color: 'hsl(var(--muted-foreground))' }}>{t('voucher_coupons')}</span>
                   <span style={{ color: 'white' }}>{coupons.length} vouchers</span>
                 </div>
               </div>
@@ -473,7 +473,7 @@ export default function ProfilePage() {
                   className="btn"
                   style={{ flexGrow: 1, padding: '0.6rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}
                 >
-                  📥 Export Anonymous Data Package
+                  📥 {t('export_data_btn')}
                 </button>
                 
                 <button
@@ -484,7 +484,7 @@ export default function ProfilePage() {
                   onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)'}
                   onMouseOut={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'}
                 >
-                  ⚠️ Forget Me & Purge Footprint
+                  ⚠️ {t('forget_me_btn')}
                 </button>
               </div>
             </div>
@@ -513,6 +513,7 @@ interface VisualizerProps {
 export function FeedDensityVisualizer({ adFrequency, quietHours }: VisualizerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [simHour, setSimHour] = useState(new Date().getHours());
+  const { t } = useUser();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -624,14 +625,14 @@ export function FeedDensityVisualizer({ adFrequency, quietHours }: VisualizerPro
   }, [simHour, adFrequency, quietHours]);
 
   const isCurrentMuted = quietHours.enabled && isHourInInterval(simHour, quietHours.start, quietHours.end);
-  const statusLabel = isCurrentMuted ? "🔴 Muted (Quiet Hours)" : "🟢 Active Delivery";
-  const exposureLevel = adFrequency === 'low' ? "~3 ads (Low)" : (adFrequency === 'balanced' ? "~6 ads (Balanced)" : "~10 ads (High)");
+  const statusLabel = isCurrentMuted ? t('visualizer_muted_status') : t('visualizer_active_status');
+  const exposureLevel = adFrequency === 'low' ? t('low_ads') : (adFrequency === 'balanced' ? t('balanced_ads') : t('high_ads'));
   const availabilityPct = isCurrentMuted ? 0 : (adFrequency === 'low' ? 30 : (adFrequency === 'balanced' ? 60 : 90));
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 'bold' }}>Delivery Simulator & Feed Density Visualizer</h3>
+        <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 'bold' }}>{t('visualizer_title')}</h3>
         <span style={{ fontSize: '0.8rem', color: isCurrentMuted ? 'rgb(248, 113, 113)' : 'rgb(52, 211, 153)', fontWeight: 'bold' }}>
           {statusLabel}
         </span>
@@ -659,7 +660,7 @@ export function FeedDensityVisualizer({ adFrequency, quietHours }: VisualizerPro
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>
-          <span>Simulated Time Slider:</span>
+          <span>{t('simulated_time_slider')}</span>
           <span style={{ fontWeight: 'bold', color: 'white' }}>{String(simHour).padStart(2, '0')}:00</span>
         </div>
         <input 
@@ -682,13 +683,13 @@ export function FeedDensityVisualizer({ adFrequency, quietHours }: VisualizerPro
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.25rem' }}>
         <div className="glass" style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <div style={{ fontSize: '0.65rem', color: 'hsl(var(--muted-foreground))' }}>Estimated Daily Ads</div>
+          <div style={{ fontSize: '0.65rem', color: 'hsl(var(--muted-foreground))' }}>{t('estimated_daily_ads')}</div>
           <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'white', marginTop: '0.15rem' }}>{exposureLevel}</div>
         </div>
         <div className="glass" style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <div style={{ fontSize: '0.65rem', color: 'hsl(var(--muted-foreground))' }}>Time availability</div>
+          <div style={{ fontSize: '0.65rem', color: 'hsl(var(--muted-foreground))' }}>{t('time_availability')}</div>
           <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: isCurrentMuted ? 'rgb(248, 113, 113)' : 'rgb(52, 211, 153)', marginTop: '0.15rem' }}>
-            {availabilityPct}% Delivery
+            {availabilityPct}% {t('delivery')}
           </div>
         </div>
       </div>
