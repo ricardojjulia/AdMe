@@ -18,7 +18,7 @@
     "@localization-governance/storage-postgres": "file:./tarballs/localization-governance-storage-postgres-0.1.0.tgz",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.105.1",
-    "next": "16.0.8",
+    "next": "16.2.6",
     "pg": "^8.21.0",
     "react": "19.2.1",
     "react-dom": "19.2.1"
