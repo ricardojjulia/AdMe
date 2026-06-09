@@ -20,7 +20,7 @@ const topFilters = ["Tech & SaaS", "Local Eateries", "Faith & Books", "Auto unde
 const sideFilters = ["Home & Garden", "Wellness & Health", "Gaming", "Finance"];
 
 export default function Home() {
-  const { user, preferences, togglePreference, savedAds, switchRole, location, enableLocation, setLocation } = useUser();
+  const { user, preferences, togglePreference, savedAds, switchRole, location, enableLocation, setLocation, locale, setLocale, t } = useUser();
   const [activeTab, setActiveTab] = useState('For You');
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
@@ -64,8 +64,8 @@ export default function Home() {
             />
           </div>
           <div>
-            <p className={styles.brandTitle}>AdMe</p>
-            <p className={styles.brandTagline}>Voluntary, beautiful ads built for you</p>
+            <p className={styles.brandTitle}>{t('app_name')}</p>
+            <p className={styles.brandTagline}>{user ? t('welcome_message', { name: user.name }) : 'Voluntary, beautiful ads built for you'}</p>
           </div>
         </div>
 
@@ -79,6 +79,15 @@ export default function Home() {
         </div>
 
         <div className={styles.actions}>
+          <select
+            className={styles.langSelector}
+            value={locale}
+            onChange={(e) => setLocale(e.target.value)}
+            aria-label="Select Language"
+          >
+            <option value="en-US">English (US)</option>
+            <option value="es-PR">Español (PR)</option>
+          </select>
           {!user ? (
             <Link href="/login" className={styles.loginLink}>Log in</Link>
           ) : (
@@ -130,7 +139,7 @@ export default function Home() {
               <Link href="/studio" style={{ textDecoration: 'none' }}>
                 <div className={`${styles.insightCard} ${styles.primary} hover-lift`}>
                   <span className={styles.insightValue}>{user?.adCreditsBalance.toLocaleString() || '0'}</span>
-                  <span className={styles.insightLabel}>Ad Credits</span>
+                  <span className={styles.insightLabel}>{t('ad_credits', { credits: user?.adCreditsBalance.toLocaleString() || '0' })}</span>
                 </div>
               </Link>
             ) : (
@@ -138,7 +147,7 @@ export default function Home() {
                 <Link href="/rewards" style={{ textDecoration: 'none' }}>
                   <div className={`${styles.insightCard} ${styles.primary} hover-lift`}>
                     <span className={styles.insightValue}>{user?.rewardsBalance.toLocaleString() || '0'}</span>
-                    <span className={styles.insightLabel}>Rewards in queue</span>
+                    <span className={styles.insightLabel}>{t('points_balance', { points: user?.rewardsBalance.toLocaleString() || '0' })}</span>
                   </div>
                 </Link>
                 {user && user.currentStreak > 0 && (

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { createClient } from "@/lib/supabase/client";
+import canonicalCatalog from "./i18n/catalog.en-US.json";
 
 interface User {
   id: string;
@@ -43,6 +44,10 @@ interface UserContextType {
   deliveryChannels: { feed: boolean; geofenced: boolean; push: boolean };
   quietHours: { enabled: boolean; start: string; end: string };
   updateAdControlSettings: (settings: { adFrequency?: 'low' | 'balanced' | 'high'; deliveryChannels?: { feed: boolean; geofenced: boolean; push: boolean }; quietHours?: { enabled: boolean; start: string; end: string } }) => void;
+  locale: string;
+  setLocale: (l: string) => void;
+  t: (key: string, variables?: Record<string, any>) => string;
+  loadingCatalog: boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -112,6 +117,61 @@ export const DEMO_PERSONAS = [
 ];
 
 export function UserProvider({ children }: { children: ReactNode }) {
+  const [locale, setLocaleState] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const savedLocale = localStorage.getItem('adme_locale');
+      if (savedLocale) return savedLocale;
+    }
+    return 'en-US';
+  });
+
+  const [catalog, setCatalog] = useState<Record<string, string>>({});
+  const [loadingCatalog, setLoadingCatalog] = useState<boolean>(false);
+
+  useEffect(() => {
+    async function loadCatalog() {
+      if (locale === 'en-US') {
+        setCatalog(canonicalCatalog);
+        return;
+      }
+      setLoadingCatalog(true);
+      try {
+        const { getClientActiveCatalog } = await import('./i18n/client');
+        const messages = await getClientActiveCatalog(locale);
+        setCatalog(messages);
+      } catch (err) {
+        console.error('Failed to load locale catalog:', err);
+        setCatalog(canonicalCatalog);
+      } finally {
+        setLoadingCatalog(false);
+      }
+    }
+    loadCatalog();
+  }, [locale]);
+
+  const setLocale = (newLocale: string) => {
+    setLocaleState(newLocale);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('adme_locale', newLocale);
+    }
+  };
+
+  const t = (key: string, variables: Record<string, any> = {}) => {
+    let lookupKey = key;
+    if ('count' in variables) {
+      const count = Number(variables.count);
+      const isOne = count === 1;
+      const pluralKey = `${key}_${isOne ? 'one' : 'other'}`;
+      if (catalog[pluralKey] || canonicalCatalog[pluralKey as keyof typeof canonicalCatalog]) {
+        lookupKey = pluralKey;
+      }
+    }
+    const msg = catalog[lookupKey] || canonicalCatalog[lookupKey as keyof typeof canonicalCatalog] || key;
+    return msg.replace(/\{([A-Za-z0-9_]+)\}/g, (match, name) => {
+      return name in variables ? String(variables[name]) : match;
+    });
+  };
+
   const [user, setUser] = useState<User | null>(() => {
     if (typeof window !== 'undefined') {
       const demoPersonaId = localStorage.getItem('adme_demo_persona_id');
@@ -595,7 +655,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, redeemPerk, setLocation, selectPersona, adFrequency, deliveryChannels, quietHours, updateAdControlSettings }}>
+    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, redeemPerk, setLocation, selectPersona, adFrequency, deliveryChannels, quietHours, updateAdControlSettings, locale, setLocale, t, loadingCatalog }}>
       {children}
     </UserContext.Provider>
   );

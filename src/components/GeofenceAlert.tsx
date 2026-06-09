@@ -219,6 +219,7 @@ interface ScratchCardProps {
 }
 
 export function ScratchCard({ onComplete, brandName }: ScratchCardProps) {
+  const { locale } = useUser();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [scratchedPercent, setScratchedPercent] = useState(0);
   const [completeTriggered, setCompleteTriggered] = useState(false);
@@ -238,13 +239,14 @@ export function ScratchCard({ onComplete, brandName }: ScratchCardProps) {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    const isSpanish = locale === 'es-PR';
     // Add overlay text
     ctx.fillStyle = '#444444';
     ctx.font = 'bold 11px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('Scratch here to reveal deal!', canvas.width / 2, canvas.height / 2);
-  }, []);
+    ctx.fillText(isSpanish ? '¡Rasca aquí para ver la oferta!' : 'Scratch here to reveal deal!', canvas.width / 2, canvas.height / 2);
+  }, [locale]);
 
   const getMousePos = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -337,7 +339,7 @@ export function ScratchCard({ onComplete, brandName }: ScratchCardProps) {
 }
 
 export function GeofenceAlert() {
-  const { location, savedAds, coupons, deliveryChannels, quietHours, addReward } = useUser();
+  const { location, savedAds, coupons, deliveryChannels, quietHours, addReward, locale } = useUser();
   const { addToast } = useToast();
   const [alerts, setAlerts] = useState<ActiveAlert[]>([]);
   const [dismissedAds, setDismissedAds] = useState<string[]>([]);
@@ -532,7 +534,7 @@ export function GeofenceAlert() {
                   {alert.headline}
                 </p>
                 <div style={{ fontSize: '0.8rem', marginTop: '0.35rem', color: 'white', fontWeight: '500' }}>
-                  🏃 Just {alert.distance} miles away from you (Compass: {bearing})!
+                  🏃 {locale === 'es-PR' ? `A solo ${alert.distance} millas de ti (Brújula: ${bearing})!` : `Just ${alert.distance} miles away from you (Compass: ${bearing})!`}
                 </div>
 
                 {location && (
@@ -553,13 +555,15 @@ export function GeofenceAlert() {
                       className="btn" 
                       style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                     >
-                      Copy Code
+                      {locale === 'es-PR' ? 'Copiar código' : 'Copy Code'}
                     </button>
                   </div>
                 ) : (
                   <div>
                     <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>
-                      ⚡ Proximity Drop: Scratch card to unlock coupon & claim +50 bonus pts!
+                      {locale === 'es-PR' 
+                        ? '⚡ Caída de proximidad: ¡Rasca la tarjeta para desbloquear el cupón y reclamar +50 puntos de bono!' 
+                        : '⚡ Proximity Drop: Scratch card to unlock coupon & claim +50 bonus pts!'}
                     </p>
                     <ScratchCard 
                       brandName={alert.brandName}

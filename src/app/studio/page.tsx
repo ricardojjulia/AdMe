@@ -40,7 +40,7 @@ function calculateZTest(impressionsA: number, clicksA: number, impressionsB: num
 }
 
 export default function StudioDashboard() {
-  const { user, switchRole } = useUser();
+  const { user, switchRole, locale, t } = useUser();
   const { addToast } = useToast();
   const router = useRouter();
   const [activeAds, setActiveAds] = useState<any[]>([]);
@@ -487,7 +487,7 @@ export default function StudioDashboard() {
         </section>
 
         <section className={`${styles.metricCard} glass`}>
-          <h2>Ad Credits</h2>
+          <h2>{t('ad_credits', { credits: '' }).replace(/:\s*$/, '') || 'Ad Credits'}</h2>
           <div className={styles.metricAmount}>
             <span className={styles.currency}>★</span>
             {adCredits.toLocaleString()}
@@ -644,7 +644,7 @@ export default function StudioDashboard() {
                                   </div>
                                   <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginTop: '0.25rem', flexWrap: 'wrap' }}>
                                     <div className={styles.campaignStatus}>
-                                      <span className={styles.statusDot}></span> {ad.status}
+                                      <span className={styles.statusDot}></span> {t('campaign_status', { status: ad.status })}
                                     </div>
                                     <span className={`${styles.qualityBadge} ${quality.style}`}>
                                       {quality.label} ({ad.avgDuration}s avg)

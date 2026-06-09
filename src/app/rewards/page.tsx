@@ -10,7 +10,7 @@ import { PollDeck } from "@/components/PollDeck";
 import { CouponWallet } from "@/components/CouponWallet";
 
 export default function RewardsPage() {
-  const { user, savedAds, redeemPerk } = useUser();
+  const { user, savedAds, redeemPerk, locale, t } = useUser();
   const { addToast } = useToast();
   const [history, setHistory] = useState<any[]>([]);
   const [localAds, setLocalAds] = useState<any[]>([]);
@@ -136,19 +136,29 @@ export default function RewardsPage() {
       <div className={styles.grid}>
         <section className={`${styles.balanceCard} glass`}>
           <div className={styles.balanceContent}>
-            <h2>Available Balance</h2>
+            <h2>{locale === 'es-PR' ? 'Balance disponible' : 'Available Balance'}</h2>
             <div className={styles.balanceAmount}>
               <span className={styles.currency}>★</span>
               {balance.toLocaleString()}
             </div>
-            <p className={styles.balanceSubtext}>You have {savedAds.length} saved offers pending redemption.</p>
+            <p className={styles.balanceSubtext}>
+              {locale === 'es-PR' 
+                ? `Tienes ${savedAds.length} ofertas guardadas pendientes de canjear.` 
+                : `You have ${savedAds.length} saved offers pending redemption.`}
+            </p>
           </div>
         </section>
 
         <section className={styles.historySection}>
           <h3>Recent History</h3>
           <div className={`${styles.historyList} glass`}>
-            {history.length === 0 ? <p style={{padding: '1rem'}}>No history yet. Start engaging with ads to earn points!</p> : null}
+            {history.length === 0 ? (
+              <p style={{padding: '1rem'}}>
+                {locale === 'es-PR' 
+                  ? 'Sin historial aún. ¡Comienza a interactuar con anuncios para ganar puntos!' 
+                  : 'No history yet. Start engaging with ads to earn points!'}
+              </p>
+            ) : null}
             {history.map((item) => (
               <div key={item.id} className={styles.historyRow}>
                 <div>
@@ -259,7 +269,7 @@ export default function RewardsPage() {
                   onClick={() => setConfirmPerk(perk)}
                   style={{ width: '100%', marginTop: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
                 >
-                  Redeem for {perk.cost} ★
+                  {locale === 'es-PR' ? `${t('redeem_points')} (${perk.cost} ★)` : `Redeem for ${perk.cost} ★`}
                 </button>
               </div>
             ))

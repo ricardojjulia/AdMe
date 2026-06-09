@@ -507,18 +507,38 @@
   .shell {
     padding: 1.5rem 0 2.5rem;
   }
-
   .topbar {
     position: static;
   }
-
   .search {
     width: 100%;
   }
-
   .feedHeader {
     flex-direction: column;
     gap: 0.75rem;
     align-items: flex-start;
   }
 }
+
+.langSelector {
+  padding: 0.4rem 0.65rem;
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.langSelector:hover {
+  border-color: hsl(var(--ring));
+  transform: translateY(-1px);
+}
+
+.langSelector:focus {
+  border-color: hsl(var(--ring));
+}
+

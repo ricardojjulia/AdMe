@@ -20,7 +20,7 @@ interface FeedCardProps {
 export function FeedCard({ ad }: FeedCardProps) {
   const [showReportOptions, setShowReportOptions] = useState(false);
   const { ref, logClick, logLike, isLiked } = useEngagementAnalytics(ad.id);
-  const { toggleSavedAd, savedAds, reportAd, user, skipAd, addReward } = useUser();
+  const { toggleSavedAd, savedAds, reportAd, user, skipAd, addReward, t } = useUser();
   const { addToast } = useToast();
   const isSaved = savedAds.includes(ad.id);
   const [likesCount, setLikesCount] = useState(ad.metrics.likes);
@@ -205,7 +205,7 @@ export function FeedCard({ ad }: FeedCardProps) {
                 e.currentTarget.style.borderColor = 'hsl(var(--primary)/0.4)';
               }}
             >
-              🎁 Play & Earn +50 pts
+              🎁 {t('scratch_card_title')} (+50 pts)
             </button>
           )}
         </div>
@@ -286,7 +286,7 @@ export function FeedCard({ ad }: FeedCardProps) {
           <button onClick={handleSkip} type="button" className={styles.control} aria-label="Skip ad" style={{marginLeft: 'auto'}}>✕</button>
         </div>
         <div className={styles.metrics}>
-          <span>{likesCount.toLocaleString()} loves</span>
+          <span>{t('likes_count', { count: likesCount })}</span>
           <span>·</span>
           <button 
             type="button" 

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 
 export function DemoPanel() {
-  const { user, selectPersona } = useUser();
+  const { user, selectPersona, locale, setLocale } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [activePersonaId, setActivePersonaId] = useState<string | null>(null);
@@ -108,6 +108,51 @@ export function DemoPanel() {
                 <p>Using default/live session. Select a persona below to begin override.</p>
               </div>
             )}
+
+            {/* Developer Language Selector */}
+            <div className={styles.section} style={{ borderBottom: '1px solid hsl(var(--border))', paddingBottom: '1rem', marginBottom: '1rem' }}>
+              <h4 className={styles.sectionTitle}>Global Language Context</h4>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setLocale('en-US')}
+                  className={`${styles.navLink} ${locale === 'en-US' ? styles.navActive : ''}`}
+                  style={{
+                    flex: 1,
+                    padding: '0.4rem',
+                    fontSize: '0.8rem',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '0.4rem',
+                    background: locale === 'en-US' ? 'hsl(var(--primary) / 0.15)' : 'transparent',
+                    color: locale === 'en-US' ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
+                    fontWeight: 600
+                  }}
+                >
+                  🇺🇸 English (US)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLocale('es-PR')}
+                  className={`${styles.navLink} ${locale === 'es-PR' ? styles.navActive : ''}`}
+                  style={{
+                    flex: 1,
+                    padding: '0.4rem',
+                    fontSize: '0.8rem',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '0.4rem',
+                    background: locale === 'es-PR' ? 'hsl(var(--primary) / 0.15)' : 'transparent',
+                    color: locale === 'es-PR' ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
+                    fontWeight: 600
+                  }}
+                >
+                  🇵🇷 Español (PR)
+                </button>
+              </div>
+            </div>
 
             {/* Consumer Section */}
             <div className={styles.section}>

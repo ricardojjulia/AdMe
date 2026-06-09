@@ -15,7 +15,7 @@ const ALL_CATEGORIES = [
 ];
 
 export default function ProfilePage() {
-  const { user, preferences, togglePreference, savedAds, coupons, adFrequency, deliveryChannels, quietHours, updateAdControlSettings } = useUser();
+  const { user, preferences, togglePreference, savedAds, coupons, adFrequency, deliveryChannels, quietHours, updateAdControlSettings, locale, setLocale, t } = useUser();
   const { addToast } = useToast();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'Preferences' | 'Wallet' | 'Controls'>('Preferences');
@@ -398,6 +398,36 @@ export default function ProfilePage() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Language Preference */}
+            <div className={styles.controlCard}>
+              <div>
+                <h3 className={styles.controlGroupTitle}>Language Preference</h3>
+                <p className={styles.controlGroupDesc}>Choose your preferred language for the interface and ad content.</p>
+              </div>
+              <div style={{ marginTop: '0.75rem' }}>
+                <select
+                  value={locale}
+                  onChange={(e) => setLocale(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: 'calc(var(--radius) - 0.2rem)',
+                    border: '1px solid hsl(var(--border))',
+                    backgroundColor: 'hsl(var(--card))',
+                    color: 'hsl(var(--foreground))',
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    outline: 'none',
+                  }}
+                  aria-label="Language Preference"
+                >
+                  <option value="en-US">English (US)</option>
+                  <option value="es-PR">Español (PR)</option>
+                </select>
+              </div>
             </div>
 
             {/* Delivery Timeline Visualizer Card */}

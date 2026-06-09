@@ -17,7 +17,7 @@ interface NativeAdCardProps {
 
 export function NativeAdCard({ ad }: NativeAdCardProps) {
   const { ref, logClick, logLike, isLiked } = useEngagementAnalytics(ad.id);
-  const { toggleSavedAd, savedAds, reportAd, skipAd, addReward } = useUser();
+  const { toggleSavedAd, savedAds, reportAd, skipAd, addReward, t } = useUser();
   const { addToast } = useToast();
   const [showReportOptions, setShowReportOptions] = useState(false);
   const isSaved = savedAds.includes(ad.id);
@@ -203,7 +203,7 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
                   e.currentTarget.style.borderColor = 'hsl(var(--primary)/0.4)';
                 }}
               >
-                🎁 Play & Earn +50 pts
+                🎁 {t('scratch_card_title')} (+50 pts)
               </button>
             )}
           </div>

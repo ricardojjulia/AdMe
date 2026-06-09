@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import styles from "./InteractionUnits.module.css";
+import { useUser } from "@/lib/UserContext";
 
 interface ScratchCardProps {
   rewardAmount: number;
@@ -10,6 +11,7 @@ interface ScratchCardProps {
 }
 
 export function ScratchCard({ rewardAmount, onComplete, brandName }: ScratchCardProps) {
+  const { locale } = useUser();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [scratched, setScratched] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -18,43 +20,47 @@ export function ScratchCard({ rewardAmount, onComplete, brandName }: ScratchCard
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Set canvas dimensions based on container
-    const rect = canvas.parentElement?.getBoundingClientRect();
-    canvas.width = rect?.width || 320;
-    canvas.height = rect?.height || 200;
+    // Set high-DPI display size
+    const width = 340;
+    const height = 220;
+    canvas.width = width * 2;
+    canvas.height = height * 2;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    ctx.scale(2, 2);
 
-    // Fill background with elegant night-market style gradient overlay
-    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    gradient.addColorStop(0, "#2a1b40"); // Deep purple
-    gradient.addColorStop(0.5, "#43286b"); // Midnight amethyst
-    gradient.addColorStop(1, "#193644"); // Dark teal
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Fill with silver scratch overlay
+    const grad = ctx.createLinearGradient(0, 0, width, height);
+    grad.addColorStop(0, "#8e9eab");
+    grad.addColorStop(1, "#eef2f3");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, width, height);
 
-    // Draw cover pattern border
-    ctx.strokeStyle = "hsl(191, 97%, 58%, 0.4)";
-    ctx.lineWidth = 4;
-    ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
+    const isSpanish = locale === 'es-PR';
+    const dropText = isSpanish ? "🎁 REGALO DE INTERCAMBIO" : "🎁 VALUE EXCHANGE DROP";
+    const earnText = isSpanish 
+      ? `¡Rasca para ganar +${rewardAmount} puntos!` 
+      : `Scratch to earn +${rewardAmount} points!`;
+    const instructionText = isSpanish ? "Usa tu mouse o dedo" : "Use your mouse or finger";
 
-    // Draw text instructions
-    ctx.fillStyle = "#ffffff";
+    // Add glowing text instructions
+    ctx.fillStyle = "#1e293b";
     ctx.font = "bold 16px var(--font-display), Inter, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("🎁 VALUE EXCHANGE DROP", canvas.width / 2, canvas.height / 2 - 20);
+    ctx.fillText(dropText, width / 2, height / 2 - 20);
     
     ctx.fillStyle = "hsl(191, 97%, 58%)";
     ctx.font = "bold 14px var(--font-display), Inter, sans-serif";
-    ctx.fillText("Scratch to earn +" + rewardAmount + " points!", canvas.width / 2, canvas.height / 2 + 15);
+    ctx.fillText(earnText, width / 2, height / 2 + 15);
 
-    ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
+    ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
     ctx.font = "11px Inter, sans-serif";
-    ctx.fillText("Use your mouse or finger", canvas.width / 2, canvas.height / 2 + 45);
-  }, [rewardAmount]);
+    ctx.fillText(instructionText, width / 2, height / 2 + 45);
+  }, [rewardAmount, locale]);
 
   const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
@@ -72,8 +78,8 @@ export function ScratchCard({ rewardAmount, onComplete, brandName }: ScratchCard
     }
 
     return {
-      x: clientX - rect.left,
-      y: clientY - rect.top,
+      x: (clientX - rect.left) * 2,
+      y: (clientY - rect.top) * 2,
     };
   };
 
@@ -86,7 +92,7 @@ export function ScratchCard({ rewardAmount, onComplete, brandName }: ScratchCard
     // Set blend mode to erase
     ctx.globalCompositeOperation = "destination-out";
     ctx.beginPath();
-    ctx.arc(x, y, 22, 0, Math.PI * 2);
+    ctx.arc(x, y, 44, 0, Math.PI * 2);
     ctx.fill();
   };
 
@@ -102,14 +108,12 @@ export function ScratchCard({ rewardAmount, onComplete, brandName }: ScratchCard
     const coords = getCoordinates(e);
     if (!coords) return;
     
-    // Prevent scrolling on mobile touch scratch
     if (e.cancelable) {
       e.preventDefault();
     }
 
     scratch(coords.x, coords.y);
 
-    // Debounce percentage calculation
     if (Math.random() < 0.15) {
       checkScratchedPercentage();
     }
@@ -147,15 +151,16 @@ export function ScratchCard({ rewardAmount, onComplete, brandName }: ScratchCard
     }
   };
 
+  const isSpanish = locale === 'es-PR';
+
   return (
     <div className={styles.scratchWrapper}>
-      {/* Background layer underneath canvas */}
       <div className={styles.rewardsBackground}>
         <div className={styles.rewardCrown}>🌟</div>
-        <div className={styles.rewardHeading}>Reward Unlocked!</div>
-        <div className={styles.rewardSub}>{brandName} Coupon Active</div>
+        <div className={styles.rewardHeading}>{isSpanish ? "¡Recompensa desbloqueada!" : "Reward Unlocked!"}</div>
+        <div className={styles.rewardSub}>{isSpanish ? `Cupón de ${brandName} activo` : `${brandName} Coupon Active`}</div>
         <div className={styles.rewardNumber}>+{rewardAmount} pts</div>
-        <div className={styles.successLine}>Added directly to your balance</div>
+        <div className={styles.successLine}>{isSpanish ? "Añadido directamente a tu saldo" : "Added directly to your balance"}</div>
       </div>
 
       {!scratched && (
@@ -175,7 +180,7 @@ export function ScratchCard({ rewardAmount, onComplete, brandName }: ScratchCard
 
       {!scratched && (
         <div className={styles.progressIndicator}>
-          Revealed: {percentage}%
+          {isSpanish ? "Revelado:" : "Revealed:"} {percentage}%
         </div>
       )}
     </div>
@@ -197,17 +202,24 @@ interface QuizCardProps {
 }
 
 export function QuizCard({ rewardAmount, onComplete, brandName }: QuizCardProps) {
+  const { locale } = useUser();
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
+
+  const isSpanish = locale === 'es-PR';
 
   // Tailored brand questions
   const getBrandQuestion = (): QuizQuestion => {
     switch (brandName) {
       case "Valor Brews":
         return {
-          question: "What is Valor Brews' approach to craft roasting?",
-          options: [
+          question: isSpanish ? "¿Cuál es el enfoque de Valor Brews para el tostado artesanal?" : "What is Valor Brews' approach to craft roasting?",
+          options: isSpanish ? [
+            "Mezclas de fábrica molidas en masa",
+            "Micro-lotes frescos de origen único",
+            "Paquetes instantáneos liofilizados"
+          ] : [
             "Mass factory ground blends",
             "Single-origin fresh micro-batches",
             "Instant freeze-dried packets"
@@ -216,7 +228,7 @@ export function QuizCard({ rewardAmount, onComplete, brandName }: QuizCardProps)
         };
       case "Nomad Motors":
         return {
-          question: "What is the starting price for the compact Voyager EV?",
+          question: isSpanish ? "¿Cuál es el precio inicial del Voyager EV compacto?" : "What is the starting price for the compact Voyager EV?",
           options: [
             "$24,900",
             "$34,900",
@@ -226,8 +238,12 @@ export function QuizCard({ rewardAmount, onComplete, brandName }: QuizCardProps)
         };
       case "The Green Kitchen":
         return {
-          question: "What is the specialty bowl drop at The Green Kitchen?",
-          options: [
+          question: isSpanish ? "¿Cuál es el plato de tazón de especialidad en The Green Kitchen?" : "What is the specialty bowl drop at The Green Kitchen?",
+          options: isSpanish ? [
+            "Tazones de cosecha de California",
+            "Pizza de carne de plato hondo",
+            "Cesta de mariscos fritos"
+          ] : [
             "California Harvest Bowls",
             "Deep Dish Meat Pizza",
             "Fried Seafood Basket"
@@ -237,8 +253,12 @@ export function QuizCard({ rewardAmount, onComplete, brandName }: QuizCardProps)
       case "Beacon Publishing":
       default:
         return {
-          question: "What theme does the current Beacon Publishing collection focus on?",
-          options: [
+          question: isSpanish ? "¿En qué tema se enfoca la colección actual de Beacon Publishing?" : "What theme does the current Beacon Publishing collection focus on?",
+          options: isSpanish ? [
+            "Ciencia ficción cyberpunk",
+            "Fe, comunidad e inspiración diaria",
+            "Estrategias de finanzas corporativas"
+          ] : [
             "Cyberpunk Science Fiction",
             "Faith, community & daily inspiration",
             "Corporate Finance Strategies"
@@ -278,7 +298,9 @@ export function QuizCard({ rewardAmount, onComplete, brandName }: QuizCardProps)
       {!isSubmitted || !isCorrect ? (
         <div className={styles.quizContent}>
           <div className={styles.quizHeader}>
-            <span className={styles.quizTag}>❓ BRAND TRIVIA (+{rewardAmount} pts)</span>
+            <span className={styles.quizTag}>
+              ❓ {isSpanish ? `TRIVIA DE MARCA (+${rewardAmount} pts)` : `BRAND TRIVIA (+${rewardAmount} pts)`}
+            </span>
             <span className={styles.brandTitle}>{brandName}</span>
           </div>
           
@@ -317,18 +339,20 @@ export function QuizCard({ rewardAmount, onComplete, brandName }: QuizCardProps)
                 onClick={handleSubmit}
                 disabled={selectedOption === null}
               >
-                Submit Answer
+                {isSpanish ? "Enviar respuesta" : "Submit Answer"}
               </button>
             ) : (
               !isCorrect && (
                 <div className={styles.failureRow}>
-                  <span className={styles.failText}>❌ Incorrect. Try again!</span>
+                  <span className={styles.failText}>
+                    {isSpanish ? "❌ Incorrecto. ¡Inténtalo de nuevo!" : "❌ Incorrect. Try again!"}
+                  </span>
                   <button
                     type="button"
                     className={styles.retryBtn}
                     onClick={handleTryAgain}
                   >
-                    Retry
+                    {isSpanish ? "Reintentar" : "Retry"}
                   </button>
                 </div>
               )
@@ -338,10 +362,10 @@ export function QuizCard({ rewardAmount, onComplete, brandName }: QuizCardProps)
       ) : (
         <div className={styles.quizSuccess}>
           <div className={styles.successIcon}>🎉</div>
-          <h3 className={styles.successTitle}>Trivia Solved!</h3>
-          <p className={styles.successSub}>Thank you for paying attention.</p>
+          <h3 className={styles.successTitle}>{isSpanish ? "¡Trivia resuelta!" : "Trivia Solved!"}</h3>
+          <p className={styles.successSub}>{isSpanish ? "Gracias por prestar atención." : "Thank you for paying attention."}</p>
           <div className={styles.rewardNumber}>+{rewardAmount} pts</div>
-          <div className={styles.successLine}>Points credited to your account</div>
+          <div className={styles.successLine}>{isSpanish ? "Puntos acreditados a tu cuenta" : "Points credited to your account"}</div>
         </div>
       )}
     </div>
