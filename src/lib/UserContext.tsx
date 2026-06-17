@@ -49,6 +49,8 @@ interface UserContextType {
   setLocale: (l: string) => void;
   t: (key: string, variables?: Record<string, any>) => string;
   loadingCatalog: boolean;
+  claimGeofenceReward: (adId: string, points: number, brandName: string) => Promise<boolean>;
+  claimViewportReward: (adId: string, dwellSeconds: number, proof: string, points: number) => Promise<boolean>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -395,6 +397,74 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const claimGeofenceReward = async (adId: string, points: number, brandName: string): Promise<boolean> => {
+    if (isSupabaseEnabled && user) {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase.rpc('add_geofence_claim', {
+          ad_id: adId,
+          points: points
+        });
+        if (error) throw error;
+        
+        if (data === false) {
+          return false;
+        }
+        
+        setUser((prev) => prev ? { ...prev, rewardsBalance: prev.rewardsBalance + points } : prev);
+        return true;
+      } catch (e) {
+        console.error("Failed to claim geofence reward in Supabase via RPC:", e);
+        return false;
+      }
+    } else {
+      const claimKey = `adme_geofence_claimed_${user?.id || 'guest'}_${adId}`;
+      if (typeof window !== 'undefined' && localStorage.getItem(claimKey)) {
+        return false;
+      }
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(claimKey, 'true');
+      }
+      setUser((prev) => prev ? { ...prev, rewardsBalance: prev.rewardsBalance + points } : prev);
+      return true;
+    }
+  };
+
+  const claimViewportReward = async (adId: string, dwellSeconds: number, proof: string, points: number): Promise<boolean> => {
+    if (isSupabaseEnabled && user) {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase.rpc('add_viewport_claim', {
+          ad_id: adId,
+          dwell_seconds: dwellSeconds,
+          zkp_proof: proof,
+          points: points
+        });
+        if (error) throw error;
+        
+        if (data === false) {
+          return false;
+        }
+        
+        setUser((prev) => prev ? { ...prev, rewardsBalance: prev.rewardsBalance + points } : prev);
+        return true;
+      } catch (e) {
+        console.error("Failed to claim viewport reward in Supabase via RPC:", e);
+        return false;
+      }
+    } else {
+      const claimKey = `adme_viewport_claimed_${user?.id || 'guest'}_${adId}`;
+      if (typeof window !== 'undefined' && localStorage.getItem(claimKey)) {
+        return false;
+      }
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(claimKey, 'true');
+      }
+      setUser((prev) => prev ? { ...prev, rewardsBalance: prev.rewardsBalance + points } : prev);
+      return true;
+    }
+  };
+
   const togglePreference = async (category: string) => {
     let isAdding = false;
     setPreferences((prev) => {
@@ -659,7 +729,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, redeemPerk, setLocation, selectPersona, adFrequency, deliveryChannels, quietHours, updateAdControlSettings, locale, setLocale, t, loadingCatalog }}>
+    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, redeemPerk, setLocation, selectPersona, adFrequency, deliveryChannels, quietHours, updateAdControlSettings, locale, setLocale, t, loadingCatalog, claimGeofenceReward, claimViewportReward }}>
       {children}
     </UserContext.Provider>
   );

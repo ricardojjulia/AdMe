@@ -247,7 +247,7 @@ describe('Localization Governance Framework Integration', () => {
           versionId: draft.id,
           reviewerRole: 'linguistic',
           decision: 'approved',
-          actor: { id: 'unassigned-reviewer-uuid' },
+          actor: { id: 'unassigned-reviewer-uuid', role: 'linguistic' },
         })
       ).rejects.toThrow(/Matching reviewer assignment is required/);
 
@@ -260,7 +260,7 @@ describe('Localization Governance Framework Integration', () => {
         versionId: draft.id,
         reviewerRole: 'linguistic',
         decision: 'approved',
-        actor: { id: reviewerLinguistic.id },
+        actor: reviewerLinguistic,
       });
 
       // Separation of duties: same reviewer attempting other role should fail
@@ -269,7 +269,7 @@ describe('Localization Governance Framework Integration', () => {
           versionId: draft.id,
           reviewerRole: 'domain',
           decision: 'approved',
-          actor: { id: reviewerLinguistic.id },
+          actor: reviewerLinguistic,
         })
       ).rejects.toThrow(/Reviewer cannot satisfy multiple roles/);
 
@@ -278,7 +278,7 @@ describe('Localization Governance Framework Integration', () => {
         versionId: draft.id,
         reviewerRole: 'domain',
         decision: 'approved',
-        actor: { id: reviewerDomain.id },
+        actor: reviewerDomain,
       });
 
       // Approve version
@@ -322,7 +322,7 @@ describe('Localization Governance Framework Integration', () => {
         versionId: draft.id,
         reviewerRole: 'linguistic',
         decision: 'approved',
-        actor: { id: reviewerLinguistic.id },
+        actor: reviewerLinguistic,
       });
       await gov.approveVersion({ versionId: draft.id, actor: adminActor });
       
@@ -431,7 +431,7 @@ describe('Localization Governance Framework Integration', () => {
         versionId: draft.id,
         reviewerRole: 'linguistic',
         decision: 'approved',
-        actor: { id: reviewerLinguistic.id },
+        actor: reviewerLinguistic,
       });
       expect(review.decision).toBe('approved');
 
@@ -473,7 +473,7 @@ describe('Localization Governance Framework Integration', () => {
         versionId: secondVersion.id,
         reviewerRole: 'linguistic',
         decision: 'approved',
-        actor: { id: reviewerLinguistic.id },
+        actor: reviewerLinguistic,
       });
       await gov.approveVersion({ versionId: secondVersion.id, actor: adminActor });
       await gov.activateVersion({ versionId: secondVersion.id, actor: adminActor });

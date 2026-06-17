@@ -11,6 +11,7 @@ import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
 import { LeadModal } from "./LeadModal";
 import { ScratchCard, QuizCard } from "./InteractionUnits";
+import { ZkpWebGLSwiper } from "./ZkpWebGLSwiper";
 import styles from "./FeedCard.module.css";
 
 interface FeedCardProps {
@@ -40,12 +41,19 @@ export function FeedCard({ ad }: FeedCardProps) {
     }
   }, [ad.id]);
 
-  const interactionType = ad.advertiser.name === "Valor Brews" || ad.advertiser.name === "The Green Kitchen" ? 'scratch' : 'quiz';
+  const interactionType = 
+    ad.advertiser.name === "Valor Brews" || ad.advertiser.name === "The Green Kitchen" 
+      ? 'scratch' 
+      : ad.advertiser.name === "Nomad Motors"
+        ? 'zkp'
+        : 'quiz';
 
-  const handleCompleteInteraction = () => {
+  const handleCompleteInteraction = (isZkpClaim: boolean = false) => {
     if (isInteractionCompleted) return;
     
-    addReward(50, `Value-Exchange: ${ad.advertiser.name}`);
+    if (!isZkpClaim) {
+      addReward(50, `Value-Exchange: ${ad.advertiser.name}`);
+    }
     localStorage.setItem(`adme_interaction_completed_${ad.id}`, 'true');
     setIsInteractionCompleted(true);
     addToast(t("reward_success_toast"), "success");
@@ -210,7 +218,7 @@ export function FeedCard({ ad }: FeedCardProps) {
                 e.currentTarget.style.borderColor = 'hsl(var(--primary)/0.4)';
               }}
             >
-              🎁 {t('scratch_card_title')} (+50 pts)
+              {interactionType === 'zkp' ? `📐 ${t('zkp_interaction_title')}` : `🎁 ${t('scratch_card_title')}`} (+50 pts)
             </button>
           )}
         </div>
@@ -223,6 +231,16 @@ export function FeedCard({ ad }: FeedCardProps) {
               rewardAmount={50} 
               brandName={ad.advertiser.name} 
               onComplete={handleCompleteInteraction} 
+            />
+          ) : interactionType === 'zkp' ? (
+            <ZkpWebGLSwiper
+              adId={ad.id}
+              brandName={ad.advertiser.name}
+              category={ad.category}
+              primaryColor={ad.content.primaryColor}
+              advertiserAvatar={ad.advertiser.avatar}
+              onClose={() => setActiveInteraction(false)}
+              onComplete={() => handleCompleteInteraction(true)}
             />
           ) : (
             <QuizCard 

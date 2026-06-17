@@ -1,0 +1,4 @@
+# Architecture-critical paths — require review from the architects team
+/supabase/migrations/  @ricardojjulia
+/.github/workflows/    @ricardojjulia
+/src/lib/supabase/     @ricardojjulia

@@ -264,5 +264,9 @@
   "balanced_ads": "~6 anuncios (Balanceada)",
   "high_ads": "~10 anuncios (Alta)",
   "export_success_toast": "¡Paquete de datos exportado con éxito!",
-  "purge_success_toast": "¡Todos los datos purgados permanentemente! Regresando a la página de inicio."
+  "purge_success_toast": "¡Todos los datos purgados permanentemente! Regresando a la página de inicio.",
+  "double_claim_prevented": "¡Ya reclamaste los puntos para esta oferta!",
+  "zkp_proof_verified": "¡ZKP de Viewport verificado con éxito! +50 pts añadidos.",
+  "zkp_verify_failed": "Error al verificar la prueba de visualización de viewport.",
+  "zkp_interaction_title": "ZKP de Viewport 3D"
 }

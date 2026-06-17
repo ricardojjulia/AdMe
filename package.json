@@ -1,14 +1,17 @@
 {
   "name": "adme",
-  "version": "3.0.0",
+  "version": "4.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3400",
     "build": "next build",
     "start": "next start",
     "test": "vitest run",
+    "test:ci": "vitest run --coverage --reporter=verbose",
     "test:e2e": "playwright test",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "version:check": "node scripts/check-version.mjs"
   },
   "dependencies": {
     "@localization-governance/cli": "file:./tarballs/localization-governance-cli-0.1.0.tgz",
@@ -29,6 +32,7 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.9",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.8",

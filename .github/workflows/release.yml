@@ -1,0 +1,46 @@
+name: Release
+on:
+  push: { branches: [main] }
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  deploy-staging:
+    needs: ci
+    environment: staging
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with: { version: latest }
+      - name: Push migrations to staging
+        run: supabase db push --project-ref ${{ secrets.STAGING_SUPABASE_PROJECT_REF }}
+        env: { SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }} }
+
+  approve:
+    needs: [deploy-staging]
+    environment: production   # manual gate in GitHub → Settings → Environments
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Approved"
+
+  deploy:
+    needs: approve
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with: { version: latest }
+      - name: Push migrations to production
+        run: supabase db push --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+        env: { SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }} }
+      - name: Notify
+        if: success()
+        env: { WEBHOOK_URL: ${{ secrets.DEPLOY_WEBHOOK_URL }} }
+        run: |
+          if [ -n "$WEBHOOK_URL" ]; then
+            curl -s -X POST "$WEBHOOK_URL" -H "Content-Type: application/json" \
+              -d "{\"text\": \"✅ Deployed ${{ github.sha }} by ${{ github.actor }}\"}"
+          fi

@@ -1,18 +1,21 @@
 #!/usr/bin/env node
 
-import { getPool, closePool } from '../src/lib/i18n/adapter.ts';
+import pg from 'pg';
 import fs from 'node:fs';
 import path from 'node:path';
 
-async function main() {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
-    console.error('Error: DATABASE_URL environment variable is required.');
-    process.exit(1);
-  }
+const { Pool } = pg;
 
-  console.log('Deploying all database migrations in sequence to remote database...');
-  const pool = getPool();
+async function main() {
+  const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@127.0.0.1:53322/postgres';
+  console.log('Deploying all database migrations in sequence...');
+  
+  const pool = new Pool({
+    connectionString,
+    max: 1,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  });
 
   try {
     const migrationsDir = path.resolve('supabase/migrations');
@@ -27,8 +30,6 @@ async function main() {
       console.log(`Applying migration: ${file}`);
       const sqlContent = fs.readFileSync(filePath, 'utf8');
 
-      // We run each migration file
-      // Note: we can split statements or run them as a single query block
       await pool.query(sqlContent);
       console.log(`Migration ${file} applied successfully.`);
     }
@@ -38,7 +39,7 @@ async function main() {
     console.error('Failed to deploy migrations:', error);
     process.exit(1);
   } finally {
-    await closePool();
+    await pool.end();
   }
 }
 

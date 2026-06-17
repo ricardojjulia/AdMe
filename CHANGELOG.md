@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.0] - 2026-06-17
+
+### Added
+- **AI-Governed Council HQ Dashboard**: Built dynamic AI deliberation features at `/hq` to process proposals, cast votes, and write ratified markdown decisions.
+- **Geofence Verification Ledger**: Implemented Postgres table `geofence_claims` with RLS and unique constraint checks alongside a secure `SECURITY DEFINER` RPC helper to prevent double-claiming points.
+- **3D WebGL ZKP Viewport Swiper**: Built a local WebGL rotating 3D advertiser card with drag controls, visibility tracking, on-device mock Zero-Knowledge Proof generation, and database ledger integration.
+
 ## [4.0.0] - 2026-06-09
 
 ### Added

@@ -334,7 +334,7 @@ export function ScratchCard({ onComplete, brandName }: ScratchCardProps) {
 }
 
 export function GeofenceAlert() {
-  const { location, savedAds, coupons, deliveryChannels, quietHours, addReward, locale, t } = useUser();
+  const { location, savedAds, coupons, deliveryChannels, quietHours, claimGeofenceReward, locale, t } = useUser();
   const { addToast } = useToast();
   const [alerts, setAlerts] = useState<ActiveAlert[]>([]);
   const [dismissedAds, setDismissedAds] = useState<string[]>([]);
@@ -466,7 +466,12 @@ export function GeofenceAlert() {
   }, [location, savedAds, coupons, dismissedAds, deliveryChannels, quietHours]);
 
   const handleScratchComplete = async (alert: ActiveAlert) => {
-    addReward(50, `Proximity Drop: ${alert.brandName}`);
+    const success = await claimGeofenceReward(alert.adId, 50, alert.brandName);
+    if (!success) {
+      addToast(t("double_claim_prevented"), 'error');
+      return;
+    }
+
     addToast(t("points_awarded_proximity"), 'success');
     
     const generatedCode = `FREE-${alert.brandName.toUpperCase().replace(/\s+/g, '')}-VOUCHER`;
