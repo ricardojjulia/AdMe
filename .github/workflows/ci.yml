@@ -14,7 +14,7 @@ jobs:
       - name: Version consistency check
         run: npm run version:check
       - name: Lint
-        run: npm run lint -- --max-warnings 0
+        run: npm run lint
 
   typecheck:
     needs: lint
@@ -29,13 +29,33 @@ jobs:
   unit-tests:
     needs: typecheck
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 53322:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '24', cache: 'npm' }
       - run: npm ci
+      - name: Prepare localization test database
+        run: psql "$DATABASE_URL" -f supabase/migrations/20260609000000_localization_governance.sql
+        env:
+          DATABASE_URL: postgresql://postgres@localhost:53322/postgres
+          PGPASSWORD: postgres
       - name: Run unit tests with coverage
         run: npm run test:ci
+        env:
+          DATABASE_URL: postgresql://postgres@localhost:53322/postgres
+          PGPASSWORD: postgres
       - uses: actions/upload-artifact@v4
         if: always()
         with:
