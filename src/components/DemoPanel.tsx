@@ -97,9 +97,6 @@ export function DemoPanel() {
                   <Link href="/studio" className={`${styles.navLink} ${pathname.startsWith("/studio") ? styles.navActive : ""}`}>
                     Ad Studio
                   </Link>
-                  <Link href="/hq" className={`${styles.navLink} ${pathname === "/hq" ? styles.navActive : ""}`}>
-                    🛡️ Council HQ
-                  </Link>
                   <button type="button" className={styles.clearBtn} onClick={handleClear}>
                     Exit Demo Mode
                   </button>

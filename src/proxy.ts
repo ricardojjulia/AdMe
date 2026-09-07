@@ -61,6 +61,13 @@ export default async function proxy(request: NextRequest) {
     }
   }
 
+  // Disable access to /hq (Council HQ)
+  if (request.nextUrl.pathname.startsWith('/hq')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/'
+    return NextResponse.redirect(url)
+  }
+
   // Redirect if logged in and trying to access login page
   if (user && request.nextUrl.pathname === '/login') {
     const url = request.nextUrl.clone()

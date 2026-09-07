@@ -100,13 +100,6 @@ export default function Home() {
               >
                 {user?.role === 'consumer' ? t('switch_role_business') : t('switch_role_consumer')}
               </button>
-              <Link 
-                href="/hq" 
-                className={styles.ctaGhost} 
-                style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
-              >
-                🛡️ Council HQ
-              </Link>
               <button type="button" className={styles.iconButton} aria-label="Notifications">🔔</button>
               <Link href="/profile" className={styles.iconButton} aria-label="Saved" style={{ textDecoration: 'none' }}>★</Link>
               <Link href="/profile" className={styles.avatar} aria-hidden style={{ textDecoration: 'none' }}>{user.avatar}</Link>
