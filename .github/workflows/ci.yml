@@ -14,7 +14,7 @@ jobs:
       - name: Version consistency check
         run: npm run version:check
       - name: Lint
-        run: npx next lint --max-warnings 0
+        run: npm run lint -- --max-warnings 0
 
   typecheck:
     needs: lint
