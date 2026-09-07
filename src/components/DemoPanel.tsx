@@ -13,13 +13,20 @@ export function DemoPanel() {
   const [activePersonaId, setActivePersonaId] = useState<string | null>(null);
   const pathname = usePathname();
 
+  // Defense-in-depth: eliminated on Vercel unless explicitly enabled via NEXT_PUBLIC_ENABLE_DEMO_PANEL
+  const isVercel = process.env.NEXT_PUBLIC_VERCEL === '1' || process.env.VERCEL === '1';
+  const explicitFlag = process.env.NEXT_PUBLIC_ENABLE_DEMO_PANEL;
+  const isEnabled = explicitFlag !== undefined
+    ? explicitFlag === 'true' || explicitFlag === '1'
+    : !isVercel;
+
   useEffect(() => {
     setMounted(true);
     const storedId = localStorage.getItem("adme_demo_persona_id");
     setActivePersonaId(storedId);
   }, [user]);
 
-  if (!mounted) return null;
+  if (!mounted || !isEnabled) return null;
 
   const handlePersonaSelect = async (persona: typeof DEMO_PERSONAS[0]) => {
     setIsOpen(false);

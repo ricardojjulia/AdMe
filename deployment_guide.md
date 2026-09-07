@@ -35,6 +35,7 @@ Configure these variables under Project Settings -> Environment Variables in Ver
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public / Browser | The public anonymous key used to initialize browser client calls. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server / Secret | **CRITICAL.** Secret service role key allowing route handlers to bypass RLS for verifying analytics. |
 | `JWT_SECRET` | Server / Secret | **CRITICAL.** Cryptographic key used to sign and verify HMAC tokens for engagement viewport tracking. |
+| `NEXT_PUBLIC_ENABLE_DEMO_PANEL` | Public / Optional | Controls Demo Panel visibility. Automatically `false` (eliminated) on Vercel deployments, and `true` (enabled) on self-hosted environments unless explicitly set. |
 
 ---
 

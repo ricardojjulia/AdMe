@@ -37,6 +37,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Demo Panel environment enforcement:
+  // Automatically eliminated on Vercel deployments, enabled on self-hosted / local.
+  // Can be explicitly overridden with NEXT_PUBLIC_ENABLE_DEMO_PANEL or ENABLE_DEMO_PANEL ('true' | 'false').
+  const isVercel = process.env.VERCEL === '1' || process.env.NEXT_PUBLIC_VERCEL === '1';
+  const explicitFlag = process.env.NEXT_PUBLIC_ENABLE_DEMO_PANEL ?? process.env.ENABLE_DEMO_PANEL;
+  const showDemoPanel = explicitFlag !== undefined
+    ? explicitFlag === 'true' || explicitFlag === '1'
+    : !isVercel;
+
   return (
     <html lang="en" suppressHydrationWarning className={display.variable}>
       <body suppressHydrationWarning>
@@ -45,7 +54,7 @@ export default function RootLayout({
             <main className="container h-full">
               {children}
             </main>
-            <DemoPanel />
+            {showDemoPanel && <DemoPanel />}
           </UserProvider>
         </ToastProvider>
       </body>
