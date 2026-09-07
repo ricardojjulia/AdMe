@@ -18,13 +18,14 @@ You can launch and interact with the hosted SaaS web application immediately in 
 
 | Environment | Hosted SaaS URL | Status | Description |
 | :--- | :--- | :--- | :--- |
-| **Primary SaaS Platform** | [**https://ad-me.vercel.app**](https://ad-me.vercel.app) | `Active` | Production SaaS release hosted on Vercel |
-| **Backup SaaS Mirror** | [**https://adme-psi.vercel.app**](https://adme-psi.vercel.app) | `Active` | Alternative mirror deployment |
+| **Production SaaS Platform** | [**https://www.adforme.io**](https://www.adforme.io) | `Active` | Official Production SaaS deployment |
+| **Vercel Mirror** | [**https://ad-me.vercel.app**](https://ad-me.vercel.app) | `Active` | Direct Vercel deployment mirror |
+| **Backup Mirror** | [**https://adme-psi.vercel.app**](https://adme-psi.vercel.app) | `Active` | Alternative mirror deployment |
 | **Database & Auth** | **Supabase Cloud** | `Active` | Managed PostgreSQL with GoTrue Auth & RLS |
 
 ### ⚡ Quick Ways to Explore the SaaS App:
 1. **Explore Instant Demo Personas**: Click the floating **Persona Switcher** in the top navigation bar to test the application as *Sarah (Tech Dev)*, *Marcus (Local Foodie)*, *Elena (New Consumer)*, or *Valor Brews (Business Owner)* without entering credentials.
-2. **Create a Fresh Account**: Head directly to [/login](https://ad-me.vercel.app/login) and toggle to **Create Account** to experience individual onboarding (+100 welcome AdPoints bonus) or register a business.
+2. **Create a Fresh Account**: Head directly to [https://www.adforme.io/login](https://www.adforme.io/login) and toggle to **Create Account** to experience individual onboarding (+100 welcome AdPoints bonus) or register a business.
 3. **Change Languages**: Click the language toggle in the header to switch instantaneously between English (`EN`) and Puerto Rican Spanish (`ES`).
 4. **Read the Full Step-by-Step Guide**: See **[HOW-TO.md](./HOW-TO.md)** for complete end-to-end user workflows.
 

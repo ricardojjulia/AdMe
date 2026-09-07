@@ -10,8 +10,9 @@ You can access and test the production application directly in your browser with
 
 | Environment | Direct URL | Description |
 | :--- | :--- | :--- |
-| **Primary SaaS App** | [https://ad-me.vercel.app](https://ad-me.vercel.app) | Production deployment on Vercel |
-| **Mirror Deployment** | [https://adme-psi.vercel.app](https://adme-psi.vercel.app) | Production backup mirror |
+| **Official Production SaaS** | [https://www.adforme.io](https://www.adforme.io) | Official Production deployment |
+| **Vercel Mirror** | [https://ad-me.vercel.app](https://ad-me.vercel.app) | Direct Vercel deployment mirror |
+| **Mirror Deployment** | [https://adme-psi.vercel.app](https://adme-psi.vercel.app) | Alternative production mirror |
 | **Backend & Database** | Hosted on [Supabase](https://supabase.com) | Real-time PostgreSQL, GoTrue Auth & RLS policies |
 
 > [!TIP]
