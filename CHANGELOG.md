@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.0] - 2026-09-07
+
+### Added
+- **Segmented Authentication & Signup Pathways**: Implemented dedicated Sign In and Create Account segmented flows in `/login` with individual vs. business role selection, input validation, and clear error handling.
+- **3-Step Consumer Preference Onboarding**: Connected `/onboarding` to save user category preferences directly into Supabase and automatically award a 100 AdPoints welcome bonus.
+- **Business Studio Campaign Lifecycle Management**:
+  - Direct route to `/studio` for newly registered business accounts.
+  - Added inline lifecycle action controls: `⏸ Pause`, `▶ Resume`, `✏ Edit Budget` (interactive modal), and `🗑 Archive`.
+  - Added ad credits deduction and balance validation on campaign creation in `/studio/create`.
+- **Inbound Customer Leads Cockpit**: Added an advertiser leads management pipeline in `/studio` with status filtering (`All`, `New`, `Contacted`, `Closed`) and quick actions (`Mark Contacted`, `Close Lead`, `Reopen`).
+- **High-Contrast Barcode & 2D QR Code Scanner Wallet**:
+  - Added format toggle between linear Code-128 barcode and dynamic HTML canvas 25×25 QR code matrix with corner finder patterns.
+  - Built an in-store cashier verification PIN input with database state updating via `verify_and_redeem_coupon` RPC.
+- **Privacy & GDPR Compliance Enhancements**:
+  - GDPR Article 20 one-click anonymous profile data export to formatted JSON in `/profile`.
+  - GDPR Article 17 "Forget Me" account deletion with cascading database erasure via `gdpr_forget_user` RPC.
+  - Enforced client-side Zero-Knowledge feed filtering to prevent preference query leakage.
+- **Comprehensive Unit & Integration Test Suites**:
+  - `tests/unit/campaign-lifecycle.test.ts`: Added tests for RTB auction ranking, deterministic A/B split-testing variations, budget pacemaker rate limits, and geofence proximity calculations.
+  - `tests/integration/api-endpoints.test.ts`: Added integration tests for Stripe checkout validation and cryptographic HMAC dwell-time heartbeats.
+- **Playwright End-to-End Test Expansion**:
+  - Codified consumer account creation, 3-step preference onboarding, and welcome points grant into automated browser test suite.
+  - Codified business account creation with brand name and automatic studio routing.
+  - Achieved 12/12 passing E2E browser tests and 58/58 passing Vitest unit/integration tests.
+- **Bilingual Localization Parity**: Synchronized 100% of all UI strings across canonical English (`catalog.en-US.json`) and Puerto Rican Spanish (`catalog.es-PR.json`).
+- **Comprehensive User & Developer Guide**: Created `HOW-TO.md` covering SaaS app access on Vercel, consumer onboarding, business studio tools, barcode/QR verification, and local development.
+
 ## [4.1.0] - 2026-06-17
 
 ### Added

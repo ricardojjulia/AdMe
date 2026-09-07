@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUser } from "@/lib/UserContext";
+import { useToast } from "@/lib/ToastContext";
 import { createClient } from "@/lib/supabase/client";
 import styles from "../page.module.css";
 
@@ -13,17 +14,24 @@ const ALL_CATEGORIES = [
 ];
 
 export default function CreateAdPage() {
-  const { user } = useUser();
+  const { user, deductCredits } = useUser();
+  const { addToast } = useToast();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [formatType, setFormatType] = useState<'social' | 'carousel' | 'geofenced'>('social');
+  const [error, setError] = useState("");
+  const [isABTest, setIsABTest] = useState(false);
 
   useEffect(() => {
     if (user && user.role !== 'business') {
       router.push('/');
     }
   }, [user, router]);
-  const [error, setError] = useState("");
-  const [isABTest, setIsABTest] = useState(false);
+
+  const credits = user?.adCreditsBalance || 0;
+  const plan = user?.subscriptionTier || 'free';
+  const requiresCredits = plan === 'free';
+  const hasSufficientFunds = !requiresCredits || credits >= 50;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -32,6 +40,12 @@ export default function CreateAdPage() {
 
     if (!user) {
       setError("You must be logged in.");
+      setLoading(false);
+      return;
+    }
+
+    if (!hasSufficientFunds) {
+      setError("Insufficient ad credits. Free tier accounts require at least 50 credits to publish. Please top up or upgrade.");
       setLoading(false);
       return;
     }
@@ -48,15 +62,17 @@ export default function CreateAdPage() {
     const dailyBudget = parseInt(formData.get("dailyBudget") as string) || 1000;
     const maxCpcBid = parseInt(formData.get("maxCpcBid") as string) || 15;
 
+    // Location coordinates for geofenced drops
+    const lat = formData.get("latitude") ? parseFloat(formData.get("latitude") as string) : null;
+    const lng = formData.get("longitude") ? parseFloat(formData.get("longitude") as string) : null;
+
     const supabase = createClient();
-    
-    // Generate a UUID for the campaign
     const campaignId = crypto.randomUUID();
 
-    const baseAd = {
+    const baseAd: any = {
       owner_id: user.id,
       category,
-      format_type: 'social',
+      format_type: formatType,
       advertiser_name: user.name,
       advertiser_avatar: user.avatar,
       content_text: text,
@@ -70,7 +86,10 @@ export default function CreateAdPage() {
       is_boosted: isBoosted,
       daily_budget: dailyBudget,
       credits_spent_today: 0,
-      max_cpc_bid: maxCpcBid
+      max_cpc_bid: maxCpcBid,
+      status: 'active',
+      latitude: lat,
+      longitude: lng
     };
 
     const adsToInsert = [
@@ -99,6 +118,10 @@ export default function CreateAdPage() {
       setError(insertError.message);
       setLoading(false);
     } else {
+      if (requiresCredits) {
+        deductCredits(50);
+      }
+      addToast("Campaign created and active!", "success");
       router.push("/studio");
     }
   };
@@ -110,18 +133,97 @@ export default function CreateAdPage() {
           <Link href="/studio" className={styles.backBtn}>← Back to Studio</Link>
         </div>
         <h1>Create New Campaign</h1>
+        <p style={{ color: "hsl(var(--muted-foreground))" }}>Launch targeted, privacy-respecting campaigns to high-intent consumers.</p>
       </header>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '600px' }}>
+      {!hasSufficientFunds && (
+        <div style={{
+          background: "hsl(var(--destructive) / 0.15)",
+          border: "1px solid hsl(var(--destructive) / 0.3)",
+          color: "hsl(var(--destructive))",
+          padding: "1rem 1.25rem",
+          borderRadius: "0.75rem",
+          marginBottom: "1.5rem",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center"
+        }}>
+          <div>
+            <strong>⚠️ Funding Required</strong>: Free tier accounts require 50 credits to publish. Your balance: {credits} credits.
+          </div>
+          <Link href="/checkout" className="btn" style={{ padding: "0.4rem 0.8rem", fontSize: "0.85rem" }}>
+            Top Up Credits
+          </Link>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '640px' }}>
         {error && <div style={{ color: 'hsl(var(--destructive))', padding: '1rem', background: 'hsl(var(--destructive)/0.1)', borderRadius: 'var(--radius)' }}>{error}</div>}
         
+        {/* Campaign Format Type Selector */}
+        <div>
+          <span style={{ fontSize: "0.9rem", fontWeight: 600, display: "block", marginBottom: "0.5rem" }}>Campaign Format</span>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.5rem" }}>
+            <button
+              type="button"
+              onClick={() => setFormatType('social')}
+              style={{
+                padding: "0.75rem",
+                borderRadius: "0.5rem",
+                border: formatType === 'social' ? "2px solid hsl(var(--primary))" : "1px solid hsl(var(--border))",
+                background: formatType === 'social' ? "hsl(var(--primary) / 0.1)" : "hsl(var(--card))",
+                color: "white",
+                cursor: "pointer",
+                textAlign: "center"
+              }}
+            >
+              <div style={{ fontSize: "1.2rem", marginBottom: "0.25rem" }}>📱</div>
+              <strong style={{ fontSize: "0.85rem" }}>Native Feed</strong>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFormatType('carousel')}
+              style={{
+                padding: "0.75rem",
+                borderRadius: "0.5rem",
+                border: formatType === 'carousel' ? "2px solid hsl(var(--primary))" : "1px solid hsl(var(--border))",
+                background: formatType === 'carousel' ? "hsl(var(--primary) / 0.1)" : "hsl(var(--card))",
+                color: "white",
+                cursor: "pointer",
+                textAlign: "center"
+              }}
+            >
+              <div style={{ fontSize: "1.2rem", marginBottom: "0.25rem" }}>🎠</div>
+              <strong style={{ fontSize: "0.85rem" }}>Carousel</strong>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFormatType('geofenced')}
+              style={{
+                padding: "0.75rem",
+                borderRadius: "0.5rem",
+                border: formatType === 'geofenced' ? "2px solid hsl(var(--primary))" : "1px solid hsl(var(--border))",
+                background: formatType === 'geofenced' ? "hsl(var(--primary) / 0.1)" : "hsl(var(--card))",
+                color: "white",
+                cursor: "pointer",
+                textAlign: "center"
+              }}
+            >
+              <div style={{ fontSize: "1.2rem", marginBottom: "0.25rem" }}>📍</div>
+              <strong style={{ fontSize: "0.85rem" }}>Geofenced Drop</strong>
+            </button>
+          </div>
+        </div>
+
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <span>Headline</span>
           <input name="headline" required placeholder="Catchy title for your ad" style={{ padding: '0.75rem', borderRadius: '0.5rem', background: 'hsl(var(--input))', border: 'none', color: 'white' }} />
         </label>
 
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <span>Category</span>
+          <span>Target Category</span>
           <select name="category" required style={{ padding: '0.75rem', borderRadius: '0.5rem', background: 'hsl(var(--input))', border: 'none', color: 'white' }}>
             {ALL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
@@ -133,20 +235,38 @@ export default function CreateAdPage() {
         </label>
 
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <span>Image URL</span>
-          <input name="imageUrl" type="url" required placeholder="https://..." style={{ padding: '0.75rem', borderRadius: '0.5rem', background: 'hsl(var(--input))', border: 'none', color: 'white' }} />
+          <span>Image URL (Primary Slide)</span>
+          <input name="imageUrl" type="url" required placeholder="https://images.unsplash.com/..." style={{ padding: '0.75rem', borderRadius: '0.5rem', background: 'hsl(var(--input))', border: 'none', color: 'white' }} />
         </label>
 
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginTop: '0.5rem', padding: '1rem', background: 'hsl(var(--card))', borderRadius: '0.5rem', border: '1px solid hsl(var(--border))' }}>
+        {/* Geofence Location Fields */}
+        {formatType === 'geofenced' && (
+          <div style={{ padding: '1rem', background: 'hsl(var(--card))', borderRadius: '0.5rem', border: '1px solid hsl(var(--primary) / 0.4)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <strong style={{ color: 'hsl(var(--primary))' }}>📍 Proximity Coordinates (Store / Drop Location)</strong>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <span style={{ fontSize: '0.8rem' }}>Latitude</span>
+                <input name="latitude" type="number" step="any" defaultValue="34.0196" required style={{ padding: '0.5rem', borderRadius: '0.375rem', background: 'hsl(var(--input))', border: 'none', color: 'white' }} />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <span style={{ fontSize: '0.8rem' }}>Longitude</span>
+                <input name="longitude" type="number" step="any" defaultValue="-118.4913" required style={{ padding: '0.5rem', borderRadius: '0.375rem', background: 'hsl(var(--input))', border: 'none', color: 'white' }} />
+              </label>
+            </div>
+            <span style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>Defaults to Santa Monica demo hub. Walkers within 5 miles will trigger proximity alerts.</span>
+          </div>
+        )}
+
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '1rem', background: 'hsl(var(--card))', borderRadius: '0.5rem', border: '1px solid hsl(var(--border))' }}>
           <input type="checkbox" checked={isABTest} onChange={(e) => setIsABTest(e.target.checked)} style={{ transform: 'scale(1.2)' }} />
           <strong>Run A/B Test</strong>
-          <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem' }}>(Test a second variation)</span>
+          <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem' }}>(Test a second headline/image variant)</span>
         </label>
  
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginTop: '0.5rem', padding: '1rem', background: 'hsl(var(--card))', borderRadius: '0.5rem', border: '1px solid hsl(var(--border))' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', padding: '1rem', background: 'hsl(var(--card))', borderRadius: '0.5rem', border: '1px solid hsl(var(--border))' }}>
           <input type="checkbox" name="isBoosted" style={{ transform: 'scale(1.2)' }} />
-          <strong>Boost Proximity Placement</strong>
-          <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem' }}>(Pay to rank first in nearby local searches)</span>
+          <strong>Boost Placement</strong>
+          <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem' }}>(Priority ranking in consumer feeds)</span>
         </label>
 
         {isABTest && (
@@ -192,10 +312,11 @@ export default function CreateAdPage() {
           <input name="ctaUrl" type="url" required placeholder="https://..." style={{ padding: '0.75rem', borderRadius: '0.5rem', background: 'hsl(var(--input))', border: 'none', color: 'white' }} />
         </label>
 
-        <button type="submit" disabled={loading} className="btn" style={{ marginTop: '1rem' }}>
+        <button type="submit" disabled={loading || !hasSufficientFunds} className="btn" style={{ marginTop: '0.5rem' }}>
           {loading ? "Publishing..." : "Publish Campaign"}
         </button>
       </form>
     </main>
   );
 }
+

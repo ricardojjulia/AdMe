@@ -34,4 +34,5 @@ export interface Ad {
     creditsSpentToday?: number;
     ownerId?: string;
     maxCpcBid?: number;
+    status?: 'active' | 'paused' | 'archived';
 }

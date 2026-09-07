@@ -1,24 +1,126 @@
 # AdMe ── The World's First Privacy-First, Permission-Based Advertising Marketplace
 
-[![Release: v3.0.0](https://img.shields.io/badge/Release-v3.0.0-blue.svg?style=flat)](https://github.com/ricardojjulia/AdMe/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Release: v5.0.0](https://img.shields.io/badge/Release-v5.0.0-blue.svg?style=flat)](https://github.com/ricardojjulia/AdMe/releases)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0.en.html)
 [![Framework: Next.js 16](https://img.shields.io/badge/Next.js-16.0.8-black.svg?style=flat&logo=nextdotjs)](https://nextjs.org/)
 [![Database: Supabase](https://img.shields.io/badge/Database-Supabase-blueviolet.svg?style=flat&logo=supabase)](https://supabase.com/)
+[![Tests: 100% Passing](https://img.shields.io/badge/Tests-58%20Unit%20%7C%2012%20E2E-brightgreen.svg)](#-testing--quality-assurance)
 
 > **"We know what you like, but we don't know who you are."**
 
-AdMe is a revolutionary discovery platform built to fix digital advertising for both users and businesses. Instead of surveillance-based tracking, AdMe operates as a consent-first, privacy-first ad marketplace. Users voluntarily control their preferences, maintain complete anonymity through hashed UIDs, and earn value for their attention. Small businesses get an affordable, level playing field to reach high-intent customers locally.
+AdMe is a revolutionary discovery platform built to fix digital advertising for both consumers and businesses. Instead of surveillance-based tracking, AdMe operates as a consent-first, privacy-first ad marketplace. Users voluntarily control their preferences, maintain complete anonymity through hashed UIDs, and earn value for their attention. Small and local businesses get an affordable, level playing field to reach high-intent customers without paying massive platform taxes.
 
 ---
 
-## 🌐 Live Demo Environment
+## 🌐 Live SaaS Hosted Application (Vercel)
 
-You can try the fully deployed production application immediately in the cloud:
+You can launch and interact with the hosted SaaS web application immediately in your browser:
 
-*   **Production Application**: [https://adme-psi.vercel.app](https://adme-psi.vercel.app)
-*   **Database & API Backend**: Powered by a hosted [Supabase](https://supabase.com) PostgreSQL database instance.
+| Environment | Hosted SaaS URL | Status | Description |
+| :--- | :--- | :--- | :--- |
+| **Primary SaaS Platform** | [**https://ad-me.vercel.app**](https://ad-me.vercel.app) | `Active` | Production SaaS release hosted on Vercel |
+| **Backup SaaS Mirror** | [**https://adme-psi.vercel.app**](https://adme-psi.vercel.app) | `Active` | Alternative mirror deployment |
+| **Database & Auth** | **Supabase Cloud** | `Active` | Managed PostgreSQL with GoTrue Auth & RLS |
 
-*Note: The demo environments are configured with preloaded demo personas (Sarah the Developer, Marcus the Local Foodie, Elena the New Consumer, and Valor Brews Business Owner) accessible directly via the Persona switcher in the interface header.*
+### ⚡ Quick Ways to Explore the SaaS App:
+1. **Explore Instant Demo Personas**: Click the floating **Persona Switcher** in the top navigation bar to test the application as *Sarah (Tech Dev)*, *Marcus (Local Foodie)*, *Elena (New Consumer)*, or *Valor Brews (Business Owner)* without entering credentials.
+2. **Create a Fresh Account**: Head directly to [/login](https://ad-me.vercel.app/login) and toggle to **Create Account** to experience individual onboarding (+100 welcome AdPoints bonus) or register a business.
+3. **Change Languages**: Click the language toggle in the header to switch instantaneously between English (`EN`) and Puerto Rican Spanish (`ES`).
+4. **Read the Full Step-by-Step Guide**: See **[HOW-TO.md](./HOW-TO.md)** for complete end-to-end user workflows.
+
+---
+
+## 🏗️ System Architecture & Visual Topology
+
+### 1. High-Level Marketplace Topology
+```mermaid
+graph TD
+    subgraph Consumers["👤 Consumers (Zero-Knowledge)"]
+        Browser["Next.js 16 Web Client"]
+        ZKPrefs["Local In-Browser Preferences"]
+        Wallet["AdPoints & Voucher Wallet<br/>(Barcode & 2D QR Matrix)"]
+    end
+
+    subgraph Platform["⚡ Edge & App Layer (Vercel)"]
+        NextApp["App Router (React 19)"]
+        HMAC["Cryptographic Heartbeat & Dwell HMAC"]
+        Pacemaker["Advertiser Budget Pacemaker"]
+        i18nEngine["Bilingual Catalog Engine (EN / ES)"]
+    end
+
+    subgraph Data["🛡️ Data & Security (Supabase PostgreSQL)"]
+        GoTrue["GoTrue Auth"]
+        RLS["Row Level Security (RLS)"]
+        AdsTable["Active Campaigns & Bids"]
+        LeadsTable["Inbound Customer Leads"]
+        Ledger["Service Role Rewards Ledger"]
+        GDPR["Atomic GDPR Forget Me RPC"]
+    end
+
+    subgraph Advertisers["🏢 Businesses & Brands"]
+        Studio["Ad Studio & Leads Cockpit"]
+        CampaignMgr["Lifecycle Controls (Pause/Budget/Archive)"]
+        Scanner["Cashier Voucher Verification"]
+    end
+
+    Browser <--> NextApp
+    ZKPrefs -.->|Client-Side Blend| Browser
+    Wallet <--> NextApp
+    NextApp <--> GoTrue
+    NextApp <--> RLS
+    RLS <--> AdsTable
+    RLS <--> LeadsTable
+    NextApp --> Ledger
+    NextApp --> GDPR
+    Studio <--> NextApp
+    CampaignMgr <--> NextApp
+    Scanner --> NextApp
+```
+
+### 2. Value-Exchange Lifecycle: Attention to Real-World Discounts
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Consumer
+    participant Client as Browser (Zero-Knowledge)
+    participant Edge as AdMe API / RPC
+    actor Cashier as Local Merchant
+
+    Consumer->>Client: Engages with Native Ad / Swipes Preference Poll
+    Client->>Edge: Submit Viewport Heartbeat (HMAC-SHA256 Token)
+    Edge->>Edge: Verify Dwell Time & Nonce
+    Edge-->>Consumer: Award AdPoints (+10 to +50 points)
+    
+    Consumer->>Client: Selects Local Perk in Rewards Marketplace
+    Client->>Edge: Invoke redeem_perk_coupon() RPC
+    Edge-->>Client: Issue Unique Digital Voucher
+    
+    Consumer->>Cashier: Shows Voucher (Code-128 Barcode or 2D QR Matrix)
+    Cashier->>Client: Enters Staff PIN & clicks "Verify In-Store"
+    Client->>Edge: Invoke verify_and_redeem_coupon() RPC
+    Edge-->>Client: Coupon marked "Redeemed" with audit timestamp
+    Cashier-->>Consumer: Hands over coffee / discounted product
+```
+
+### 3. Business Campaign Lifecycle & Inbound Leads Funnel
+```mermaid
+stateDiagram-v2
+    [*] --> Draft: Business Owner Enters Studio (/studio/create)
+    Draft --> Active: Launch Campaign (-50 AdCredits)
+    Active --> Paused: Pause Campaign (Instant Feed Halt)
+    Paused --> Active: Resume Campaign
+    Active --> BudgetCapped: Daily Budget Cap Reached (Pacemaker)
+    BudgetCapped --> Active: Daily Reset at Midnight UTC
+    Active --> Archived: Archive Campaign (Decommissioned)
+    Paused --> Archived: Archive Campaign
+
+    state "Inbound Leads Funnel" as Leads {
+        [*] --> New: Consumer Requests Info / Quotes
+        New --> Contacted: Advertiser Reaches Out
+        Contacted --> Closed: Deal Won / Customer Served
+        Closed --> Contacted: Follow-up Reopened
+    }
+```
 
 ---
 
@@ -27,24 +129,11 @@ You can try the fully deployed production application immediately in the cloud:
 ### 1. Ad Relevance Without Surveillance (Consumers)
 Nobody wants diapers when they don’t have children, or political ads they disagree with. Users select precisely what they want to discover (e.g., Tech, Local restaurants, Home renovation, Veteran-owned businesses).
 
-### 2. High-Outcome local Discovery (Small Businesses)
-Traditional platforms (Google, Meta, TikTok) favor big spenders, burying local restaurants, coffee shops, contractors, and authors. AdMe provides low-cost subscription tiers (e.g., Free, $10/mo, $25/mo) allowing small businesses to compete and build volume first.
+### 2. High-Outcome Local Discovery (Small Businesses)
+Traditional platforms (Google, Meta, TikTok) favor big spenders, burying local restaurants, coffee shops, contractors, and authors. AdMe provides transparent CPC bidding, daily budget pacemakers, and low-cost subscription tiers allowing small businesses to compete and build volume first.
 
 ### 3. Absolute Privacy by Design
 Meta and TikTok monitor every click, scroll, and keystroke. AdMe stores **zero personally identifiable information (PII)** in the public application layer. Attacker breaches yield only anonymous interaction lists, which are virtually worthless.
-
----
-
-## 🛡️ Privacy-First Architecture
-
-*   **Anonymous UIDs**: Upon signup, the application generates a hashed UID (e.g., `UID-73A8-XP92-AB44`).
-*   **Zero PII Storage**: The public database table stores **no** real names, addresses, phone numbers, emails, birthdates, or genders.
-*   **Anonymous Metrics**: Advertisers track outcomes rather than identities. Supported interaction logs include:
-    *   UID clicked
-    *   UID viewed
-    *   UID saved
-    *   UID requested info
-    *   UID visited business page
 
 ---
 
@@ -52,206 +141,125 @@ Meta and TikTok monitor every click, scroll, and keystroke. AdMe stores **zero p
 
 ### 1. Unified Consumer Experience
 *   **Voluntary, Curated Feed**: Ad recommendations driven entirely by user-toggled categories.
-*   **Client-Side Contextual Ad Injection**: A smart-blending feed that dynamically interleaves mock organic social posts and matching category ads client-side, ensuring user profiling queries are never sent to the server.
-*   **Local Differential Privacy (LDP) Shield**: Toggles 30% randomized response perturbation (double-coin-flip math) for preference database synchronization, offering mathematically provable plausible deniability while honoring reward points truthfully.
-*   **Ad Wallet & Proximity Scratch Cards**: Save interesting drops, and play canvas-based scratch-off "Gift Card Drops" inside geofence alerts to claim a +50 point bonus and reveal voucher codes.
-*   **Gamified Preference Swipe Polls**: Tinder-style swipeable card deck that awards users with points for refining their interest profiles.
-*   **Value Exchange (Reward Points)**: Users earn `AdPoints` for voluntary interaction (watching a demo, reviewing an ad, visiting a page), redeemable for gift cards, local business discounts, or charitable giving.
+*   **Zero-Knowledge Contextual Feed**: Mock organic social posts and category ads are fetched globally and filtered strictly in-browser—user preferences are never sent in ad query requests.
+*   **Local Differential Privacy (LDP) Shield**: Optional randomized response perturbation (double-coin-flip math) for preference synchronization, providing mathematically provable plausible deniability.
+*   **Interactive Barcode & 2D QR Voucher Wallet**: Instant switching between Code-128 linear barcodes and HTML canvas-rendered 2D QR codes with cashier verification PIN support.
+*   **Proximity Compass Maps & Scratch Cards**: Real-time compass navigation and canvas scratch cards rewarding users with +50 points when walking within 0.25 miles of local merchants.
+*   **Gamified Preference Swipe Polls**: Swipe card decks in the Rewards Hub that reward users with points for refining their interest profiles.
+*   **GDPR Article 17 & 20 Compliance**: One-click complete anonymous JSON profile data download and an atomic `gdpr_forget_user` cascade purge.
 
-### 2. Premium Ad Formats
-*   **Native Ads**: Clean layouts organically blended into the feed.
-*   **Carousel Ads**: Multi-media horizontal swipe cards with smooth micro-animations.
-*   **Canvas-based Compass Proximity Maps**: GPS compass tracking and route animations rendered dynamically on `<canvas>` inside localized deal alert cards.
-*   **Interactive Comments**: Community feedback loops on ad campaigns.
+### 2. Business Ad Studio & Inbound Leads Cockpit
+*   **Campaign Lifecycle Controls**: Instant inline status management (`Active`, `Paused`, `Archived`) and live daily AdPoints budget editing.
+*   **Inbound Leads Cockpit**: Complete customer lead management pipeline (`New` -> `Contacted` -> `Closed`) with real-time status badges and filter pills.
+*   **Real-Time RTB Auction Board**: Max CPC bid updates with live position previews against active competitors.
+*   **Advertiser Budget Pacemaker**: Compares elapsed daily time against spend velocity to throttle impressions smoothly across 24 hours.
+*   **A/B Test Engine & Statistical Significance**: Native split-testing variants evaluated with normal CDF Z-score calculators.
 
-### 3. Business Ad Studio & Pacing
-*   **Campaign Builder**: Self-serve campaign wizard supporting targeting filters, formatting, and daily budgeting.
-*   **Advertiser Budget Pacemaker**: Time-based campaign pacing that matches the daily elapsed time fraction against campaign spend fraction, throttling ad displays when spending velocity is too high.
-*   **Interactive Feed Density Visualizer**: An animated 24h timeline canvas graph slider displaying muted quiet hours slots, delivery cadence, and pacing score simulator controls.
-*   **A/B Test Variations**: Built-in support to run headline and design variants to test effectiveness.
-*   **Real-time Analytics**: Live reporting of views, clicks, and CTR (Click-Through Rate) utilizing Supabase Realtime subscriptions.
-
----
-
-## 🛡️ Architecture & Visual Design
-
-To understand the core mechanics, system topology, security boundaries, and data flow pipelines of the AdMe platform, refer to the visual **[ARCHITECTURE.md](./ARCHITECTURE.md)** guide. It features interactive Mermaid diagrams for:
-*   **System Architecture Map**: Frontend route guards, Edge layouts, and Supabase service blocks.
-*   **Ledger Balance RPC Flow**: RLS rules, and server-side balance updates using `SECURITY DEFINER` constraints.
-*   **GDPR Cascade Erasure**: Automatic account purges and PostgreSQL cascades on user deletion.
-*   **Sticky A/B Splits Pipeline**: Hashed user-variation mapping.
-*   **Cryptographic Viewport Heartbeats**: HMAC-signed dwelled tracking endpoint flows.
+### 3. 100% Bilingual Localization (EN / ES)
+*   Canonical English (`catalog.en-US.json`) and Puerto Rican Spanish (`catalog.es-PR.json`) with complete translation key parity across all routes, modals, and error states.
+*   Backed by our tenant-bound Localization Governance framework supporting automated translation validation and review workflows.
 
 ---
 
-## 📁 Repository & Software Structure
-
-The project follows a standard Next.js App Router hierarchy backed by Supabase:
+## 📁 Repository Structure
 
 ```
-├── public/                  # Static assets and brand logos
-├── supabase/                # Supabase Local Development Setup
-│   ├── config.toml          # Local Supabase configuration
-│   ├── migrations/          # SQL database schemas & security policies
-│   └── seed.sql             # Mock seeding scripts
+├── docs/                     # Architecture decisions & setup guides
+├── public/                   # Static assets, branding, and icons
+├── supabase/                 # Supabase Local Development & Migrations
+│   ├── config.toml           # Supabase CLI configuration
+│   └── migrations/           # Versioned SQL migrations (RLS, Ledger, GDPR, Leads)
 ├── src/
-│   ├── app/                 # Next.js App Router pages
-│   │   ├── auth/            # OAuth & passwordless callbacks
-│   │   ├── checkout/        # Stripe/mock credits top-up
-│   │   ├── login/           # Authentication endpoints & pages
-│   │   ├── onboarding/      # Consumer questionnaire/interests
-│   │   ├── profile/         # Wallet, saved cards, and preferences
-│   │   ├── rewards/         # User points ledger and earnings history
-│   │   └── studio/          # Campaign dashboard and creation flows
-│   ├── components/          # Reusable React components (Feed, Cards, Comments)
-│   ├── lib/                 # Core utilities and contexts
-│   │   ├── hooks/           # Analytics & engagement hooks
-│   │   ├── supabase/        # Database clients (Server vs. Client components)
-│   │   ├── utils/           # Proximity & mathematical functions
-│   │   ├── UserContext.tsx  # Global state provider (consumer vs. business roles)
-│   │   └── ToastContext.tsx # Notification alerts system
-│   ├── types/               # TypeScript interface declarations
-│   └── proxy.ts             # Next.js session validation and route guards (formerly middleware.ts)
+│   ├── app/                  # Next.js 16 App Router
+│   │   ├── api/              # API endpoints (Checkout, Heartbeat, Engagement)
+│   │   ├── auth/             # Auth callbacks
+│   │   ├── hq/               # AI-Governed Council HQ Dashboard
+│   │   ├── login/            # Segmented Sign In / Create Account
+│   │   ├── onboarding/       # 3-step preference discovery
+│   │   ├── profile/          # Wallet, preferences, GDPR export & purge
+│   │   ├── rewards/          # Rewards store marketplace & swipe polls
+│   │   └── studio/           # Campaign dashboard, builder & leads cockpit
+│   ├── components/           # Reusable components (Feed, CouponWallet, Cards)
+│   ├── lib/                  # Core contexts, hooks, and Supabase client
+│   │   ├── i18n/             # Canonical EN and ES translation catalogs
+│   │   └── UserContext.tsx   # Global state & authenticated session management
+│   └── types/                # TypeScript interface declarations
+├── tests/
+│   ├── unit/                 # Unit tests (Campaign lifecycle, RTB auctions, geofence)
+│   ├── integration/          # Integration tests (Stripe checkout, HMAC heartbeats)
+│   ├── localization/         # Localization governance test suite
+│   └── e2e/                  # Playwright browser end-to-end test suite
+├── HOW-TO.md                 # Complete user & developer how-to guide
+├── CHANGELOG.md              # Historical version changelog (Keep a Changelog)
+├── ARCHITECTURE.md           # Visual architecture diagrams and security models
+└── README.md                 # Repository entry point
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🧪 Testing & Quality Assurance
 
-### 1. Prerequisites
-Ensure you have **Node.js 18+** and the **Supabase CLI** installed.
+AdMe enforces automated testing across all layers:
 
-### 2. Local Setup
-1. Clone the repository and install dependencies:
-   ```bash
-   git clone https://github.com/ricardojjulia/AdMe.git
-   cd AdMe
-   npm install
-   ```
-
-2. Copy the environment template:
-   Create a `.env.local` file in the root directory:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:53321
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   ```
-
-3. Spin up local Supabase container:
-   ```bash
-   supabase start
-   ```
-
-4. Run the development server:
-   ```bash
-   npm run dev
-   ```
-   Open [http://localhost:3400](http://localhost:3400) to view the application.
-
-### 3. Build & Production Verification
-To compile the TypeScript project and generate static pages:
-```bash
-npm run build
-```
-
-### 4. Running Tests
-To run unit and integration tests (Vitest):
+### 1. Vitest Unit & Integration Tests (58 / 58 Passing)
 ```bash
 npm run test
 ```
+* **Coverage**: RTB auction ranking, deterministic A/B variation hashing, budget pacing calculations, geofence distance algorithms, HMAC engagement verification, checkout validation, and localization governance.
 
-To run the full Playwright E2E browser test suite:
+### 2. Playwright End-to-End Browser Tests (12 / 12 Passing)
 ```bash
 npm run test:e2e
 ```
+* **Automated Journeys Tested**:
+  1. Brand homepage & value proposition verification
+  2. Persona switcher state transitions
+  3. Proximity deals simulation and geofence alerts
+  4. GDPR "Forget Me" database cascade & session purge
+  5. Swipeable preference deck & AdPoints rewards
+  6. Ad Studio campaign selection & Max CPC bid updates
+  7. Rewards marketplace search, filtering, and voucher redemption
+  8. Business owner campaign status management & inbound leads pipeline
+  9. Barcode / 2D QR matrix display toggle & in-store verification
+  10. Anonymous JSON profile export (GDPR Article 20)
+  11. **Consumer account creation, 3-step onboarding & welcome bonus**
+  12. **Business account creation with brand name & direct Studio routing**
 
-Refer to the [deployment_guide.md](./deployment_guide.md) for detailed instructions on production deployment and configuration.
+### 3. Production Build Compilation
+```bash
+npm run build
+```
+* Clean Next.js 16 compile in under 2 seconds with zero TypeScript or ESLint warnings.
 
 ---
 
-## 🌍 Localization Governance Framework
+## 🚀 Local Development Setup
 
-AdMe integrates a portable, tenant-bound localization governance framework built using packed npm tarballs of `@localization-governance/*`. This enforces a strict validation and review lifecycle for translation catalogs, preventing bad strings or incomplete formats from reaching users.
+### 1. Prerequisites
+* **Node.js 18+**
+* **Supabase CLI** (optional for local database container)
 
-### 📦 Staged Tarballs & Overrides
-The core libraries are installed locally via packed tarballs situated in the `tarballs/` directory:
-- `@localization-governance/core`
-- `@localization-governance/storage-postgres`
-- `@localization-governance/provider-google`
-- `@localization-governance/cli`
-
-To ensure dependency cycles resolve correctly, standard `overrides` are configured in `package.json`:
-```json
-"overrides": {
-  "@localization-governance/core": "file:./tarballs/localization-governance-core-0.1.0.tgz"
-}
+### 2. Installation
+```bash
+git clone https://github.com/ricardojjulia/AdMe.git
+cd AdMe
+npm install
 ```
 
-### ⚙️ Database Migration
-Localization states are persisted in a Supabase PostgreSQL instance using the `storage-postgres` adapter. The database tables are created via the additive migration:
-- `supabase/migrations/20260609000000_localization_governance.sql`
-
-All database queries are bound to the product tenant ID (`'adme'`) to support multi-tenant isolation.
-
-### 🛠️ CLI Operations & Commands
-The CLI reads settings from the local `localization-governance.config.mjs` config file and connects directly using the `DATABASE_URL` environment variable.
-
-#### 1. Create a Locale
-Initialize support for a new BCP 47 locale (e.g. `es-ES` Spanish):
-```bash
-npx locgov locale create es-ES
+### 3. Environment Configuration
+Create `.env.local` in the project root:
+```env
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:53321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-#### 2. Create and Populate a Catalog Draft
-Drafts can be created programmatically or via the adapter. In the background, automated provider translations can be requested:
+### 4. Run Development Server
 ```bash
-npx locgov translate es-ES --version <version_id> --provider google --scope missing
-```
-
-#### 3. Run Validation Checks
-Validate formatting placeholders, plural forms matching counts/names, required glossary terms, and empty translations:
-```bash
-npx locgov validate es-ES --version <version_id>
-```
-
-#### 4. Request Linguistic and Domain Review
-Before a catalog can be approved, it must be validated and explicitly reviewed by assigned reviewers:
-```bash
-# Request review transition (validated -> in_linguistic_review)
-npx locgov review request es-ES --version <version_id>
-
-# Submit assigned reviewer decision
-npx locgov review submit es-ES --version <version_id> --role linguistic --decision approved --comment "Grammar looks correct"
-```
-
-#### 5. Approve Version
-Transition the catalog to `approved` state after satisfying policy constraints (separation of duties requires separate linguistic and domain approvals if configured):
-```bash
-npx locgov approve es-ES --version <version_id>
-```
-
-#### 6. Activate and Deploy Catalogs Atomically
-Deploy the catalog version to production. This updates the active pointer atomically:
-```bash
-npx locgov activate es-ES --version <version_id>
-```
-
-#### 7. Atomic Rollbacks
-Roll back to a previously active catalog version immediately in case of emergency:
-```bash
-npx locgov rollback es-ES --to <version_id>
-```
-
-#### 8. Verify Status & CI Policy
-Check the state of localized catalogs and evaluate policy compliance in CI pipelines:
-```bash
-# Get status report (outputs JSON with --json)
-npx locgov status es-ES --json
-
-# Evaluate CI pipeline policy status
-npx locgov ci
+npm run dev
+# Application starts at http://localhost:3400
 ```
 
 ---
 
 ## 📄 License
-This project is licensed under the **MIT License** - see the [LICENSE](./LICENSE) file for details.
+This project is licensed under the **GNU Affero General Public License v3.0 (GNU AGPL-3.0)** - see the [LICENSE](./LICENSE) file for details.

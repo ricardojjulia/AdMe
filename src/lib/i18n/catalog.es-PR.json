@@ -99,6 +99,13 @@
   "close_wallet": "Cerrar cartera",
   "coupon_redeemed_success": "¡Cupón marcado como canjeado con éxito!",
   "coupon_update_failed": "Error al actualizar el cupón en la base de datos.",
+  "code_type_barcode": "Código de Barras",
+  "code_type_qr": "Código QR",
+  "merchant_verification_title": "Verificación del Comerciante / Cajero",
+  "merchant_verification_subtitle": "Pide al personal de la tienda que confirme el canje",
+  "merchant_pin_label": "PIN del Personal (Opcional)",
+  "verify_and_redeem_btn": "Verificar y Canjear en Tienda",
+  "coupon_verified_toast": "¡Cupón verificado y canjeado con éxito!",
 
   "proximity_deal_alert": "Alerta de Oferta por Proximidad",
   "compass_gps_active": "Brújula GPS Activa",
@@ -268,5 +275,13 @@
   "double_claim_prevented": "¡Ya reclamaste los puntos para esta oferta!",
   "zkp_proof_verified": "¡ZKP de Viewport verificado con éxito! +50 pts añadidos.",
   "zkp_verify_failed": "Error al verificar la prueba de visualización de viewport.",
-  "zkp_interaction_title": "ZKP de Viewport 3D"
+  "zkp_interaction_title": "ZKP de Viewport 3D",
+  "onboarding_welcome_title": "Bienvenido a una nueva era de anuncios.",
+  "onboarding_welcome_sub": "Tu atención es valiosa. Creemos que debes ser recompensado por ella.",
+  "onboarding_lets_go": "Empecemos",
+  "onboarding_vibes_title": "¿Cuál es tu estilo?",
+  "onboarding_vibes_sub": "Dinos qué quieres ver realmente.",
+  "onboarding_continue": "Continuar",
+  "onboarding_generating_title": "Generando tu feed...",
+  "onboarding_generating_sub": "Estamos seleccionando campañas que coinciden con tu estilo."
 }

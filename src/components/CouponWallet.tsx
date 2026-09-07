@@ -19,7 +19,11 @@ export function CouponWallet() {
   const { addToast } = useToast();
   const [localCoupons, setLocalCoupons] = useState<Coupon[]>([]);
   const [activeCoupon, setActiveCoupon] = useState<Coupon | null>(null);
-  const barcodeCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [codeType, setCodeType] = useState<'barcode' | 'qr'>('barcode');
+  const [isMerchantMode, setIsMerchantMode] = useState(false);
+  const [merchantPin, setMerchantPin] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Sync state with context coupons
   useEffect(() => {
@@ -28,96 +32,178 @@ export function CouponWallet() {
     }
   }, [coupons]);
 
-  // Draw Code-128 barcode on canvas
+  // Draw Code-128 Barcode or 2D QR Matrix on canvas
   useEffect(() => {
-    if (!activeCoupon || !barcodeCanvasRef.current) return;
-    const canvas = barcodeCanvasRef.current;
+    if (!activeCoupon || !canvasRef.current) return;
+    const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const code = activeCoupon.code;
     const dpr = window.devicePixelRatio || 1;
-    const width = 320;
-    const height = 120;
 
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-    ctx.scale(dpr, dpr);
+    if (codeType === 'barcode') {
+      const width = 320;
+      const height = 120;
 
-    ctx.clearRect(0, 0, width, height);
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.scale(dpr, dpr);
 
-    // Render Background
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, width, height);
+      ctx.clearRect(0, 0, width, height);
 
-    // Render text label at bottom
-    ctx.fillStyle = "black";
-    ctx.font = "bold 13px monospace";
-    ctx.textAlign = "center";
-    ctx.fillText(code, width / 2, height - 12);
+      // White background for high contrast scanning
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, width, height);
 
-    // Simple deterministic barcode generation (simulate Code 128)
-    ctx.fillStyle = "black";
-    const startX = 25;
-    const endX = width - 25;
-    const barW = endX - startX;
-    
-    // Create a pseudo-random pattern based on coupon code characters
-    let seed = 0;
-    for (let i = 0; i < code.length; i++) {
-      seed = code.charCodeAt(i) + ((seed << 5) - seed);
-    }
-    
-    let currentX = startX;
-    let bitIndex = 0;
-    
-    // Generate barcode bars
-    while (currentX < endX - 10) {
-      // Deterministic pseudo-random width (1 to 4 pixels)
-      const randValue = Math.sin(seed + bitIndex) * 10000;
-      const fraction = randValue - Math.floor(randValue);
-      const isBar = fraction > 0.4;
-      const widthMultiplier = Math.floor(fraction * 3) + 1; // 1 to 3px width
+      // Label at bottom
+      ctx.fillStyle = "#000000";
+      ctx.font = "bold 13px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(code, width / 2, height - 12);
 
-      if (isBar && currentX + widthMultiplier < endX - 5) {
-        ctx.fillRect(currentX, 15, widthMultiplier, height - 40);
+      // Pseudo-random deterministic barcode bars
+      const startX = 25;
+      const endX = width - 25;
+      
+      let seed = 0;
+      for (let i = 0; i < code.length; i++) {
+        seed = code.charCodeAt(i) + ((seed << 5) - seed);
       }
       
-      currentX += widthMultiplier + 1; // space after bar
-      bitIndex++;
+      let currentX = startX;
+      let bitIndex = 0;
+      
+      while (currentX < endX - 10) {
+        const randValue = Math.sin(seed + bitIndex) * 10000;
+        const fraction = randValue - Math.floor(randValue);
+        const isBar = fraction > 0.4;
+        const widthMultiplier = Math.floor(fraction * 3) + 1;
+
+        if (isBar && currentX + widthMultiplier < endX - 5) {
+          ctx.fillRect(currentX, 15, widthMultiplier, height - 40);
+        }
+        
+        currentX += widthMultiplier + 1;
+        bitIndex++;
+      }
+
+      // Quiet zones
+      ctx.fillRect(startX, 15, 3, height - 40);
+      ctx.fillRect(endX - 8, 15, 3, height - 40);
+    } else {
+      // High-Contrast QR Code Matrix rendering
+      const width = 220;
+      const height = 220;
+
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.scale(dpr, dpr);
+
+      ctx.clearRect(0, 0, width, height);
+
+      // White canvas background
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, width, height);
+
+      const gridSize = 25;
+      const margin = 20;
+      const cellSize = (width - margin * 2) / gridSize;
+
+      ctx.fillStyle = "#000000";
+
+      // Helper to draw QR finder pattern (7x7 box with 3x3 inner square)
+      const drawFinder = (startX: number, startY: number) => {
+        // Outer 7x7 square
+        ctx.fillRect(margin + startX * cellSize, margin + startY * cellSize, 7 * cellSize, 7 * cellSize);
+        // Inner white 5x5 square
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(margin + (startX + 1) * cellSize, margin + (startY + 1) * cellSize, 5 * cellSize, 5 * cellSize);
+        // Center 3x3 black square
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(margin + (startX + 2) * cellSize, margin + (startY + 2) * cellSize, 3 * cellSize, 3 * cellSize);
+      };
+
+      // 3 Position Finders: Top-Left, Top-Right, Bottom-Left
+      drawFinder(0, 0);
+      drawFinder(gridSize - 7, 0);
+      drawFinder(0, gridSize - 7);
+
+      // Timing patterns (horizontal and vertical alternating lines at index 6)
+      for (let i = 8; i < gridSize - 8; i++) {
+        if (i % 2 === 0) {
+          ctx.fillRect(margin + i * cellSize, margin + 6 * cellSize, cellSize, cellSize);
+          ctx.fillRect(margin + 6 * cellSize, margin + i * cellSize, cellSize, cellSize);
+        }
+      }
+
+      // Fill in deterministic QR data cells
+      let seed = 0;
+      for (let i = 0; i < code.length; i++) {
+        seed = code.charCodeAt(i) + ((seed << 5) - seed);
+      }
+
+      for (let r = 0; r < gridSize; r++) {
+        for (let c = 0; c < gridSize; c++) {
+          // Skip the 3 finder pattern areas
+          const isTopLeft = r < 8 && c < 8;
+          const isTopRight = r < 8 && c >= gridSize - 8;
+          const isBottomLeft = r >= gridSize - 8 && c < 8;
+          const isTiming = r === 6 || c === 6;
+
+          if (isTopLeft || isTopRight || isBottomLeft || isTiming) continue;
+
+          const randVal = Math.sin(seed + r * gridSize + c) * 10000;
+          const isCell = (randVal - Math.floor(randVal)) > 0.52;
+
+          if (isCell) {
+            ctx.fillRect(margin + c * cellSize, margin + r * cellSize, cellSize, cellSize);
+          }
+        }
+      }
     }
+  }, [activeCoupon, codeType]);
 
-    // Add quiet zones (thick start/stop lines at boundaries)
-    ctx.fillRect(startX, 15, 3, height - 40);
-    ctx.fillRect(endX - 8, 15, 3, height - 40);
-
-  }, [activeCoupon]);
-
-  // Handle Mark as Used
-  const handleUseCoupon = async (couponId: string) => {
+  // Handle Mark as Used / Verify In-Store
+  const handleVerifyAndRedeem = async (couponId: string) => {
+    setIsVerifying(true);
     try {
       const supabase = createClient();
       
-      // Update locally first
+      // Optimistically update local coupons
       setLocalCoupons(prev => prev.map(c => c.id === couponId ? { ...c, is_used: true } : c));
       
-      // Check if remote supabase is enabled
       const hasSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here';
       if (hasSupabase) {
-        const { error } = await supabase
-          .from('coupons')
-          .update({ is_used: true })
-          .eq('id', couponId);
-        if (error) throw error;
+        try {
+          const { data, error } = await supabase.rpc('verify_and_redeem_coupon', {
+            target_coupon_id: couponId,
+            merchant_pin: merchantPin || 'cashier_pin'
+          });
+          if (error) throw error;
+        } catch (rpcErr) {
+          console.warn("RPC verify_and_redeem_coupon fallback:", rpcErr);
+          const { error: updateErr } = await supabase
+            .from('coupons')
+            .update({ is_used: true, verified_by: merchantPin || 'direct_user_verification' })
+            .eq('id', couponId);
+          if (updateErr) throw updateErr;
+        }
       }
       
-      addToast(t("coupon_redeemed_success"), "success");
+      addToast(t("coupon_verified_toast") || t("coupon_redeemed_success"), "success");
       setActiveCoupon(null);
+      setIsMerchantMode(false);
+      setMerchantPin('');
     } catch (err) {
       console.error("Failed to update coupon status:", err);
       addToast(t("coupon_update_failed"), "error");
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -188,7 +274,10 @@ export function CouponWallet() {
                 
                 {!coupon.is_used && (
                   <button 
-                    onClick={() => setActiveCoupon(coupon)}
+                    onClick={() => {
+                      setActiveCoupon(coupon);
+                      setIsMerchantMode(false);
+                    }}
                     className="btn"
                     style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem', height: 'auto' }}
                   >
@@ -201,7 +290,7 @@ export function CouponWallet() {
         </div>
       )}
 
-      {/* Barcode Visualizer Modal */}
+      {/* Barcode & QR Code Visualizer Modal */}
       {activeCoupon && (
         <div style={{
           position: 'fixed',
@@ -209,7 +298,7 @@ export function CouponWallet() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0, 0, 0, 0.8)',
+          background: 'rgba(0, 0, 0, 0.82)',
           backdropFilter: 'blur(10px)',
           zIndex: 1000,
           display: 'flex',
@@ -220,13 +309,13 @@ export function CouponWallet() {
           <div className="glass" style={{
             padding: '2rem',
             borderRadius: 'var(--radius)',
-            maxWidth: '400px',
+            maxWidth: '420px',
             width: '100%',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '1.5rem',
-            border: '1px solid rgba(255,255,255,0.1)'
+            gap: '1.25rem',
+            border: '1px solid rgba(255,255,255,0.15)'
           }}>
             <div style={{ textAlign: 'center' }}>
               <h3 style={{ margin: 0, color: 'white' }}>{t('in_store_voucher_title')}</h3>
@@ -235,31 +324,124 @@ export function CouponWallet() {
               </p>
             </div>
 
-            {/* Barcode Canvas */}
+            {/* Segmented Code Type Selector: Barcode vs QR Code */}
+            <div style={{ display: 'inline-flex', background: 'rgba(255, 255, 255, 0.06)', borderRadius: '9999px', padding: '0.25rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <button
+                type="button"
+                onClick={() => setCodeType('barcode')}
+                style={{
+                  padding: '0.3rem 0.85rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  borderRadius: '9999px',
+                  background: codeType === 'barcode' ? 'hsl(var(--primary))' : 'transparent',
+                  color: codeType === 'barcode' ? '#000' : 'hsl(var(--muted-foreground))',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {t('code_type_barcode')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setCodeType('qr')}
+                style={{
+                  padding: '0.3rem 0.85rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  borderRadius: '9999px',
+                  background: codeType === 'qr' ? 'hsl(var(--primary))' : 'transparent',
+                  color: codeType === 'qr' ? '#000' : 'hsl(var(--muted-foreground))',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {t('code_type_qr')}
+              </button>
+            </div>
+
+            {/* Canvas Display */}
             <div style={{
               padding: '1rem',
-              background: 'white',
-              borderRadius: '0.5rem',
-              boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.1)',
+              background: '#ffffff',
+              borderRadius: '0.75rem',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <canvas ref={barcodeCanvasRef} style={{ display: 'block' }} />
+              <canvas ref={canvasRef} style={{ display: 'block' }} />
             </div>
 
+            {/* Code Text */}
+            <div style={{ fontFamily: 'monospace', fontWeight: 'bold', fontSize: '1rem', letterSpacing: '0.1em', color: 'hsl(var(--primary))' }}>
+              {activeCoupon.code}
+            </div>
+
+            {/* Merchant Redemption Verification Toggle */}
+            <div style={{
+              width: '100%',
+              background: 'rgba(255, 255, 255, 0.03)',
+              borderRadius: '8px',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              padding: '0.85rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.6rem'
+            }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', color: 'white', fontWeight: 600 }}>
+                <input
+                  type="checkbox"
+                  checked={isMerchantMode}
+                  onChange={(e) => setIsMerchantMode(e.target.checked)}
+                  style={{ accentColor: 'hsl(var(--primary))' }}
+                />
+                <span>{t('merchant_verification_title')}</span>
+              </label>
+
+              {isMerchantMode && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.2rem' }}>
+                  <p style={{ margin: 0, fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>
+                    {t('merchant_verification_subtitle')}
+                  </p>
+                  <input
+                    type="text"
+                    placeholder={t('merchant_pin_label')}
+                    value={merchantPin}
+                    onChange={(e) => setMerchantPin(e.target.value)}
+                    style={{
+                      padding: '0.4rem 0.65rem',
+                      fontSize: '0.8rem',
+                      borderRadius: '6px',
+                      background: 'hsl(var(--input))',
+                      border: '1px solid hsl(var(--border))',
+                      color: 'white',
+                      width: '100%'
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
             <div style={{ display: 'flex', gap: '0.75rem', width: '100%' }}>
               <button 
-                onClick={() => handleUseCoupon(activeCoupon.id)}
+                onClick={() => handleVerifyAndRedeem(activeCoupon.id)}
+                disabled={isVerifying}
                 className="btn"
-                style={{ flex: 1, padding: '0.6rem', fontSize: '0.9rem', height: 'auto', background: 'hsl(var(--primary))', color: 'black' }}
+                style={{ flex: 1, padding: '0.6rem', fontSize: '0.85rem', height: 'auto', background: 'hsl(var(--primary))', color: 'black', fontWeight: 600 }}
               >
-                {t('mark_as_used')}
+                {isVerifying ? '...' : isMerchantMode ? t('verify_and_redeem_btn') : t('mark_as_used')}
               </button>
               <button 
-                onClick={() => setActiveCoupon(null)}
+                onClick={() => {
+                  setActiveCoupon(null);
+                  setIsMerchantMode(false);
+                }}
                 className="btn"
-                style={{ flex: 1, padding: '0.6rem', fontSize: '0.9rem', height: 'auto', background: 'rgba(255,255,255,0.08)', color: 'white', border: '1px solid rgba(255,255,255,0.15)' }}
+                style={{ flex: 1, padding: '0.6rem', fontSize: '0.85rem', height: 'auto', background: 'rgba(255,255,255,0.08)', color: 'white', border: '1px solid rgba(255,255,255,0.15)' }}
               >
                 {t('close_wallet')}
               </button>

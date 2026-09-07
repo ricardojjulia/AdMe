@@ -11,7 +11,7 @@ const ALL_CATEGORIES = [
 ];
 
 export default function OnboardingPage() {
-  const { preferences, togglePreference } = useUser();
+  const { preferences, togglePreference, addReward, t } = useUser();
   const [step, setStep] = useState(1);
   const router = useRouter();
 
@@ -21,12 +21,19 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     if (step === 3) {
+      if (typeof window !== 'undefined') {
+        const hasBonus = localStorage.getItem('adme_welcome_bonus_awarded');
+        if (!hasBonus) {
+          addReward(100, "Welcome Bonus");
+          localStorage.setItem('adme_welcome_bonus_awarded', 'true');
+        }
+      }
       const timer = setTimeout(() => {
         router.push("/");
-      }, 2000);
+      }, 2200);
       return () => clearTimeout(timer);
     }
-  }, [step, router]);
+  }, [step, router, addReward]);
 
   return (
     <div className={styles.container}>
@@ -35,19 +42,19 @@ export default function OnboardingPage() {
         {step === 1 && (
           <div className={`${styles.step} animate-fade-in`}>
             <div className={styles.iconWrapper}>✨</div>
-            <h1 className={styles.title}>Welcome to a new era of ads.</h1>
+            <h1 className={styles.title}>{t('onboarding_welcome_title')}</h1>
             <p className={styles.subtitle}>
-              Your attention is valuable. We believe you should be rewarded for it.
+              {t('onboarding_welcome_sub')}
             </p>
-            <button className="btn w-full hover-lift" onClick={nextStep}>Let's go</button>
+            <button className="btn w-full hover-lift" onClick={nextStep}>{t('onboarding_lets_go')}</button>
           </div>
         )}
 
         {step === 2 && (
           <div className={`${styles.step} animate-fade-in`}>
-            <h1 className={styles.title}>What are your vibes?</h1>
+            <h1 className={styles.title}>{t('onboarding_vibes_title')}</h1>
             <p className={styles.subtitle}>
-              Tell us what you actually want to see.
+              {t('onboarding_vibes_sub')}
             </p>
             <div className={styles.grid}>
               {ALL_CATEGORIES.map((category) => {
@@ -59,7 +66,7 @@ export default function OnboardingPage() {
                     className={`${styles.chip} ${isActive ? styles.active : ""}`}
                     onClick={() => togglePreference(category)}
                   >
-                    {category}
+                    {t(category)}
                   </button>
                 );
               })}
@@ -69,7 +76,7 @@ export default function OnboardingPage() {
               onClick={nextStep}
               disabled={preferences.length === 0}
             >
-              Continue
+              {t('onboarding_continue')}
             </button>
           </div>
         )}
@@ -77,9 +84,9 @@ export default function OnboardingPage() {
         {step === 3 && (
           <div className={`${styles.step} animate-fade-in`}>
             <div className={styles.loader}></div>
-            <h1 className={styles.title}>Generating your feed...</h1>
+            <h1 className={styles.title}>{t('onboarding_generating_title')}</h1>
             <p className={styles.subtitle}>
-              We're curating campaigns that match your vibe.
+              {t('onboarding_generating_sub')}
             </p>
           </div>
         )}
@@ -94,3 +101,4 @@ export default function OnboardingPage() {
     </div>
   );
 }
+

@@ -99,6 +99,13 @@
   "close_wallet": "Close Wallet",
   "coupon_redeemed_success": "Coupon marked as redeemed successfully!",
   "coupon_update_failed": "Failed to update coupon in database.",
+  "code_type_barcode": "Barcode",
+  "code_type_qr": "QR Code",
+  "merchant_verification_title": "Cashier / Merchant Verification",
+  "merchant_verification_subtitle": "Ask store staff to confirm redemption",
+  "merchant_pin_label": "Merchant Staff PIN (Optional)",
+  "verify_and_redeem_btn": "Verify & Redeem In-Store",
+  "coupon_verified_toast": "Voucher successfully verified and redeemed!",
 
   "proximity_deal_alert": "Proximity Deal Alert",
   "compass_gps_active": "Compass GPS Active",
@@ -268,5 +275,13 @@
   "double_claim_prevented": "Already claimed points for this offer!",
   "zkp_proof_verified": "Privacy-First Viewport ZKP verified! +50 pts added.",
   "zkp_verify_failed": "Failed to verify viewport dwell proof.",
-  "zkp_interaction_title": "3D Viewport ZKP"
+  "zkp_interaction_title": "3D Viewport ZKP",
+  "onboarding_welcome_title": "Welcome to a new era of ads.",
+  "onboarding_welcome_sub": "Your attention is valuable. We believe you should be rewarded for it.",
+  "onboarding_lets_go": "Let's go",
+  "onboarding_vibes_title": "What are your vibes?",
+  "onboarding_vibes_sub": "Tell us what you actually want to see.",
+  "onboarding_continue": "Continue",
+  "onboarding_generating_title": "Generating your feed...",
+  "onboarding_generating_sub": "We're curating campaigns that match your vibe."
 }

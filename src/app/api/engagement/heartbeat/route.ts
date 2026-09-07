@@ -4,10 +4,11 @@ import { createClient } from '@supabase/supabase-js';
 
 const SECRET_KEY = process.env.JWT_SECRET || 'adme_developer_secret_key_heartbeat_123';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
+  return createClient(url, key);
+}
 
 export async function POST(request: Request) {
   try {
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
     }
 
     // Upsert the engagement log
+    const supabaseAdmin = getSupabaseAdmin();
     const { error } = await supabaseAdmin
       .from('engagements')
       .upsert({

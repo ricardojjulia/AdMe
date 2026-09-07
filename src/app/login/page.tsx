@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import Link from "next/link";
+import { useUser } from "@/lib/UserContext";
 import styles from "./page.module.css";
 
 const accountOptions = [
@@ -19,6 +21,8 @@ const accountOptions = [
 ] as const;
 
 export default function LoginPage() {
+  const { sessionMode, exitDemoMode } = useUser();
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [type, setType] = useState<(typeof accountOptions)[number]["key"]>("individual");
 
   const activeOption = useMemo(
@@ -38,16 +42,18 @@ export default function LoginPage() {
 
     const formData = new FormData(event.currentTarget);
     formData.append("type", type);
+    formData.append("authMode", authMode);
     
-    // Import server action dynamically or ensure it's available
     const { loginWithEmail } = await import("./actions");
     const result = await loginWithEmail(formData);
     
     if (result?.error) {
       setErrorMsg(result.error);
+    } else if (result?.success) {
+      setSuccessMsg(result.success);
     }
     setLoading(false);
-  }, [type]);
+  }, [type, authMode]);
 
   const handleMagicLink = useCallback(async () => {
     const emailInput = document.querySelector('input[name="email"]') as HTMLInputElement;
@@ -62,6 +68,7 @@ export default function LoginPage() {
 
     const formData = new FormData();
     formData.append("email", emailInput.value);
+    formData.append("type", type);
 
     const { loginWithMagicLink } = await import("./actions");
     const result = await loginWithMagicLink(formData);
@@ -76,12 +83,30 @@ export default function LoginPage() {
 
   return (
     <div className={styles.shell}>
+      {sessionMode === "demo" && (
+        <div style={{
+          background: "hsl(var(--primary) / 0.15)",
+          border: "1px solid hsl(var(--primary) / 0.3)",
+          color: "hsl(var(--foreground))",
+          padding: "0.75rem 1.25rem",
+          borderRadius: "0.75rem",
+          marginBottom: "1.5rem",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          fontSize: "0.9rem"
+        }}>
+          <span>🎮 <strong>Demo Persona Active</strong>: You are previewing with simulated personas. Signing in below activates your authentic session.</span>
+          <Link href="/" style={{ color: "hsl(var(--primary))", textDecoration: "underline", fontWeight: 600 }}>Return to Feed</Link>
+        </div>
+      )}
+
       <div className={styles.header}>
-        <span className={styles.badge}>Welcome back</span>
-        <h1>Choose how you sign in</h1>
+        <span className={styles.badge}>{authMode === "signin" ? "Welcome back" : "Get started"}</span>
+        <h1>{authMode === "signin" ? "Sign in to AdMe" : "Create your account"}</h1>
         <p>
-          Pick the experience tailored for you. AdMe keeps ads voluntary and relevant—whether you&apos;re
-          enjoying the feed or running campaigns.
+          AdMe keeps ads voluntary, privacy-first, and high-value—whether you&apos;re
+          curating your personal feed or launching local campaigns.
         </p>
       </div>
 
@@ -102,10 +127,58 @@ export default function LoginPage() {
 
         <div className={styles.content}>
           <form className={styles.form} onSubmit={handleSubmit}>
+            {/* Auth Mode Toggle Tabs (Sign In vs Sign Up) */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "0.5rem",
+              background: "hsl(var(--muted) / 0.3)",
+              padding: "0.25rem",
+              borderRadius: "0.5rem",
+              marginBottom: "1.25rem"
+            }}>
+              <button
+                type="button"
+                onClick={() => { setAuthMode("signin"); setErrorMsg(""); setSuccessMsg(""); }}
+                style={{
+                  padding: "0.5rem",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  borderRadius: "0.375rem",
+                  border: "none",
+                  cursor: "pointer",
+                  background: authMode === "signin" ? "hsl(var(--card))" : "transparent",
+                  color: authMode === "signin" ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))",
+                  boxShadow: authMode === "signin" ? "0 1px 3px rgba(0,0,0,0.2)" : "none",
+                  transition: "all 0.2s"
+                }}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => { setAuthMode("signup"); setErrorMsg(""); setSuccessMsg(""); }}
+                style={{
+                  padding: "0.5rem",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  borderRadius: "0.375rem",
+                  border: "none",
+                  cursor: "pointer",
+                  background: authMode === "signup" ? "hsl(var(--card))" : "transparent",
+                  color: authMode === "signup" ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))",
+                  boxShadow: authMode === "signup" ? "0 1px 3px rgba(0,0,0,0.2)" : "none",
+                  transition: "all 0.2s"
+                }}
+              >
+                Create Account
+              </button>
+            </div>
+
             <div className={styles.formHeader}>
               <div>
                 <p className={styles.formEyebrow}>{activeOption.label}</p>
-                <h3>Sign in with email</h3>
+                <h3>{authMode === "signin" ? "Sign in with email" : "Register with email"}</h3>
               </div>
               <span className={styles.pill}>Secure session</span>
             </div>
@@ -113,28 +186,28 @@ export default function LoginPage() {
             {errorMsg && <div style={{ color: 'hsl(var(--destructive))', fontSize: '0.9rem', marginBottom: '1rem', padding: '0.5rem', background: 'hsl(var(--destructive)/0.1)', borderRadius: 'var(--radius)' }}>{errorMsg}</div>}
             {successMsg && <div style={{ color: 'hsl(var(--primary))', fontSize: '0.9rem', marginBottom: '1rem', padding: '0.5rem', background: 'hsl(var(--primary)/0.1)', borderRadius: 'var(--radius)' }}>{successMsg}</div>}
 
-            {type === "business" && (
+            {type === "business" && authMode === "signup" && (
               <label className={styles.field}>
-                <span>Company name</span>
-                <input name="company" placeholder="e.g., Aurora Mobility" />
+                <span>Company name *</span>
+                <input name="company" placeholder="e.g., Aurora Mobility" required />
               </label>
             )}
 
             <label className={styles.field}>
-              <span>Email</span>
-              <input name="email" type="email" placeholder="you@example.com" />
+              <span>Email address</span>
+              <input name="email" type="email" placeholder="you@example.com" required />
             </label>
 
             <label className={styles.field}>
-              <span>Password</span>
-              <input name="password" type="password" placeholder="••••••••" />
+              <span>Password (minimum 6 characters)</span>
+              <input name="password" type="password" placeholder="••••••••" required minLength={6} />
             </label>
 
             <div className={styles.actions}>
-              <button type="submit" className={styles.primaryBtn}>
-                Continue as {activeOption.label.toLowerCase()}
+              <button type="submit" className={styles.primaryBtn} disabled={loading}>
+                {loading ? "Processing..." : authMode === "signin" ? `Sign in as ${activeOption.label.toLowerCase()}` : `Create ${activeOption.label.toLowerCase()}`}
               </button>
-              <button type="button" className={styles.secondaryBtn} onClick={handleMagicLink}>
+              <button type="button" className={styles.secondaryBtn} onClick={handleMagicLink} disabled={loading}>
                 Use magic link
               </button>
             </div>
@@ -151,8 +224,8 @@ export default function LoginPage() {
             <div className={styles.helper}>
               <span className={styles.helperDot} aria-hidden />
               <div>
-                <p className={styles.helperTitle}>Need to switch plans?</p>
-                <p className={styles.helperCopy}>Your saved ads, campaigns, and analytics stay with your profile.</p>
+                <p className={styles.helperTitle}>Zero PII Guarantee</p>
+                <p className={styles.helperCopy}>Your real name and browsing habits are never shared with advertisers or third parties.</p>
               </div>
             </div>
           </div>
@@ -161,3 +234,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

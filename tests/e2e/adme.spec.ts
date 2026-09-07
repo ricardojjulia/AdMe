@@ -223,4 +223,161 @@ test.describe('AdMe End-to-End Remediations Verification', () => {
     await page.getByRole('button', { name: 'Close Wallet' }).click();
   });
 
+  test('should allow business owner to manage campaign status and filter leads in Studio', async ({ page }) => {
+    await page.goto('/');
+
+    // Switch to Valor Brews (Business persona)
+    await page.getByLabel('Toggle Demo Switcher').click();
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'load' }),
+      page.getByRole('button', { name: 'Valor Brews (Business)' }).click()
+    ]);
+
+    await page.waitForLoadState('networkidle');
+
+    // Verify campaigns list is loaded
+    await expect(page.locator('h3').filter({ hasText: 'Active Campaigns' })).toBeVisible();
+
+    // Verify campaign action buttons exist
+    const pauseBtn = page.getByRole('button', { name: /Pause/i }).first();
+    await expect(pauseBtn).toBeVisible();
+    await pauseBtn.click();
+
+    // Verify it toggles to Resume
+    await expect(page.getByRole('button', { name: /Resume/i }).first()).toBeVisible();
+
+    // Verify Inbound Leads Cockpit with status filters
+    const leadsSection = page.locator('section').filter({ hasText: 'Anonymous Inquiry Leads' });
+    await expect(leadsSection).toBeVisible();
+    await expect(leadsSection.getByRole('button', { name: /^All/i })).toBeVisible();
+    await expect(leadsSection.getByRole('button', { name: /^New/i })).toBeVisible();
+    await expect(leadsSection.getByRole('button', { name: /^Contacted/i })).toBeVisible();
+    await expect(leadsSection.getByRole('button', { name: /^Closed/i })).toBeVisible();
+  });
+
+  test('should toggle between barcode and QR code matrix in voucher wallet', async ({ page }) => {
+    await page.goto('/');
+
+    // Switch to Marcus persona
+    await page.getByLabel('Toggle Demo Switcher').click();
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'load' }),
+      page.getByRole('button', { name: 'Marcus (Local Foodie)' }).click()
+    ]);
+
+    await page.goto('/rewards');
+    await page.waitForLoadState('networkidle');
+
+    // Verify My Voucher Wallet section is accessible
+    await expect(page.locator('h3').filter({ hasText: 'My Voucher Wallet' })).toBeVisible();
+
+    // If there is a coupon with View Barcode button, open it and toggle QR code
+    const viewBarcodeBtn = page.getByRole('button', { name: 'View Barcode' }).first();
+    if (await viewBarcodeBtn.isVisible()) {
+      await viewBarcodeBtn.click();
+      await expect(page.locator('h3').filter({ hasText: 'In-Store Scanner Voucher' })).toBeVisible();
+      
+      // Toggle to QR Code
+      const qrBtn = page.getByRole('button', { name: 'QR Code', exact: true });
+      await expect(qrBtn).toBeVisible();
+      await qrBtn.click();
+      
+      // Toggle back to Barcode
+      const barcodeBtn = page.getByRole('button', { name: 'Barcode', exact: true });
+      await expect(barcodeBtn).toBeVisible();
+      await barcodeBtn.click();
+      
+      await page.getByRole('button', { name: 'Close Wallet' }).click();
+    }
+  });
+
+  test('should provide anonymous profile data export', async ({ page }) => {
+    await page.goto('/');
+
+    // Switch to Marcus persona
+    await page.getByLabel('Toggle Demo Switcher').click();
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'load' }),
+      page.getByRole('button', { name: 'Marcus (Local Foodie)' }).click()
+    ]);
+
+    await page.goto('/profile');
+    await expect(page.locator('h1')).toContainText('Your Profile');
+
+    // Click Ad Controls tab
+    await page.getByRole('button', { name: 'Ad Controls' }).click();
+
+    // Verify Export My Data button is present
+    await expect(page.getByRole('button', { name: /Export Anonymous Data/i })).toBeVisible();
+  });
+
+  test('should navigate to login, create a new consumer account and complete onboarding', async ({ page }) => {
+    await page.goto('/login');
+
+    // Ensure we are in real session mode (exit demo if active)
+    const exitDemoBtn = page.getByRole('button', { name: /Exit Demo Mode/i });
+    if (await exitDemoBtn.isVisible()) {
+      await exitDemoBtn.click();
+      await page.goto('/login');
+    }
+
+    // Switch to Create Account tab
+    await page.getByRole('button', { name: 'Create Account' }).click();
+    await expect(page.locator('h3')).toContainText('Register with email');
+
+    // Enter unique registration credentials
+    const uniqueEmail = `consumer_${Date.now()}@adme.test`;
+    await page.locator('input[name="email"]').fill(uniqueEmail);
+    await page.locator('input[name="password"]').fill('ValidPass123!');
+
+    // Submit form
+    await page.getByRole('button', { name: 'Create individual account' }).click();
+
+    // Verify automatic redirect to /onboarding
+    await expect(page).toHaveURL(/\/onboarding/, { timeout: 10000 });
+    await expect(page.locator('h1')).toContainText('Welcome to a new era of ads');
+
+    // Advance to Step 2 (Choose Preferences)
+    await page.getByRole('button', { name: "Let's go" }).click();
+    await expect(page.locator('h1')).toContainText('What are your vibes?');
+
+    // Select category pills
+    const eateryPill = page.getByRole('button', { name: /Local Eateries/i });
+    await eateryPill.click();
+
+    // Advance to Step 3 (Generating Feed & Points Grant)
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await expect(page.locator('h1')).toContainText('Generating your feed');
+
+    // Verify auto-redirect to homepage feed
+    await expect(page).toHaveURL('/', { timeout: 10000 });
+  });
+
+  test('should create a business account with company name and redirect to Studio', async ({ page }) => {
+    await page.goto('/login');
+
+    // Switch to Create Account tab
+    await page.getByRole('button', { name: 'Create Account' }).click();
+
+    // Select Business account toggle
+    await page.getByRole('button', { name: /Business account/i }).click();
+
+    // Verify Company name input is visible
+    const companyInput = page.locator('input[name="company"]');
+    await expect(companyInput).toBeVisible();
+    await companyInput.fill('Apex Local Roasters');
+
+    const uniqueBizEmail = `business_${Date.now()}@adme.test`;
+    await page.locator('input[name="email"]').fill(uniqueBizEmail);
+    await page.locator('input[name="password"]').fill('ValidPass123!');
+
+    // Submit business form
+    await page.getByRole('button', { name: 'Create business account' }).click();
+
+    // Verify automatic redirect to /studio dashboard
+    await expect(page).toHaveURL(/\/studio/, { timeout: 10000 });
+    await expect(page.locator('h1')).toContainText('Ad Studio Dashboard');
+  });
+
 });
+

@@ -51,6 +51,8 @@ interface UserContextType {
   loadingCatalog: boolean;
   claimGeofenceReward: (adId: string, points: number, brandName: string) => Promise<boolean>;
   claimViewportReward: (adId: string, dwellSeconds: number, proof: string, points: number) => Promise<boolean>;
+  sessionMode: 'authenticated' | 'demo' | 'unauthenticated';
+  exitDemoMode: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -202,6 +204,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return null;
   });
 
+  const [sessionMode, setSessionMode] = useState<'authenticated' | 'demo' | 'unauthenticated'>(() => {
+    if (typeof window !== 'undefined') {
+      if (localStorage.getItem('adme_demo_persona_id')) return 'demo';
+    }
+    return 'unauthenticated';
+  });
+
   const [coupons, setCoupons] = useState<any[]>([]);
 
   const [preferences, setPreferences] = useState<string[]>(() => {
@@ -276,6 +285,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       if (demoPersonaId) {
         const persona = DEMO_PERSONAS.find(p => p.id === demoPersonaId);
         if (persona) {
+          setSessionMode('demo');
           setUser({
             id: persona.id,
             name: persona.name,
@@ -311,12 +321,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
           const { data: { session } } = await supabase.auth.getSession();
           if (!session?.user) {
              setUser(null);
+             setSessionMode('unauthenticated');
              return;
           }
           
           const { data: userData } = await supabase.from('users').select('*').eq('id', session.user.id).single();
           
           if (userData) {
+            setSessionMode('authenticated');
             setUser({
               id: userData.id,
               name: userData.name || session.user.email?.split('@')[0] || 'User',
@@ -691,34 +703,48 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const selectPersona = async (id: string | null, redirectPath?: string) => {
-    if (!id) {
+  const exitDemoMode = async () => {
+    if (typeof window !== 'undefined') {
       localStorage.removeItem('adme_demo_persona_id');
-      if (isSupabaseEnabled) {
+    }
+    if (isSupabaseEnabled) {
+      try {
         const supabase = createClient();
         await supabase.auth.signOut();
+      } catch (e) {
+        console.error("Sign out error:", e);
       }
-    } else {
-      localStorage.setItem('adme_demo_persona_id', id);
-      if (isSupabaseEnabled) {
-        try {
-          const supabase = createClient();
-          let email = '';
-          if (id === 'a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0e1') email = 'sarah@adme.demo';
-          else if (id === 'a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0e2') email = 'marcus@adme.demo';
-          else if (id === 'a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0e3') email = 'elena@adme.demo';
-          else if (id === '00000000-0000-0000-0000-000000000001') email = 'valor@adme.demo';
-          else if (id === 'a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0f5') email = 'workstation@adme.demo';
-          
-          if (email) {
-            await supabase.auth.signInWithPassword({
-              email,
-              password: 'password123'
-            });
-          }
-        } catch (e) {
-          console.error("Failed to authenticate demo persona on Supabase:", e);
+    }
+    setUser(null);
+    setSessionMode('unauthenticated');
+    window.location.href = '/login';
+  };
+
+  const selectPersona = async (id: string | null, redirectPath?: string) => {
+    if (!id) {
+      await exitDemoMode();
+      return;
+    }
+    setSessionMode('demo');
+    localStorage.setItem('adme_demo_persona_id', id);
+    if (isSupabaseEnabled) {
+      try {
+        const supabase = createClient();
+        let email = '';
+        if (id === 'a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0e1') email = 'sarah@adme.demo';
+        else if (id === 'a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0e2') email = 'marcus@adme.demo';
+        else if (id === 'a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0e3') email = 'elena@adme.demo';
+        else if (id === '00000000-0000-0000-0000-000000000001') email = 'valor@adme.demo';
+        else if (id === 'a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0f5') email = 'workstation@adme.demo';
+        
+        if (email) {
+          await supabase.auth.signInWithPassword({
+            email,
+            password: 'password123'
+          });
         }
+      } catch (e) {
+        console.error("Failed to authenticate demo persona on Supabase:", e);
       }
     }
     if (redirectPath) {
@@ -729,7 +755,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, redeemPerk, setLocation, selectPersona, adFrequency, deliveryChannels, quietHours, updateAdControlSettings, locale, setLocale, t, loadingCatalog, claimGeofenceReward, claimViewportReward }}>
+    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, redeemPerk, setLocation, selectPersona, adFrequency, deliveryChannels, quietHours, updateAdControlSettings, locale, setLocale, t, loadingCatalog, claimGeofenceReward, claimViewportReward, sessionMode, exitDemoMode }}>
       {children}
     </UserContext.Provider>
   );

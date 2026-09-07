@@ -108,7 +108,8 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
                 dailyBudget: d.daily_budget,
                 creditsSpentToday: d.credits_spent_today,
                 ownerId: d.owner_id,
-                maxCpcBid: d.max_cpc_bid
+                maxCpcBid: d.max_cpc_bid,
+                status: d.status || 'active'
             }));
           }
         } catch (e) {
@@ -130,10 +131,14 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
             dailyBudget: isStatic ? (idx === 1 ? 1000 : 1200) : 1000,
             creditsSpentToday: isStatic ? 0 : Math.floor(Math.random() * 400),
             ownerId: isStatic ? '00000000-0000-0000-0000-000000000001' : `mock-owner-${idx}`,
-            maxCpcBid: isStatic ? (idx === 0 ? 20 : idx === 1 ? 15 : idx === 2 ? 35 : 45) : 15 + Math.floor(Math.random() * 20)
+            maxCpcBid: isStatic ? (idx === 0 ? 20 : idx === 1 ? 15 : idx === 2 ? 35 : 45) : 15 + Math.floor(Math.random() * 20),
+            status: 'active' as const
           };
         });
       }
+
+      // Filter out paused or archived campaigns
+      filteredAds = filteredAds.filter((ad: Ad) => !ad.status || ad.status === 'active');
 
       // 1. Shuffle the global batch client-side
       filteredAds = shuffleArray(filteredAds);

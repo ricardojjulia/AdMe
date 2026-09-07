@@ -53,6 +53,8 @@ export default function StudioDashboard() {
   const [engagementsList, setEngagementsList] = useState<any[]>([]);
   const [simulatingId, setSimulatingId] = useState<string | null>(null);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
+  const [editingBudgetAd, setEditingBudgetAd] = useState<{ id: string; headline: string; dailyBudget: number } | null>(null);
+  const [leadFilter, setLeadFilter] = useState<'all' | 'new' | 'contacted' | 'closed'>('all');
 
   const adCredits = user?.adCreditsBalance || 0;
   const currentPlan = user?.subscriptionTier || 'free';
@@ -226,12 +228,13 @@ export default function StudioDashboard() {
           userHandle: 'UID-' + l.user_id.substring(0, 8).toUpperCase(),
           message: l.message,
           contactInfo: l.contact_info || 'None provided (stayed anonymous)',
+          status: l.status || 'new',
           date: new Date(l.created_at).toLocaleDateString()
         })));
       } else {
         setLeads([
-          { id: 'mock-1', adHeadline: "Valor Brews: Single Origin Espresso Drops!", userHandle: "UID-73A8-XP92", message: "Do you have gluten-free buns available for this challenge?", contactInfo: "None provided (stayed anonymous)", date: "6/6/2026" },
-          { id: 'mock-2', adHeadline: "WorkStation: Focus Timer for Devs", userHandle: "UID-F4A2-99AB", message: "Is the ergonomic split keyboard compatible with macOS layout?", contactInfo: "inquiry@macosdev.com", date: "6/5/2026" }
+          { id: 'mock-1', adHeadline: "Valor Brews: Single Origin Espresso Drops!", userHandle: "UID-73A8-XP92", message: "Do you have gluten-free buns available for this challenge?", contactInfo: "None provided (stayed anonymous)", status: 'new', date: "6/6/2026" },
+          { id: 'mock-2', adHeadline: "WorkStation: Focus Timer for Devs", userHandle: "UID-F4A2-99AB", message: "Is the ergonomic split keyboard compatible with macOS layout?", contactInfo: "inquiry@macosdev.com", status: 'contacted', date: "6/5/2026" }
         ]);
       }
 
@@ -306,7 +309,7 @@ export default function StudioDashboard() {
       return {
         id: ad.id,
         headline: ad.headline,
-        status: 'Active',
+        status: ad.status || 'active',
         impressions: views.length,
         clicks: clicks.length,
         likes: likes.length,
@@ -341,6 +344,81 @@ export default function StudioDashboard() {
       }
       return c;
     }));
+  };
+
+  const handleToggleCampaignStatus = async (adId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'paused' ? 'active' : 'paused';
+    
+    setActiveAds(prev => prev.map(a => a.id === adId ? { ...a, status: newStatus } : a));
+    setCampaignsList(prev => prev.map(c => c.id === adId ? { ...c, status: newStatus } : c));
+    
+    const hasSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here';
+    if (hasSupabase) {
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        await supabase.from('ads').update({ status: newStatus }).eq('id', adId);
+      } catch (err) {
+        console.error("Failed to update status in Supabase:", err);
+      }
+    }
+    addToast(`Campaign ${newStatus === 'active' ? 'resumed' : 'paused'} successfully.`, "success");
+  };
+
+  const handleSaveBudget = async (newBudget: number) => {
+    if (!editingBudgetAd) return;
+    const adId = editingBudgetAd.id;
+    
+    setActiveAds(prev => prev.map(a => a.id === adId ? { ...a, dailyBudget: newBudget } : a));
+    setCampaignsList(prev => prev.map(c => c.id === adId ? { ...c, daily_budget: newBudget } : c));
+    
+    const hasSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here';
+    if (hasSupabase) {
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        await supabase.from('ads').update({ daily_budget: newBudget }).eq('id', adId);
+      } catch (err) {
+        console.error("Failed to update budget in Supabase:", err);
+      }
+    }
+    addToast(`Daily budget updated to ★${newBudget.toLocaleString()}`, "success");
+    setEditingBudgetAd(null);
+  };
+
+  const handleArchiveCampaign = async (adId: string) => {
+    if (!confirm("Are you sure you want to archive this campaign?")) return;
+    
+    setActiveAds(prev => prev.map(a => a.id === adId ? { ...a, status: 'archived' } : a));
+    setCampaignsList(prev => prev.map(c => c.id === adId ? { ...c, status: 'archived' } : c));
+    
+    const hasSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here';
+    if (hasSupabase) {
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        await supabase.from('ads').update({ status: 'archived' }).eq('id', adId);
+      } catch (err) {
+        console.error("Failed to archive campaign in Supabase:", err);
+      }
+    }
+    addToast("Campaign archived.", "info");
+  };
+
+  const handleUpdateLeadStatus = async (leadId: string, newStatus: 'new' | 'contacted' | 'closed') => {
+    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: newStatus } : l));
+    
+    const hasSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here';
+    if (hasSupabase) {
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        await supabase.from('leads').update({ status: newStatus }).eq('id', leadId);
+      } catch (err) {
+        console.error("Failed to update lead status in Supabase:", err);
+      }
+    }
+    addToast(`Lead marked as ${newStatus}.`, "success");
   };
 
   const handleExport = () => {
@@ -663,6 +741,40 @@ export default function StudioDashboard() {
                                       </span>
                                     )}
                                   </div>
+
+                                  {/* Campaign Lifecycle Action Buttons */}
+                                  <div className={styles.campaignActions}>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleToggleCampaignStatus(ad.id, ad.status);
+                                      }}
+                                      className={styles.actionBtn}
+                                    >
+                                      {ad.status === 'paused' ? '▶ Resume' : '⏸ Pause'}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingBudgetAd({ id: ad.id, headline: ad.headline, dailyBudget: ad.dailyBudget });
+                                      }}
+                                      className={styles.actionBtn}
+                                    >
+                                      ✏ Edit Budget
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleArchiveCampaign(ad.id);
+                                      }}
+                                      className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+                                    >
+                                      🗑 Archive
+                                    </button>
+                                  </div>
                                 </div>
                                 <div className={styles.campaignMetrics}>
                                   <div><strong>{ad.impressions}</strong> Views</div>
@@ -770,31 +882,114 @@ export default function StudioDashboard() {
             </div>
           </section>
 
-          {/* Anonymous Leads */}
+          {/* Anonymous Leads Cockpit */}
           <section className={styles.campaignsSection}>
-            <h3>Anonymous Inquiry Leads</h3>
-            <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem', marginBottom: '1rem' }}>
-              Real interest results generated by consumers without identity details.
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <h3 style={{ margin: 0 }}>Anonymous Inquiry Leads</h3>
+              <span style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>
+                {leads.length} Total Leads
+              </span>
+            </div>
+            <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+              Direct consumer interest captured while maintaining total zero-knowledge privacy.
             </p>
+
+            {/* Status Filter Bar */}
+            <div className={styles.leadFilterBar}>
+              {(['all', 'new', 'contacted', 'closed'] as const).map(filterKey => {
+                const count = filterKey === 'all' 
+                  ? leads.length 
+                  : leads.filter(l => (l.status || 'new') === filterKey).length;
+                return (
+                  <button
+                    key={filterKey}
+                    type="button"
+                    onClick={() => setLeadFilter(filterKey)}
+                    className={`${styles.filterPill} ${leadFilter === filterKey ? styles.filterPillActive : ''}`}
+                  >
+                    <span style={{ textTransform: 'capitalize' }}>{filterKey}</span>
+                    <span style={{ 
+                      background: leadFilter === filterKey ? 'hsl(var(--primary))' : 'hsl(var(--muted))', 
+                      color: leadFilter === filterKey ? 'black' : 'inherit',
+                      borderRadius: '9999px', 
+                      padding: '0.05rem 0.4rem', 
+                      fontSize: '0.7rem' 
+                    }}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
             <div className="glass" style={{ display: 'flex', flexDirection: 'column', borderRadius: 'var(--radius)', overflow: 'hidden', border: '1px solid hsl(var(--border))' }}>
-              {leads.length === 0 ? (
-                <p style={{ padding: '1.5rem', color: 'hsl(var(--muted-foreground))' }}>No inquiry leads yet.</p>
+              {leads.filter(l => leadFilter === 'all' || (l.status || 'new') === leadFilter).length === 0 ? (
+                <p style={{ padding: '1.5rem', color: 'hsl(var(--muted-foreground))' }}>
+                  {leadFilter === 'all' ? 'No inquiry leads yet.' : `No leads with status "${leadFilter}".`}
+                </p>
               ) : (
-                leads.map(lead => (
-                  <div key={lead.id} style={{ padding: '1rem', borderBottom: '1px solid hsl(var(--border))', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                      <strong style={{ color: 'hsl(var(--primary))' }}>{lead.userHandle}</strong>
-                      <span style={{ color: 'hsl(var(--muted-foreground))' }}>{lead.date}</span>
-                    </div>
-                    <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
-                      Campaign: <em>{lead.adHeadline}</em>
-                    </div>
-                    <p style={{ margin: '0.25rem 0', fontSize: '0.95rem' }}>&ldquo;{lead.message}&rdquo;</p>
-                    <div style={{ fontSize: '0.8rem', background: 'hsl(var(--muted))', padding: '0.4rem', borderRadius: '0.25rem', color: 'hsl(var(--muted-foreground))' }}>
-                      📞 Callback Info: {lead.contactInfo}
-                    </div>
-                  </div>
-                ))
+                leads
+                  .filter(l => leadFilter === 'all' || (l.status || 'new') === leadFilter)
+                  .map(lead => {
+                    const currentLeadStatus = lead.status || 'new';
+                    return (
+                      <div key={lead.id} className={styles.leadCard}>
+                        <div className={styles.leadHeader}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                            <strong style={{ color: 'hsl(var(--primary))' }}>{lead.userHandle}</strong>
+                            {currentLeadStatus === 'new' && (
+                              <span className={`${styles.statusBadge} ${styles.statusBadgeNew}`}>● New</span>
+                            )}
+                            {currentLeadStatus === 'contacted' && (
+                              <span className={`${styles.statusBadge} ${styles.statusBadgeContacted}`}>● Contacted</span>
+                            )}
+                            {currentLeadStatus === 'closed' && (
+                              <span className={`${styles.statusBadge} ${styles.statusBadgeClosed}`}>● Closed</span>
+                            )}
+                          </div>
+                          <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.8rem' }}>{lead.date}</span>
+                        </div>
+                        <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
+                          Campaign: <em>{lead.adHeadline}</em>
+                        </div>
+                        <p style={{ margin: '0.25rem 0', fontSize: '0.95rem' }}>&ldquo;{lead.message}&rdquo;</p>
+                        <div style={{ fontSize: '0.8rem', background: 'hsl(var(--muted))', padding: '0.4rem', borderRadius: '0.25rem', color: 'hsl(var(--muted-foreground))' }}>
+                          📞 Callback Info: {lead.contactInfo}
+                        </div>
+
+                        {/* Quick lead status action buttons */}
+                        <div className={styles.leadActions}>
+                          {currentLeadStatus !== 'contacted' && (
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateLeadStatus(lead.id, 'contacted')}
+                              className={styles.actionBtn}
+                            >
+                              Mark Contacted
+                            </button>
+                          )}
+                          {currentLeadStatus !== 'closed' && (
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateLeadStatus(lead.id, 'closed')}
+                              className={styles.actionBtn}
+                            >
+                              Mark Closed
+                            </button>
+                          )}
+                          {currentLeadStatus === 'closed' && (
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateLeadStatus(lead.id, 'new')}
+                              className={styles.actionBtn}
+                            >
+                              Reopen Lead
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
               )}
             </div>
           </section>
@@ -844,6 +1039,60 @@ export default function StudioDashboard() {
           </section>
         </aside>
       </div>
+
+      {editingBudgetAd && (
+        <div className={styles.modalOverlay} onClick={() => setEditingBudgetAd(null)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0 }}>Adjust Daily Budget</h3>
+              <button 
+                type="button"
+                onClick={() => setEditingBudgetAd(null)}
+                style={{ background: 'none', border: 'none', color: 'hsl(var(--muted-foreground))', fontSize: '1.2rem', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
+              Campaign: <strong>{editingBudgetAd.headline}</strong>
+            </p>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const fd = new FormData(e.currentTarget);
+              const val = parseInt(fd.get('dailyBudget') as string) || editingBudgetAd.dailyBudget;
+              handleSaveBudget(val);
+            }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Daily Budget (AdPoints ★)</label>
+                <input 
+                  type="number" 
+                  name="dailyBudget"
+                  defaultValue={editingBudgetAd.dailyBudget}
+                  min="100" 
+                  max="100000"
+                  step="50"
+                  className="input"
+                  style={{ width: '100%' }}
+                  required
+                />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setEditingBudgetAd(null)}
+                  className="btn"
+                  style={{ background: 'transparent', border: '1px solid hsl(var(--border))' }}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn">
+                  Save Budget
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
