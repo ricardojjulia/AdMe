@@ -50,7 +50,7 @@ export default function RewardsPage() {
       
       if (hasSupabase) {
         try {
-          const { data, error } = await supabase.from('ads').select('*').limit(6);
+          const { data, error } = await supabase.from('ads').select('*').order('id', { ascending: true }).limit(6);
           if (data && !error) {
             adsList = data;
           }
