@@ -48,7 +48,10 @@ jobs:
         with: { node-version: '24', cache: 'npm' }
       - run: npm ci
       - name: Prepare localization test database
-        run: psql "$DATABASE_URL" -f supabase/migrations/20260609000000_localization_governance.sql
+        run: |
+          psql "$DATABASE_URL" -c "CREATE TABLE IF NOT EXISTS public.users (id UUID PRIMARY KEY, name TEXT, avatar TEXT, rewards_balance INT DEFAULT 0, role TEXT DEFAULT 'consumer', ad_credits_balance INT DEFAULT 0, subscription_tier TEXT DEFAULT 'free', created_at TIMESTAMPTZ DEFAULT now());"
+          psql "$DATABASE_URL" -c "INSERT INTO public.users (id, name, role) VALUES ('a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0e1', 'Sarah', 'consumer'), ('a0e0a0e0-a0e0-a0e0-a0e0-a0e0a0e0a0e2', 'Marcus', 'consumer') ON CONFLICT (id) DO NOTHING;"
+          psql "$DATABASE_URL" -f supabase/migrations/20260609000000_localization_governance.sql
         env:
           DATABASE_URL: postgresql://postgres@localhost:53322/postgres
           PGPASSWORD: postgres
