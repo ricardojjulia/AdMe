@@ -243,8 +243,11 @@ test.describe('AdMe End-to-End Remediations Verification', () => {
     await expect(pauseBtn).toBeVisible();
     await pauseBtn.click();
 
-    // Verify it toggles to Resume
-    await expect(page.getByRole('button', { name: /Resume/i }).first()).toBeVisible();
+    // Verify it toggles to Resume and toggle back to active
+    const resumeBtn = page.getByRole('button', { name: /Resume/i }).first();
+    await expect(resumeBtn).toBeVisible();
+    await resumeBtn.click();
+    await expect(page.getByRole('button', { name: /Pause/i }).first()).toBeVisible();
 
     // Verify Inbound Leads Cockpit with status filters
     const leadsSection = page.locator('section').filter({ hasText: 'Anonymous Inquiry Leads' });
