@@ -119,19 +119,19 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
 
       // Fallback to mock ads if remote failed/empty
       if (filteredAds.length === 0) {
-        filteredAds = generateMockAds(100, location || undefined).map((ad, idx) => {
-          const isStatic = idx < 4;
-          const isVariation = !isStatic && (idx % 6 === 0 || idx % 6 === 1);
-          const campaignId = isStatic ? ad.id : (isVariation ? `mock-campaign-${Math.floor(idx / 6)}` : undefined);
+        filteredAds = generateMockAds(18, location || undefined).map((ad, idx) => {
+          const isStatic = idx < 18;
+          const isVariation = !isStatic && (idx % 2 === 1);
+          const campaignId = isStatic ? ad.id : (isVariation ? `mock-campaign-${Math.floor(idx / 2)}` : undefined);
           return {
             ...ad,
-            isBoosted: isStatic ? ad.isBoosted : (idx % 5 === 0),
+            isBoosted: ad.isBoosted ?? (idx % 4 === 0),
             campaignId: campaignId,
-            variationName: isVariation ? (idx % 2 === 0 ? 'A' : 'B') : undefined,
-            dailyBudget: isStatic ? (idx === 1 ? 1000 : 1200) : 1000,
-            creditsSpentToday: isStatic ? 0 : Math.floor(Math.random() * 400),
-            ownerId: isStatic ? '00000000-0000-0000-0000-000000000001' : `mock-owner-${idx}`,
-            maxCpcBid: isStatic ? (idx === 0 ? 20 : idx === 1 ? 15 : idx === 2 ? 35 : 45) : 15 + Math.floor(Math.random() * 20),
+            variationName: isVariation ? 'B' : 'A',
+            dailyBudget: 1200,
+            creditsSpentToday: 0,
+            ownerId: '00000000-0000-0000-0000-000000000001',
+            maxCpcBid: ad.maxCpcBid ?? 20,
             status: 'active' as const
           };
         });
@@ -145,7 +145,7 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
 
       // 2. Zero-Knowledge Category Matcher
       if (activeTab === 'Local') {
-        filteredAds = filteredAds.filter((ad: Ad) => ad.category === 'Local');
+        filteredAds = filteredAds.filter((ad: Ad) => ad.category === 'Local Eateries' || ad.category === 'Local' || !!ad.location);
       } else {
         filteredAds = filteredAds.filter((ad: Ad) => preferences.includes(ad.category));
       }

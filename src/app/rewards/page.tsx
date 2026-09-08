@@ -96,22 +96,39 @@ export default function RewardsPage() {
     }
   };
 
-  // Convert database ads into local deals
-  const localDiscounts = localAds.map((ad, idx) => ({
-    id: `local-${ad.id || idx}`,
-    name: ad.headline || `${ad.advertiser_name} local promo`,
-    cost: 350 + (idx * 50),
-    emoji: "🎟️",
-    category: t("cat_local_deals"),
-    description: t("perk_local_desc", { brand: ad.advertiser_name })
-  }));
+  // Convert verified merchant ads into local partner discount vouchers
+  const localDiscounts = localAds
+    .filter(ad => ad.category === 'Local Eateries' || ad.category === 'Veteran-owned' || ad.category === 'Home & Garden')
+    .slice(0, 3)
+    .map((ad, idx) => ({
+      id: `partner-drop-${ad.id || idx}`,
+      name: `${ad.advertiser_name} In-Store Drop: $5 Voucher`,
+      cost: 350 + (idx * 50),
+      emoji: "🎟️",
+      category: t("cat_local_deals"),
+      categories: ["Local Deals", "Food & Drink", "Shopping"],
+      description: t("perk_local_desc", { brand: ad.advertiser_name })
+    }));
 
-  // Perks list
+  // Curated perks catalog across all categories
   const perks = [
-    { id: "coffee", name: t("perk_coffee_name"), cost: 500, emoji: "☕", category: t("cat_food_drink"), description: t("perk_coffee_desc") },
-    { id: "adfree", name: t("perk_adfree_name"), cost: 1000, emoji: "🎁", category: t("cat_premium_perks"), description: t("perk_adfree_desc") },
-    { id: "amazon", name: t("perk_amazon_name"), cost: 2000, emoji: "🛍️", category: t("cat_shopping"), description: t("perk_amazon_desc") },
-    { id: "uber", name: t("perk_uber_name"), cost: 3000, emoji: "🍔", category: t("cat_food_drink"), description: t("perk_uber_desc") },
+    // 1. Food & Drink
+    { id: "coffee", name: t("perk_coffee_name"), cost: 350, emoji: "☕", category: t("cat_food_drink"), categories: ["Food & Drink", "Local Deals"], description: t("perk_coffee_desc") },
+    { id: "green-kitchen", name: t("perk_green_kitchen_name"), cost: 500, emoji: "🥗", category: t("cat_food_drink"), categories: ["Food & Drink", "Local Deals"], description: t("perk_green_kitchen_desc") },
+    { id: "artisan-sourdough", name: t("perk_artisan_sourdough_name"), cost: 250, emoji: "🥐", category: t("cat_food_drink"), categories: ["Food & Drink", "Local Deals"], description: t("perk_artisan_sourdough_desc") },
+    { id: "uber", name: t("perk_uber_name"), cost: 2500, emoji: "🍔", category: t("cat_food_drink"), categories: ["Food & Drink"], description: t("perk_uber_desc") },
+
+    // 2. Shopping & Retail
+    { id: "terra-living", name: t("perk_terra_living_name"), cost: 450, emoji: "🌿", category: t("cat_shopping"), categories: ["Shopping", "Local Deals"], description: t("perk_terra_living_desc") },
+    { id: "forward-march", name: t("perk_forward_march_name"), cost: 800, emoji: "🎒", category: t("cat_shopping"), categories: ["Shopping", "Local Deals"], description: t("perk_forward_march_desc") },
+    { id: "amazon", name: t("perk_amazon_name"), cost: 2000, emoji: "🛍️", category: t("cat_shopping"), categories: ["Shopping"], description: t("perk_amazon_desc") },
+
+    // 3. Digital & Subscriptions
+    { id: "adfree", name: t("perk_adfree_name"), cost: 800, emoji: "🎁", category: t("cat_premium_perks"), categories: ["Premium Perks"], description: t("perk_adfree_desc") },
+    { id: "audiobook", name: t("perk_audiobook_name"), cost: 750, emoji: "📚", category: t("cat_premium_perks"), categories: ["Premium Perks", "Shopping"], description: t("perk_audiobook_desc") },
+    { id: "devsync", name: t("perk_devsync_name"), cost: 1200, emoji: "💻", category: t("cat_premium_perks"), categories: ["Premium Perks"], description: t("perk_devsync_desc") },
+
+    // In-store drops from database
     ...localDiscounts
   ];
 
@@ -125,7 +142,10 @@ export default function RewardsPage() {
   ];
   
   const filteredPerks = perks.filter(perk => {
-    const matchesCategory = selectedCategory === "All" || perk.category === categories.find(c => c.key === selectedCategory)?.label;
+    const categoryLabel = categories.find(c => c.key === selectedCategory)?.label;
+    const matchesCategory = selectedCategory === "All" || 
+                            perk.category === categoryLabel ||
+                            (perk.categories && perk.categories.includes(selectedCategory));
     const matchesSearch = perk.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           perk.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesAffordable = !affordableOnly || balance >= perk.cost;

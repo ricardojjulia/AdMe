@@ -207,12 +207,45 @@ export function CouponWallet() {
     }
   };
 
+  const handleClearUsedCoupons = async () => {
+    const activeOnly = localCoupons.filter(c => !c.is_used);
+    setLocalCoupons(activeOnly);
+    
+    // Also remove used records from Supabase if connected
+    const hasSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here';
+    if (hasSupabase && user) {
+      try {
+        const supabase = createClient();
+        await supabase.from('coupons').delete().eq('user_id', user.id).eq('is_used', true);
+      } catch (err) {
+        console.error("Failed to delete used coupons in DB:", err);
+      }
+    }
+    addToast(t('cleared_used_toast') || 'Redeemed vouchers cleared from wallet', 'info');
+  };
+
+  const hasUsedCoupons = localCoupons.some(c => c.is_used);
+
   return (
     <section style={{ marginTop: '2rem' }}>
-      <h3>{t('coupon_wallet_title')}</h3>
-      <p style={{ color: 'hsl(var(--muted-foreground))', margin: '-0.5rem 0 1rem 0' }}>
-        {t('coupon_wallet_desc')}
-      </p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
+        <div>
+          <h3 style={{ margin: 0 }}>{t('coupon_wallet_title')}</h3>
+          <p style={{ color: 'hsl(var(--muted-foreground))', margin: '0.25rem 0 0 0', fontSize: '0.85rem' }}>
+            {t('coupon_wallet_desc')}
+          </p>
+        </div>
+        {hasUsedCoupons && (
+          <button 
+            type="button"
+            onClick={handleClearUsedCoupons}
+            className="btn"
+            style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', height: 'auto' }}
+          >
+            🧹 {t('clear_used_coupons')}
+          </button>
+        )}
+      </div>
 
       {localCoupons.length === 0 ? (
         <div className="glass" style={{ padding: '2rem', borderRadius: 'var(--radius)', textAlign: 'center', color: 'hsl(var(--muted-foreground))' }}>
