@@ -31,26 +31,34 @@ export function CarouselAdCard({ ad }: CarouselAdCardProps) {
 
   useEffect(() => {
     let channel: any;
+    let supabaseInstance: any;
     async function setupSubscription() {
-      const { createClient } = await import('@/lib/supabase/client');
-      const supabase = createClient();
-      
-      channel = supabase
-        .channel(`public:ads:${ad.id}`)
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ads', filter: `id=eq.${ad.id}` }, (payload) => {
-          if (payload.new && typeof payload.new.likes === 'number') {
-            setLikesCount(payload.new.likes);
-          }
-        })
-        .subscribe();
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        supabaseInstance = createClient();
+        
+        const uniqueChannelId = `public:ads:${ad.id}:${Math.random().toString(36).substring(2, 9)}`;
+        channel = supabaseInstance
+          .channel(uniqueChannelId)
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ads', filter: `id=eq.${ad.id}` }, (payload: any) => {
+            if (payload.new && typeof payload.new.likes === 'number') {
+              setLikesCount(payload.new.likes);
+            }
+          })
+          .subscribe();
+      } catch (e) {
+        console.warn('Realtime subscription error in CarouselAdCard:', e);
+      }
     }
     
     if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here') {
-        setupSubscription();
+      setupSubscription();
     }
     
     return () => {
-      if (channel) channel.unsubscribe();
+      if (channel && supabaseInstance) {
+        supabaseInstance.removeChannel(channel);
+      }
     };
   }, [ad.id]);
 

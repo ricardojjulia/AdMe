@@ -266,13 +266,18 @@ export default function StudioDashboard() {
       
       // Set up realtime subscription for updates
       if (hasSupabase) {
-        supabase
-          .channel('public:engagements')
-          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'engagements' }, (payload) => {
+        const uniqueChannelId = `public:engagements:${Math.random().toString(36).substring(2, 9)}`;
+        const engagementChannel = supabase
+          .channel(uniqueChannelId)
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'engagements' }, (payload: any) => {
             const newEngagement = payload.new;
             setEngagementsList(prev => [...prev, newEngagement]);
           })
           .subscribe();
+
+        return () => {
+          supabase.removeChannel(engagementChannel);
+        };
       }
     }
     loadData();

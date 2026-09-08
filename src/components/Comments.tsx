@@ -65,6 +65,7 @@ export function Comments({ adId }: { adId: string }) {
   useEffect(() => {
     let isMounted = true;
     let channel: any;
+    let supabaseInstance: any;
 
     async function initializeComments() {
       let initialComments: CommentItem[] = [];
@@ -102,9 +103,9 @@ export function Comments({ adId }: { adId: string }) {
       ) {
         try {
           const { createClient } = await import("@/lib/supabase/client");
-          const supabase = createClient();
+          supabaseInstance = createClient();
 
-          const { data, error } = await supabase
+          const { data, error } = await supabaseInstance
             .from("comments")
             .select("*")
             .eq("ad_id", adId)
@@ -124,12 +125,12 @@ export function Comments({ adId }: { adId: string }) {
           }
 
           // C. Realtime subscription
-          channel = supabase
+          channel = supabaseInstance
             .channel(`public:comments:${adId}:${Math.random().toString(36).substring(2, 7)}`)
             .on(
               "postgres_changes",
               { event: "INSERT", schema: "public", table: "comments", filter: `ad_id=eq.${adId}` },
-              (payload) => {
+              (payload: any) => {
                 if (payload.new && isMounted) {
                   setComments((prev) => {
                     if (prev.some((c) => c.id === payload.new.id)) return prev;
@@ -153,7 +154,9 @@ export function Comments({ adId }: { adId: string }) {
 
     return () => {
       isMounted = false;
-      if (channel) channel.unsubscribe();
+      if (channel && supabaseInstance) {
+        supabaseInstance.removeChannel(channel);
+      }
     };
   }, [adId, storageKey]);
 
