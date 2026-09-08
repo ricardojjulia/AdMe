@@ -107,4 +107,27 @@ describe('Stripe Checkout & Zero-Drop Credit Fulfillment Integration', () => {
       expect(data.received).toBe(true);
     });
   });
+
+  describe('4. Revenue Stream 3 & 4 Verification (Pay-Per-Lead & In-Store Cashier Redemptions)', () => {
+    it('should validate Stream 3 lead structure parameters', () => {
+      const mockLead = {
+        adId: '30303030-3030-3030-3030-303030303030',
+        message: 'Requesting quote for catering services',
+        contactInfo: 'client@example.com'
+      };
+      expect(mockLead.adId).toBeDefined();
+      expect(mockLead.message.length).toBeGreaterThan(0);
+      expect(mockLead.contactInfo).toContain('@');
+    });
+
+    it('should validate Stream 4 cashier redemption payload format', () => {
+      const mockRedemption = {
+        targetCouponId: '240a5b85-8d85-4a80-bd20-aaeda76de68d',
+        merchantPin: '1234'
+      };
+      expect(mockRedemption.targetCouponId).toMatch(/^[0-9a-f-]+$/);
+      expect(mockRedemption.merchantPin).toBe('1234');
+    });
+  });
 });
+

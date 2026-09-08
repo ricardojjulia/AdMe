@@ -322,6 +322,7 @@ export default function StudioDashboard() {
         dailyBudget: ad.daily_budget ?? 1000,
         creditsSpentToday: ad.credits_spent_today ?? 0,
         maxCpcBid: ad.max_cpc_bid ?? 15,
+        inStoreRedemptions: ad.in_store_redemptions ?? 0,
         category: ad.category
       };
     });
@@ -781,6 +782,11 @@ export default function StudioDashboard() {
                                   <div><strong>{ad.clicks}</strong> Clicks</div>
                                   <div><strong>{ad.ctr}%</strong> CTR</div>
                                   <div><strong>★ {ad.maxCpcBid}</strong> Bid</div>
+                                  {ad.inStoreRedemptions > 0 && (
+                                    <div style={{ color: 'hsl(var(--primary))' }}>
+                                      <strong>🏪 {ad.inStoreRedemptions}</strong> Drops
+                                    </div>
+                                  )}
                                   <div style={{ borderLeft: '1px solid hsl(var(--border)/0.5)', paddingLeft: '0.75rem', marginLeft: '0.25rem', textAlign: 'left' }}>
                                     <div style={{ fontSize: '0.85rem' }}>Pacing: <strong>{ad.creditsSpentToday}/{ad.dailyBudget}</strong> ★</div>
                                     <div style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))' }}>spent today</div>

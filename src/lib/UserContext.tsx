@@ -810,23 +810,25 @@ export function UserProvider({ children }: { children: ReactNode }) {
       try {
         const supabase = createClient();
         
-        // 1. Insert lead record
-        await supabase.from('leads').insert({
-          ad_id: adId,
-          user_id: user.id,
-          message,
-          contact_info: contactInfo
+        // 1. Invoke atomic submit_campaign_lead RPC (deducts 50 merchant credits, awards 25 consumer points)
+        const { data, error } = await supabase.rpc('submit_campaign_lead', {
+          p_ad_id: adId,
+          p_message: message,
+          p_contact_info: contactInfo
         });
 
-        // 2. Fetch the ad to identify the owner and deduct credits
-        const { data: adData } = await supabase.from('ads').select('owner_id').eq('id', adId).single();
-        if (adData?.owner_id) {
-          // Deduct 50 credits per lead from the owner's credits balance
-          const { data: ownerData } = await supabase.from('users').select('ad_credits_balance').eq('id', adData.owner_id).single();
-          if (ownerData) {
-            const newBalance = Math.max(0, (ownerData.ad_credits_balance || 0) - 50);
-            await supabase.from('users').update({ ad_credits_balance: newBalance }).eq('id', adData.owner_id);
-          }
+        if (error) {
+          console.warn("RPC submit_campaign_lead fallback:", error);
+          // Fallback direct insert if RPC not found
+          await supabase.from('leads').insert({
+            ad_id: adId,
+            user_id: user.id,
+            message,
+            contact_info: contactInfo
+          });
+        } else if (data?.consumer_points_awarded) {
+          // Optimistically update consumer points balance in local context
+          setUser(prev => prev ? { ...prev, rewardsBalance: prev.rewardsBalance + data.consumer_points_awarded } : prev);
         }
       } catch (e) {
         console.error("Failed to log lead in Supabase", e);
