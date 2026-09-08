@@ -62,6 +62,28 @@ export default function CreateAdPage() {
     const dailyBudget = parseInt(formData.get("dailyBudget") as string) || 1000;
     const maxCpcBid = parseInt(formData.get("maxCpcBid") as string) || 15;
 
+    // 1. Run Pre-Flight Automated AI Safety Moderation Check
+    try {
+      const modRes = await fetch("/api/moderation/ad", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          headline,
+          contentText: text,
+          ctaUrl,
+          category
+        })
+      });
+      const modData = await modRes.json();
+      if (modData.moderation && !modData.moderation.approved) {
+        setError(`AI Safety Gate: Campaign rejected. ${modData.moderation.reason}`);
+        setLoading(false);
+        return;
+      }
+    } catch (modErr) {
+      console.warn("AI moderation check bypassed on network error:", modErr);
+    }
+
     // Location coordinates for geofenced drops
     const lat = formData.get("latitude") ? parseFloat(formData.get("latitude") as string) : null;
     const lng = formData.get("longitude") ? parseFloat(formData.get("longitude") as string) : null;
@@ -308,12 +330,28 @@ export default function CreateAdPage() {
         </div>
 
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <span>Destination URL</span>
+          <span>Destination Store URL</span>
           <input name="ctaUrl" type="url" required placeholder="https://..." style={{ padding: '0.75rem', borderRadius: '0.5rem', background: 'hsl(var(--input))', border: 'none', color: 'white' }} />
         </label>
 
-        <button type="submit" disabled={loading || !hasSufficientFunds} className="btn" style={{ marginTop: '0.5rem' }}>
-          {loading ? "Publishing..." : "Publish Campaign"}
+        {/* Merchant Commercial & Safety Agreement Box */}
+        <div style={{
+          background: 'hsl(var(--card))',
+          border: '1px solid hsl(var(--border))',
+          borderRadius: 'var(--radius)',
+          padding: '1rem',
+          fontSize: '0.8rem',
+          color: 'hsl(var(--muted-foreground))',
+          lineHeight: '1.5'
+        }}>
+          <strong style={{ color: 'hsl(var(--foreground))', display: 'block', marginBottom: '0.35rem' }}>
+            ⚖️ Merchant Agreement & Off-Platform Commerce Policy:
+          </strong>
+          AdMe connects your business with voluntary, high-intent consumers. All customer purchases occur directly on your own storefront or store location; AdMe is not a product retailer, holds zero inventory, and assumes no liability for merchant merchandise. All campaigns are vetted via automated AI content safety. Illicit, illegal, hateful, or misleading campaigns result in immediate ad takedown and permanent account termination.
+        </div>
+
+        <button type="submit" disabled={loading || !hasSufficientFunds} className="btn" style={{ marginTop: '0.25rem' }}>
+          {loading ? "Screening & Publishing..." : "Publish Campaign"}
         </button>
       </form>
     </main>

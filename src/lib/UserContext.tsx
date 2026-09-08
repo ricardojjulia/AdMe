@@ -591,13 +591,28 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setReportedAds((prev) => [...prev, adId]);
     
     if (isSupabaseEnabled && user) {
-      const supabase = createClient();
-      await supabase.from('ad_reports').insert({
-        user_id: user.id,
-        ad_id: adId,
-        reason: reason,
-        status: 'pending'
-      });
+      try {
+        const supabase = createClient();
+        const { data: reportData } = await supabase.from('ad_reports').insert({
+          user_id: user.id,
+          ad_id: adId,
+          reason: reason,
+          status: 'pending'
+        }).select('id').single();
+
+        // Trigger instant automated AI arbitration and takedown pipeline
+        await fetch('/api/moderation/report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            adId,
+            reason,
+            reportId: reportData?.id
+          })
+        });
+      } catch (err) {
+        console.error("Failed to arbitrate report:", err);
+      }
     }
   };
 
