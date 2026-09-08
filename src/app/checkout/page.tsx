@@ -43,19 +43,9 @@ export default function CheckoutPage() {
       });
       const data = await response.json();
 
-      if (data.success) {
-        addToast("Connecting to Stripe...", "info");
-        setTimeout(async () => {
-          if (checkoutMode === 'credits') {
-            buyCredits(selectedPack * 100);
-            addToast(`Successfully topped up ${selectedPack * 100} credits!`, "success");
-          } else {
-            await upgradeSubscription(selectedSub);
-            addToast(`Successfully upgraded to the ${selectedSub.toUpperCase()} Plan!`, "success");
-          }
-          setIsProcessing(false);
-          router.push('/studio');
-        }, 1500);
+      if (data.success && data.url) {
+        addToast("Redirecting to Stripe secure checkout...", "info");
+        window.location.href = data.url;
       } else {
         addToast(data.error || "Payment session error.", "error");
         setIsProcessing(false);
@@ -177,9 +167,9 @@ export default function CheckoutPage() {
           onClick={handleCheckout}
           disabled={isProcessing}
         >
-          {isProcessing ? 'Processing Payment...' : `Pay $${getSummaryPrice()}.00 (Mock Stripe)`}
+          {isProcessing ? 'Connecting to Stripe...' : `Pay $${getSummaryPrice()}.00 with Stripe`}
         </button>
-        <p className={styles.mockNotice}>This is a simulated checkout flow for development purposes.</p>
+        <p className={styles.mockNotice}>Encrypted & processed securely via Stripe. Instant zero-loss fulfillment guarantee.</p>
       </div>
     </main>
   );
