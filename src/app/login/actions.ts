@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
 export async function loginWithEmail(formData: FormData) {
@@ -22,10 +23,19 @@ export async function loginWithEmail(formData: FormData) {
   const supabase = await createClient();
 
   if (authMode === "signup") {
+    const headersList = await headers();
+    const host = headersList.get("x-forwarded-host") || headersList.get("host");
+    const proto = headersList.get("x-forwarded-proto") || (host?.includes("localhost") ? "http" : "https");
+    const origin = host ? `${proto}://${host}` : (process.env.NEXT_PUBLIC_SITE_URL || "");
+    const emailRedirectTo = origin
+      ? `${origin}/auth/callback?next=${type === "business" ? "/studio" : "/onboarding"}`
+      : undefined;
+
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo,
         data: {
           account_type: type === "business" ? "business" : "consumer",
           full_name: type === "business" && company ? company : undefined,

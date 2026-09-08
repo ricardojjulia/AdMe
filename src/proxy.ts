@@ -27,6 +27,13 @@ export default async function proxy(request: NextRequest) {
     }
   )
 
+  // If request contains an auth confirmation code directed to root or another page, route to /auth/callback
+  if (request.nextUrl.searchParams.has('code') && !request.nextUrl.pathname.startsWith('/auth/callback')) {
+    const callbackUrl = request.nextUrl.clone()
+    callbackUrl.pathname = '/auth/callback'
+    return NextResponse.redirect(callbackUrl)
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
