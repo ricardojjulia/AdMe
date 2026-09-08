@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
 import { FeedCard } from "@/components/FeedCard";
+import { TransparencyModal } from "@/components/TransparencyModal";
 import { Ad } from "@/types/ad";
 import styles from "./page.module.css";
 
@@ -21,6 +22,7 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<'Preferences' | 'Wallet' | 'Controls'>('Preferences');
   const [walletAds, setWalletAds] = useState<Ad[]>([]);
   const [loadingWallet, setLoadingWallet] = useState(false);
+  const [showTransparency, setShowTransparency] = useState(false);
 
   const handleExportData = () => {
     if (!user) return;
@@ -499,6 +501,15 @@ export default function ProfilePage() {
                 
                 <button
                   type="button"
+                  onClick={() => setShowTransparency(true)}
+                  className="btn"
+                  style={{ flexGrow: 1, padding: '0.6rem', fontSize: '0.85rem', background: 'hsl(var(--primary) / 0.1)', color: 'hsl(var(--primary))', border: '1px solid hsl(var(--primary) / 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', fontWeight: '600' }}
+                >
+                  ⚖️ How AdMe Makes Money
+                </button>
+
+                <button
+                  type="button"
                   onClick={handleForgetMe}
                   className="btn"
                   style={{ flexGrow: 1, padding: '0.6rem', fontSize: '0.85rem', background: 'rgba(239, 68, 68, 0.15)', color: 'rgb(248, 113, 113)', border: '1px solid rgba(239, 68, 68, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}
@@ -513,6 +524,12 @@ export default function ProfilePage() {
           </div>
         </section>
       )}
+
+      {/* Business Model Transparency Modal */}
+      <TransparencyModal 
+        isOpen={showTransparency} 
+        onClose={() => setShowTransparency(false)} 
+      />
     </main>
   );
 }

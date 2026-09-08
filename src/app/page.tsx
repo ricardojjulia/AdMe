@@ -8,6 +8,7 @@ import { Feed } from "@/components/Feed";
 import { useUser } from "@/lib/UserContext";
 import { GeofenceAlert } from "@/components/GeofenceAlert";
 import { LocationBadge } from "@/components/location/LocationBadge";
+import { TransparencyModal } from "@/components/TransparencyModal";
 import styles from "./page.module.css";
 
 const topFilters = ["Tech & SaaS", "Local Eateries", "Faith & Books", "Veteran-owned"];
@@ -17,6 +18,7 @@ export default function Home() {
   const { user, preferences, togglePreference, savedAds, switchRole, location, enableLocation, setLocation, locale, setLocale, t } = useUser();
   const [activeTab, setActiveTab] = useState('For You');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showTransparency, setShowTransparency] = useState(false);
   const router = useRouter();
 
   const spotlight = {
@@ -311,11 +313,51 @@ export default function Home() {
               )}
             </div>
           </div>
+
+          {/* Transparency & Economics Card */}
+          <div className={`${styles.sideCard} glass hover-lift`} style={{ borderColor: 'hsl(var(--primary) / 0.35)', background: 'radial-gradient(circle at top right, hsl(var(--primary) / 0.08) 0%, hsl(var(--card)) 100%)' }}>
+            <div className={styles.sideHeader}>
+              <h4>⚖️ How AdMe Makes Money</h4>
+              <span className={styles.sideMeta} style={{ color: 'hsl(var(--primary))', fontWeight: 'bold' }}>100% Open</span>
+            </div>
+            <p style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))', margin: '0.5rem 0 0.75rem 0', lineHeight: '1.4' }}>
+              No hidden data tracking. No selling profiles. Discover how our consent-based attention marketplace operates.
+            </p>
+            <button 
+              type="button" 
+              onClick={() => setShowTransparency(true)}
+              className="btn" 
+              style={{ 
+                width: '100%', 
+                padding: '0.55rem', 
+                fontSize: '0.85rem', 
+                background: 'hsl(var(--primary) / 0.15)', 
+                color: 'hsl(var(--primary))', 
+                border: '1px solid hsl(var(--primary) / 0.3)', 
+                borderRadius: '0.5rem', 
+                cursor: 'pointer', 
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.4rem'
+              }}
+            >
+              <span>View Business Model & Economics</span>
+              <span>→</span>
+            </button>
+          </div>
         </aside>
       </section>
 
       {/* Floating Geofence Alerts Trigger */}
       <GeofenceAlert />
+
+      {/* Business Model Transparency Modal */}
+      <TransparencyModal 
+        isOpen={showTransparency} 
+        onClose={() => setShowTransparency(false)} 
+      />
     </div>
   );
 }
