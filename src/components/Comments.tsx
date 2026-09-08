@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useUser } from "@/lib/UserContext";
+import { useToast } from "@/lib/ToastContext";
+import styles from "./Comments.module.css";
 
-interface Comment {
+export interface CommentItem {
   id: string;
   ad_id: string;
   user_id: string;
@@ -11,112 +13,282 @@ interface Comment {
   user_avatar: string;
   content: string;
   created_at: string;
+  isOptimistic?: boolean;
+}
+
+const DEFAULT_SEED_COMMENTS: Record<string, CommentItem[]> = {
+  default: [
+    {
+      id: "seed-1",
+      ad_id: "default",
+      user_id: "u-seed-1",
+      user_name: "Elena M.",
+      user_avatar: "E",
+      content: "Love seeing authentic local brands here! Definitely bookmarking this.",
+      created_at: new Date(Date.now() - 3600 * 1000 * 3).toISOString()
+    },
+    {
+      id: "seed-2",
+      ad_id: "default",
+      user_id: "u-seed-2",
+      user_name: "Marcus V.",
+      user_avatar: "M",
+      content: "Great value exchange concept. Much better than typical invasive ads.",
+      created_at: new Date(Date.now() - 3600 * 1000 * 1).toISOString()
+    }
+  ]
+};
+
+function formatRelativeTime(dateStr: string): string {
+  try {
+    const diffSec = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+    if (diffSec < 60) return "Just now";
+    if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+    return `${Math.floor(diffSec / 86400)}d ago`;
+  } catch {
+    return "Recently";
+  }
 }
 
 export function Comments({ adId }: { adId: string }) {
-  const { user, t } = useUser();
-  const [comments, setComments] = useState<Comment[]>([]);
+  const { user, addReward, t } = useUser();
+  const { addToast } = useToast();
+  const [comments, setComments] = useState<CommentItem[]>([]);
   const [newComment, setNewComment] = useState("");
+  const [guestName, setGuestName] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const storageKey = `adme_comments_${adId}`;
+
+  // 1. Initial load from local storage & Supabase
   useEffect(() => {
+    let isMounted = true;
     let channel: any;
-    
-    async function loadComments() {
-      const { createClient } = await import('@/lib/supabase/client');
-      const supabase = createClient();
-      
-      if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here') {
-        // Fetch existing
-        const { data } = await supabase
-          .from('comments')
-          .select('*')
-          .eq('ad_id', adId)
-          .order('created_at', { ascending: true });
-          
-        if (data) setComments(data);
-        
-        // Subscribe to new
-        channel = supabase
-          .channel(`public:comments:${adId}`)
-          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments', filter: `ad_id=eq.${adId}` }, (payload) => {
-            setComments(prev => [...prev, payload.new as Comment]);
-          })
-          .subscribe();
+
+    async function initializeComments() {
+      let initialComments: CommentItem[] = [];
+
+      // A. Check localStorage first
+      if (typeof window !== "undefined") {
+        try {
+          const cached = localStorage.getItem(storageKey);
+          if (cached) {
+            initialComments = JSON.parse(cached);
+          }
+        } catch (e) {
+          console.error("Failed to parse cached comments:", e);
+        }
       }
-      setLoading(false);
+
+      // If no cached comments, seed with realistic starter comments
+      if (initialComments.length === 0) {
+        initialComments = DEFAULT_SEED_COMMENTS.default.map((c, i) => ({
+          ...c,
+          id: `seed-${adId}-${i}`,
+          ad_id: adId
+        }));
+      }
+
+      if (isMounted) {
+        setComments(initialComments);
+        setLoading(false);
+      }
+
+      // B. Try Supabase cloud/local fetch
+      if (
+        process.env.NEXT_PUBLIC_SUPABASE_URL &&
+        process.env.NEXT_PUBLIC_SUPABASE_URL !== "your_supabase_project_url_here"
+      ) {
+        try {
+          const { createClient } = await import("@/lib/supabase/client");
+          const supabase = createClient();
+
+          const { data, error } = await supabase
+            .from("comments")
+            .select("*")
+            .eq("ad_id", adId)
+            .order("created_at", { ascending: true });
+
+          if (data && !error && data.length > 0 && isMounted) {
+            setComments((prev) => {
+              // Merge remote with local un-persisted comments
+              const existingIds = new Set(data.map((c: any) => c.id));
+              const localOnly = prev.filter((c) => !existingIds.has(c.id));
+              const combined = [...data, ...localOnly];
+              if (typeof window !== "undefined") {
+                localStorage.setItem(storageKey, JSON.stringify(combined));
+              }
+              return combined;
+            });
+          }
+
+          // C. Realtime subscription
+          channel = supabase
+            .channel(`public:comments:${adId}:${Math.random().toString(36).substring(2, 7)}`)
+            .on(
+              "postgres_changes",
+              { event: "INSERT", schema: "public", table: "comments", filter: `ad_id=eq.${adId}` },
+              (payload) => {
+                if (payload.new && isMounted) {
+                  setComments((prev) => {
+                    if (prev.some((c) => c.id === payload.new.id)) return prev;
+                    const updated = [...prev, payload.new as CommentItem];
+                    if (typeof window !== "undefined") {
+                      localStorage.setItem(storageKey, JSON.stringify(updated));
+                    }
+                    return updated;
+                  });
+                }
+              }
+            )
+            .subscribe();
+        } catch (err) {
+          console.warn("Supabase comments subscription non-fatal notice:", err);
+        }
+      }
     }
-    
-    loadComments();
-    
+
+    initializeComments();
+
     return () => {
+      isMounted = false;
       if (channel) channel.unsubscribe();
     };
-  }, [adId]);
+  }, [adId, storageKey]);
 
+  // 2. Submit comment
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim() || !user) return;
-    
     const content = newComment.trim();
-    setNewComment(""); // Optimistic clear
-    
-    const { createClient } = await import('@/lib/supabase/client');
-    const supabase = createClient();
-    
-    // We rely on realtime to show the comment, or we could optimistically add it.
-    // Realtime is fast enough locally.
-    await supabase.from('comments').insert({
+    if (!content) return;
+
+    const authorName = user?.name || guestName.trim() || "Community Member";
+    const authorAvatar = user?.avatar || (guestName.trim() ? guestName.trim().charAt(0).toUpperCase() : "👤");
+    const authorId = user?.id || `guest-${Date.now()}`;
+
+    const newCommentObj: CommentItem = {
+      id: `comment-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       ad_id: adId,
-      user_id: user.id,
-      user_name: user.name,
-      user_avatar: user.avatar,
-      content: content
+      user_id: authorId,
+      user_name: authorName,
+      user_avatar: authorAvatar,
+      content,
+      created_at: new Date().toISOString(),
+      isOptimistic: true
+    };
+
+    // A. Optimistic UI update (immediate!)
+    setComments((prev) => {
+      const updated = [...prev, newCommentObj];
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(updated));
+        } catch (err) {
+          console.warn("LocalStorage save error:", err);
+        }
+      }
+      return updated;
     });
+
+    setNewComment("");
+
+    // B. Value-exchange rewards (+2 points for contributing!)
+    addReward(2, "Community Comment");
+    addToast(t("comment_posted_toast") || "Comment posted! +2 points earned", "success");
+
+    // C. Background sync to Supabase
+    if (
+      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      process.env.NEXT_PUBLIC_SUPABASE_URL !== "your_supabase_project_url_here"
+    ) {
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        await supabase.from("comments").insert({
+          ad_id: adId,
+          user_id: authorId,
+          user_name: authorName,
+          user_avatar: authorAvatar,
+          content
+        });
+      } catch (err) {
+        console.warn("Supabase comment sync error (preserved locally):", err);
+      }
+    }
   };
 
   return (
-    <div style={{ padding: '1rem', borderTop: '1px solid hsl(var(--border))', background: 'hsl(var(--background)/0.5)', marginTop: '0.5rem' }}>
-      <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+    <div className={styles.commentsContainer}>
+      <div className={styles.headerRow}>
+        <div className={styles.commentCountBadge}>
+          <span>💬</span>
+          <span>
+            {comments.length} {comments.length === 1 ? t("comment") : `${t("comment")}s`}
+          </span>
+        </div>
+        <div className={styles.rewardHint}>
+          ✨ +2 pts per comment
+        </div>
+      </div>
+
+      <div className={styles.commentsList}>
         {loading ? (
-          <div style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.85rem' }}>{t('loading_comments')}</div>
+          <div className={styles.emptyState}>{t("loading_comments") || "Loading comments..."}</div>
         ) : comments.length === 0 ? (
-          <div style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.85rem' }}>{t('no_comments')}</div>
+          <div className={styles.emptyState}>{t("no_comments") || "No comments yet. Be the first!"}</div>
         ) : (
-          comments.map(comment => (
-            <div key={comment.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-              <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'hsl(var(--primary)/0.2)', color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 'bold', flexShrink: 0 }}>
+          comments.map((comment) => (
+            <div key={comment.id} className={styles.commentItem}>
+              <div className={styles.avatar}>
                 {comment.user_avatar}
               </div>
-              <div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'hsl(var(--foreground))' }}>
-                  {comment.user_name}
+              <div className={styles.commentBody}>
+                <div className={styles.commentMeta}>
+                  <span className={styles.userName}>{comment.user_name}</span>
+                  {!user && comment.user_id.startsWith("guest") && (
+                    <span className={styles.guestBadge}>{t("guest_badge") || "Guest"}</span>
+                  )}
+                  <span className={styles.timestamp}>{formatRelativeTime(comment.created_at)}</span>
                 </div>
-                <div style={{ fontSize: '0.9rem', color: 'hsl(var(--muted-foreground))', lineHeight: 1.4 }}>
-                  {comment.content}
-                </div>
+                <div className={styles.content}>{comment.content}</div>
               </div>
             </div>
           ))
         )}
       </div>
-      
-      {user ? (
-        <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '0.5rem' }}>
-          <input 
-            type="text" 
+
+      <form onSubmit={handleSubmit} className={styles.form}>
+        <div className={styles.inputRow}>
+          <input
+            type="text"
             value={newComment}
-            onChange={e => setNewComment(e.target.value)}
-            placeholder={t('add_comment_placeholder')}
-            style={{ flex: 1, padding: '0.5rem 0.75rem', borderRadius: '1rem', border: '1px solid hsl(var(--border))', background: 'hsl(var(--input))', color: 'hsl(var(--foreground))', outline: 'none' }}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder={t("add_comment_placeholder") || "Add a comment..."}
+            className={styles.input}
           />
-          <button type="submit" disabled={!newComment.trim()} style={{ background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', border: 'none', borderRadius: '1rem', padding: '0 1rem', fontWeight: 500, cursor: newComment.trim() ? 'pointer' : 'not-allowed', opacity: newComment.trim() ? 1 : 0.5 }}>
-            {t('post_comment')}
+          <button
+            type="submit"
+            disabled={!newComment.trim()}
+            className={styles.submitBtn}
+          >
+            {t("post_comment") || "Post"}
           </button>
-        </form>
-      ) : (
-        <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>{t('login_to_comment')}</div>
-      )}
+        </div>
+
+        {!user && (
+          <div className={styles.guestRow}>
+            <span>Commenting as:</span>
+            <input
+              type="text"
+              placeholder={t("guest_name_placeholder") || "Your name (Guest)"}
+              value={guestName}
+              onChange={(e) => setGuestName(e.target.value)}
+              className={styles.guestNameInput}
+            />
+          </div>
+        )}
+      </form>
     </div>
   );
 }

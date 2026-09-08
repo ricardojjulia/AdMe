@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { Ad } from "@/types/ad";
 import { Comments } from "./Comments";
+import { ShareModal } from "./ShareModal";
 import { useEngagementAnalytics } from "@/lib/hooks/useEngagementAnalytics";
 import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
@@ -22,8 +23,10 @@ export function CarouselAdCard({ ad }: CarouselAdCardProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showReportOptions, setShowReportOptions] = useState(false);
   const [likesCount, setLikesCount] = useState(ad.metrics.likes);
+  const [sharesCount, setSharesCount] = useState(ad.metrics.shares || 0);
   const [isSkipping, setIsSkipping] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
   const [isLeadOpen, setIsLeadOpen] = useState(false);
 
   useEffect(() => {
@@ -184,9 +187,12 @@ export function CarouselAdCard({ ad }: CarouselAdCardProps) {
             {isLiked ? '♥' : '♡'} {likesCount}
           </button>
           <button onClick={() => setShowComments(!showComments)} type="button" className={styles.control} aria-label="Comment">💬</button>
+          <button onClick={() => setIsShareOpen(true)} type="button" className={styles.control} aria-label="Share">↗</button>
           <button onClick={handleSkip} type="button" className={styles.control} aria-label="Skip ad" style={{marginLeft: 'auto'}}>✕</button>
         </div>
         <div className={styles.metrics}>
+          <span>{t('shares_count', { count: sharesCount })}</span>
+          <span style={{ margin: '0 0.5rem', color: 'hsl(var(--border))' }}>·</span>
           <button 
             type="button" 
             onClick={() => toggleSavedAd(ad.id)}
@@ -206,6 +212,14 @@ export function CarouselAdCard({ ad }: CarouselAdCardProps) {
       </footer>
       {showComments && <Comments adId={ad.id} />}
       <LeadModal isOpen={isLeadOpen} onClose={() => setIsLeadOpen(false)} ad={ad} />
+      <ShareModal 
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        title={ad.content.headline}
+        text={ad.content.text}
+        url={typeof window !== 'undefined' ? `${window.location.origin}/?ad=${ad.id}` : ''}
+        onShareSuccess={() => setSharesCount(prev => prev + 1)}
+      />
     </article>
   );
 }

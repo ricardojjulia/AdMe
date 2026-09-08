@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Ad } from "@/types/ad";
 import { Comments } from "./Comments";
+import { ShareModal } from "./ShareModal";
 import { useEngagementAnalytics } from "@/lib/hooks/useEngagementAnalytics";
 import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
@@ -22,8 +23,10 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
   const [showReportOptions, setShowReportOptions] = useState(false);
   const isSaved = savedAds.includes(ad.id);
   const [likesCount, setLikesCount] = useState(ad.metrics.likes);
+  const [sharesCount, setSharesCount] = useState(ad.metrics.shares || 0);
   const [isSkipping, setIsSkipping] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
   const [isLeadOpen, setIsLeadOpen] = useState(false);
 
   const [activeInteraction, setActiveInteraction] = useState<boolean>(false);
@@ -246,6 +249,7 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
               {isLiked ? '♥' : '♡'} {likesCount}
             </button>
             <button onClick={() => setShowComments(!showComments)} type="button" className={styles.control} aria-label="Comment">💬</button>
+            <button onClick={() => setIsShareOpen(true)} type="button" className={styles.control} aria-label="Share">↗ {sharesCount > 0 ? sharesCount : ''}</button>
             <button 
               onClick={() => toggleSavedAd(ad.id)} 
               type="button" 
@@ -277,6 +281,14 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
       </div>
       {showComments && <Comments adId={ad.id} />}
       <LeadModal isOpen={isLeadOpen} onClose={() => setIsLeadOpen(false)} ad={ad} />
+      <ShareModal 
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        title={ad.content.headline}
+        text={ad.content.text}
+        url={typeof window !== 'undefined' ? `${window.location.origin}/?ad=${ad.id}` : ''}
+        onShareSuccess={() => setSharesCount(prev => prev + 1)}
+      />
     </article>
   );
 }

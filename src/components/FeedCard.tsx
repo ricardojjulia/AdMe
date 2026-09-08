@@ -6,6 +6,7 @@ import { Ad } from "@/types/ad";
 import { NativeAdCard } from "./NativeAdCard";
 import { CarouselAdCard } from "./CarouselAdCard";
 import { Comments } from "./Comments";
+import { ShareModal } from "./ShareModal";
 import { useEngagementAnalytics } from "@/lib/hooks/useEngagementAnalytics";
 import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
@@ -25,8 +26,10 @@ export function FeedCard({ ad }: FeedCardProps) {
   const { addToast } = useToast();
   const isSaved = savedAds.includes(ad.id);
   const [likesCount, setLikesCount] = useState(ad.metrics.likes);
+  const [sharesCount, setSharesCount] = useState(ad.metrics.shares || 0);
   const [isSkipping, setIsSkipping] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
   const [isLeadOpen, setIsLeadOpen] = useState(false);
 
   const [activeInteraction, setActiveInteraction] = useState<boolean>(false);
@@ -305,11 +308,13 @@ export function FeedCard({ ad }: FeedCardProps) {
             {isLiked ? '♥' : '♡'}
           </button>
           <button onClick={() => setShowComments(!showComments)} type="button" className={styles.control} aria-label="Comment">💬</button>
-          <button type="button" className={styles.control} aria-label="Share">↗</button>
+          <button onClick={() => setIsShareOpen(true)} type="button" className={styles.control} aria-label="Share">↗</button>
           <button onClick={handleSkip} type="button" className={styles.control} aria-label="Skip ad" style={{marginLeft: 'auto'}}>✕</button>
         </div>
         <div className={styles.metrics}>
           <span>{t('likes_count', { count: likesCount })}</span>
+          <span>·</span>
+          <span>{t('shares_count', { count: sharesCount })}</span>
           <span>·</span>
           <button 
             type="button" 
@@ -330,6 +335,14 @@ export function FeedCard({ ad }: FeedCardProps) {
       </footer>
       {showComments && <Comments adId={ad.id} />}
       <LeadModal isOpen={isLeadOpen} onClose={() => setIsLeadOpen(false)} ad={ad} />
+      <ShareModal 
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        title={ad.content.headline}
+        text={ad.content.text}
+        url={typeof window !== 'undefined' ? `${window.location.origin}/?ad=${ad.id}` : ''}
+        onShareSuccess={() => setSharesCount(prev => prev + 1)}
+      />
     </article>
   );
 }

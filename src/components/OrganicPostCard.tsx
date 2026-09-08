@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { OrganicPost } from "@/lib/mock-data";
 import { useUser } from "@/lib/UserContext";
+import { Comments } from "./Comments";
+import { ShareModal } from "./ShareModal";
 import styles from "./OrganicPostCard.module.css";
 
 interface OrganicPostCardProps {
@@ -13,6 +15,9 @@ export function OrganicPostCard({ post }: OrganicPostCardProps) {
   const { t } = useUser();
   const [likes, setLikes] = useState(post.likes);
   const [hasLiked, setHasLiked] = useState(false);
+  const [shares, setShares] = useState(post.likes ? Math.floor(post.likes / 4) : 12);
+  const [showComments, setShowComments] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   const handleLike = () => {
     if (hasLiked) {
@@ -65,16 +70,33 @@ export function OrganicPostCard({ post }: OrganicPostCardProps) {
           <span>{likes}</span>
         </button>
 
-        <button className={styles.actionBtn} aria-label="Comment on post">
+        <button 
+          onClick={() => setShowComments(!showComments)}
+          className={styles.actionBtn} 
+          aria-label="Comment on post"
+        >
           <span className={styles.icon}>💬</span>
           <span>{t('comment')}</span>
         </button>
 
-        <button className={styles.actionBtn} aria-label="Share post">
+        <button 
+          onClick={() => setIsShareOpen(true)}
+          className={styles.actionBtn} 
+          aria-label="Share post"
+        >
           <span className={styles.icon}>📤</span>
-          <span>{t('share')}</span>
+          <span>{t('share')} {shares > 0 ? `(${shares})` : ''}</span>
         </button>
       </footer>
+      {showComments && <Comments adId={post.id} />}
+      <ShareModal 
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        title={`Post by ${post.author.name}`}
+        text={post.content}
+        url={typeof window !== 'undefined' ? `${window.location.origin}/?post=${post.id}` : ''}
+        onShareSuccess={() => setShares(prev => prev + 1)}
+      />
     </article>
   );
 }
