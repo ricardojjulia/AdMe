@@ -58,7 +58,7 @@ export function performABSplitTest(ads: Ad[], userId: string | null): Ad[] {
 export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
   const [timeline, setTimeline] = useState<(Ad | OrganicPost)[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user, preferences, reportedAds, skippedAds, location, adFrequency, deliveryChannels, t } = useUser();
+  const { user, preferences, reportedAds, skippedAds, location, locationState, adFrequency, deliveryChannels, t } = useUser();
 
   useEffect(() => {
     setLoading(true);
@@ -182,6 +182,14 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
         if (activeTab === 'Local') {
           filteredAds = filteredAds.filter((ad: Ad) => ad.distanceMiles !== undefined && ad.distanceMiles <= 25);
         }
+      } else if (activeTab === 'Local') {
+        if (locationState.privacyMode !== 'disabled' && locationState.coarseLocation?.city) {
+          // Coarse Edge Baseline: Show local merchant deals without requiring GPS sensor
+          filteredAds = filteredAds.filter((ad: Ad) => ad.category === 'Local Eateries' || !!ad.location);
+        } else {
+          // Location disabled
+          filteredAds = [];
+        }
       }
 
       // Sort: Boosted ads first, then by Max CPC Bid descending, then by closest distance (for Local) or default
@@ -262,7 +270,7 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
 
     const timer = setTimeout(loadTimeline, 800);
     return () => clearTimeout(timer);
-  }, [preferences.join(','), searchQuery, activeTab, location, adFrequency, deliveryChannels]);
+  }, [preferences.join(','), searchQuery, activeTab, location, locationState.privacyMode, locationState.coarseLocation?.city, adFrequency, deliveryChannels]);
 
   if (!deliveryChannels.feed) {
     return (

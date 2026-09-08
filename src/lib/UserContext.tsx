@@ -4,6 +4,12 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { createClient } from "@/lib/supabase/client";
 import canonicalCatalog from "./i18n/catalog.en-US.json";
 import spanishCatalog from "./i18n/catalog.es-PR.json";
+import {
+  LocationPrivacyMode,
+  LocationState,
+  CoarseLocation,
+} from "@/types/location";
+import { quantizeCoordinates } from "@/lib/location/quantize";
 
 interface User {
   id: string;
@@ -25,6 +31,10 @@ interface UserContextType {
   reportedAds: string[];
   skippedAds: string[];
   location: { lat: number; lng: number } | null;
+  locationState: LocationState;
+  setLocationMode: (mode: LocationPrivacyMode) => void;
+  setManualCity: (city: string, region?: string) => void;
+  clearLocation: () => void;
   addReward: (amount: number, actionName?: string) => void;
   togglePreference: (category: string) => void;
   toggleSavedAd: (adId: string) => void;
@@ -230,7 +240,73 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [reportedAds, setReportedAds] = useState<string[]>([]);
   const [skippedAds, setSkippedAds] = useState<string[]>([]);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationState, setLocationState] = useState<LocationState>({
+    privacyMode: 'coarse-edge',
+    coarseLocation: { city: 'Santa Monica', region: 'CA', country: 'US', source: 'edge-header' },
+    quantizedCoordinates: null,
+    isEvaluatingOnDevice: true,
+    lastUpdated: null,
+  });
   const [isSupabaseEnabled, setIsSupabaseEnabled] = useState(false);
+
+  // Hydrate coarse location on mount from edge headers or sessionStorage (Zero-Knowledge)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedMode = sessionStorage.getItem('adme_location_mode') as LocationPrivacyMode | null;
+        const savedManualCity = sessionStorage.getItem('adme_manual_city');
+        const savedManualRegion = sessionStorage.getItem('adme_manual_region');
+
+        if (savedMode === 'disabled') {
+          setLocationState({
+            privacyMode: 'disabled',
+            coarseLocation: null,
+            quantizedCoordinates: null,
+            isEvaluatingOnDevice: false,
+            lastUpdated: new Date().toISOString(),
+          });
+          setLocation(null);
+          return;
+        }
+
+        if (savedMode === 'manual' && savedManualCity) {
+          setLocationState({
+            privacyMode: 'manual',
+            coarseLocation: {
+              city: savedManualCity,
+              region: savedManualRegion || undefined,
+              source: 'manual',
+            },
+            quantizedCoordinates: null,
+            isEvaluatingOnDevice: true,
+            lastUpdated: new Date().toISOString(),
+          });
+          setLocation(null);
+          return;
+        }
+
+        // Fetch coarse edge location passively (No GPS permission required)
+        fetch('/api/location/coarse')
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data: CoarseLocation | null) => {
+            if (data && data.city) {
+              setLocationState((prev) => ({
+                ...prev,
+                privacyMode: 'coarse-edge',
+                coarseLocation: data,
+                isEvaluatingOnDevice: true,
+                lastUpdated: new Date().toISOString(),
+              }));
+            }
+          })
+          .catch((err) => {
+            console.warn('Coarse location detection fallback active:', err);
+          });
+      } catch (e) {
+        console.warn('Error reading location session preference:', e);
+      }
+    }
+  }, []);
 
   const [adFrequency, setAdFrequency] = useState<'low' | 'balanced' | 'high'>(() => {
     if (typeof window !== 'undefined') {
@@ -579,17 +655,130 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
+          // Binding Amendment #2: Quantization occurs synchronously before any state dispatch
+          const quantized = quantizeCoordinates(
+            position.coords.latitude,
+            position.coords.longitude,
+            2
+          );
+
+          if (quantized) {
+            // Provide quantized coordinates to in-memory proximity calculations
+            setLocation({
+              lat: quantized.lat,
+              lng: quantized.lng
+            });
+
+            setLocationState((prev) => ({
+              ...prev,
+              privacyMode: 'fuzzed-neighborhood',
+              quantizedCoordinates: quantized,
+              coarseLocation: prev.coarseLocation || {
+                city: 'Local Area',
+                source: 'device-fuzzed'
+              },
+              isEvaluatingOnDevice: true,
+              lastUpdated: new Date().toISOString()
+            }));
+
+            if (typeof window !== 'undefined') {
+              try {
+                sessionStorage.setItem('adme_location_mode', 'fuzzed-neighborhood');
+              } catch {}
+            }
+          }
           resolve();
         },
         (error) => {
           console.error("Error getting location", error);
           reject(error);
-        }
+        },
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
       );
+    });
+  };
+
+  const setLocationMode = (mode: LocationPrivacyMode) => {
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.setItem('adme_location_mode', mode);
+      } catch {}
+    }
+
+    if (mode === 'disabled') {
+      setLocation(null);
+      setLocationState({
+        privacyMode: 'disabled',
+        coarseLocation: null,
+        quantizedCoordinates: null,
+        isEvaluatingOnDevice: false,
+        lastUpdated: new Date().toISOString()
+      });
+    } else if (mode === 'coarse-edge') {
+      setLocation(null);
+      fetch('/api/location/coarse')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data: CoarseLocation | null) => {
+          setLocationState({
+            privacyMode: 'coarse-edge',
+            coarseLocation: data || { city: 'Santa Monica', region: 'CA', country: 'US', source: 'edge-header' },
+            quantizedCoordinates: null,
+            isEvaluatingOnDevice: true,
+            lastUpdated: new Date().toISOString()
+          });
+        })
+        .catch(() => {
+          setLocationState((prev) => ({
+            ...prev,
+            privacyMode: 'coarse-edge',
+            quantizedCoordinates: null
+          }));
+        });
+    } else if (mode === 'fuzzed-neighborhood') {
+      enableLocation().catch((err) => {
+        console.warn('Geolocation opt-in declined or unavailable:', err);
+      });
+    }
+  };
+
+  const setManualCity = (city: string, region?: string) => {
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.setItem('adme_location_mode', 'manual');
+        sessionStorage.setItem('adme_manual_city', city);
+        if (region) sessionStorage.setItem('adme_manual_region', region);
+      } catch {}
+    }
+
+    setLocation(null); // No GPS coordinates needed for manual city
+    setLocationState({
+      privacyMode: 'manual',
+      coarseLocation: {
+        city,
+        region,
+        source: 'manual'
+      },
+      quantizedCoordinates: null,
+      isEvaluatingOnDevice: true,
+      lastUpdated: new Date().toISOString()
+    });
+  };
+
+  const clearLocation = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.removeItem('adme_location_mode');
+        sessionStorage.removeItem('adme_manual_city');
+        sessionStorage.removeItem('adme_manual_region');
+      } catch {}
+    }
+    setLocation(null);
+    setLocationState({
+      privacyMode: 'disabled',
+      coarseLocation: null,
+      quantizedCoordinates: null,
+      isEvaluatingOnDevice: false,
+      lastUpdated: new Date().toISOString()
     });
   };
 
@@ -755,7 +944,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, redeemPerk, setLocation, selectPersona, adFrequency, deliveryChannels, quietHours, updateAdControlSettings, locale, setLocale, t, loadingCatalog, claimGeofenceReward, claimViewportReward, sessionMode, exitDemoMode }}>
+    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, locationState, setLocationMode, setManualCity, clearLocation, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, redeemPerk, setLocation, selectPersona, adFrequency, deliveryChannels, quietHours, updateAdControlSettings, locale, setLocale, t, loadingCatalog, claimGeofenceReward, claimViewportReward, sessionMode, exitDemoMode }}>
       {children}
     </UserContext.Provider>
   );

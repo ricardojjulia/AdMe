@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Feed } from "@/components/Feed";
 import { useUser } from "@/lib/UserContext";
 import { GeofenceAlert } from "@/components/GeofenceAlert";
+import { LocationBadge } from "@/components/location/LocationBadge";
 import styles from "./page.module.css";
 
 const topFilters = ["Tech & SaaS", "Local Eateries", "Faith & Books", "Veteran-owned"];
@@ -203,8 +204,11 @@ export default function Home() {
                 {t('tab_trending')}
               </button>
             </div>
-            <div className={styles.pill}>
-              {t('ad_frequency_balanced')}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <LocationBadge />
+              <div className={styles.pill}>
+                {t('ad_frequency_balanced')}
+              </div>
             </div>
           </div>
           <Feed searchQuery={searchQuery} activeTab={activeTab} />

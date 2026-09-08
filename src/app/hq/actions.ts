@@ -72,28 +72,42 @@ Ensure all comments address the specific details of Title: "${title}", Context: 
   let resultData: any = null;
 
   if (geminiKey) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-          },
-        }),
-      });
+    const candidateModels = [
+      "gemini-3.7-flash",
+      "gemini-3.6-flash",
+      "gemini-3.5-flash",
+      "gemini-2.5-flash",
+      "gemini-flash-latest",
+    ];
 
-      if (response.ok) {
-        const json = await response.json();
-        const textContent = json.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (textContent) {
-          resultData = JSON.parse(textContent);
+    for (const model of candidateModels) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              responseMimeType: "application/json",
+            },
+          }),
+        });
+
+        if (response.ok) {
+          const json = await response.json();
+          const textContent = json.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (textContent) {
+            resultData = JSON.parse(textContent);
+            break;
+          }
+        } else {
+          const errText = await response.text();
+          console.warn(`Gemini model ${model} error:`, response.status, errText.slice(0, 120));
         }
+      } catch (e) {
+        console.warn(`Gemini API call to ${model} failed:`, e);
       }
-    } catch (e) {
-      console.error("Gemini API call failed:", e);
     }
   } else if (openaiKey) {
     try {
@@ -218,6 +232,10 @@ ${resultData.amendments.map((a: string, i: number) => `${i + 1}. ${a}`).join("\n
 ## Implementation Mandate
 ${resultData.implementationMandate || "Implement the details cleanly according to repository standards."}
 
+## Council Deliberations
+${resultData.comments.map((c: any) => `### ${c.avatar} ${c.member} (${c.vote})
+${c.text}
+`).join("\n")}
 ## Definition of Done
 - [ ] Implement the core decision details
 - [ ] Verify test suite passes clean
