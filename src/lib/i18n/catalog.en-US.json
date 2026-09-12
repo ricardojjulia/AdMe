@@ -326,5 +326,9 @@
   "why_this_ad_desc": "Matched directly on your device based on your '{category}' preference. AdMe never sells your profile, identity, or browsing history.",
   "attention_dividend": "+{pts} pts Dividend",
   "see_less_of_this": "See less of this",
-  "understood": "Got it"
+  "understood": "Got it",
+  "nav_alerts": "Alerts",
+  "nav_mode_business": "Business Studio",
+  "nav_mode_consumer": "Consumer Mode",
+  "nav_switch_to": "Switch"
 }

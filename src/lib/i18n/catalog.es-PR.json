@@ -326,5 +326,9 @@
   "why_this_ad_desc": "Emparejado en tu dispositivo según tu preferencia '{category}'. AdMe nunca vende tu perfil, identidad ni historial de navegación.",
   "attention_dividend": "+{pts} pts Dividendo",
   "see_less_of_this": "Ver menos de esto",
-  "understood": "Entendido"
+  "understood": "Entendido",
+  "nav_alerts": "Alertas",
+  "nav_mode_business": "Estudio Negocio",
+  "nav_mode_consumer": "Modo Consumidor",
+  "nav_switch_to": "Cambiar"
 }

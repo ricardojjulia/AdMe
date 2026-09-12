@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Feed } from "@/components/Feed";
 import { useUser } from "@/lib/UserContext";
+import { useToast } from "@/lib/ToastContext";
 import { GeofenceAlert } from "@/components/GeofenceAlert";
 import { LocationBadge } from "@/components/location/LocationBadge";
 import { TransparencyModal } from "@/components/TransparencyModal";
@@ -28,6 +29,7 @@ const sideFilters = ["Design", "Outdoors", "Gaming", "Wellness", "Beauty", "Fina
 
 export default function Home() {
   const { user, preferences, togglePreference, savedAds, switchRole, location, enableLocation, setLocation, locale, setLocale, t } = useUser();
+  const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState('For You');
   const [searchQuery, setSearchQuery] = useState('');
   const [showTransparency, setShowTransparency] = useState(false);
@@ -90,33 +92,89 @@ export default function Home() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
+          <span className={`${styles.searchKbd} ${styles.desktopOnly}`}>⌘K</span>
         </div>
 
-        <div className={styles.actions}>
+        <div className={styles.actions} suppressHydrationWarning>
           <select
             className={styles.langSelector}
             value={locale}
             onChange={(e) => setLocale(e.target.value)}
             aria-label="Select Language"
+            title="Select Language"
           >
-            <option value="en-US">English (US)</option>
-            <option value="es-PR">Español (PR)</option>
+            <option value="en-US">🌐 English (US)</option>
+            <option value="es-PR">🌐 Español (PR)</option>
           </select>
           {!user ? (
             <Link href="/login" className={styles.loginLink}>Log in</Link>
           ) : (
             <>
+              {/* Role / Mode Switcher Pill */}
               <button 
                 type="button" 
-                className={`${styles.ctaGhost} ${styles.desktopOnly}`} 
-                onClick={() => switchRole(user?.role === 'consumer' ? 'business' : 'consumer')}
-                style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+                className={`${styles.roleToggleBtn} ${styles.desktopOnly}`} 
+                onClick={() => {
+                  const nextRole = user?.role === 'consumer' ? 'business' : 'consumer';
+                  switchRole(nextRole);
+                  addToast(
+                    nextRole === 'business' 
+                      ? "Switched to Business Studio mode" 
+                      : "Switched to Consumer Feed mode",
+                    "info"
+                  );
+                }}
+                title={user?.role === 'consumer' ? "Switch to Business Studio mode" : "Switch to Consumer Feed mode"}
               >
-                {user?.role === 'consumer' ? t('switch_role_business') : t('switch_role_consumer')}
+                <span className={user?.role === 'business' ? styles.roleDotBusiness : styles.roleDotConsumer} />
+                <span className={styles.roleText}>
+                  {user?.role === 'business' ? (t('nav_mode_business') || "Business Studio") : (t('nav_mode_consumer') || "Consumer Feed")}
+                </span>
+                <span className={styles.roleSwitchHint}>
+                  ⇄ {t('nav_switch_to') || "Switch"}
+                </span>
               </button>
-              <button type="button" className={`${styles.iconButton} ${styles.desktopOnly}`} aria-label="Notifications">🔔</button>
-              <Link href="/profile" className={`${styles.iconButton} ${styles.desktopOnly}`} aria-label="Saved" style={{ textDecoration: 'none' }}>★</Link>
-              <Link href="/profile" className={styles.avatar} aria-label="Profile" style={{ textDecoration: 'none' }}>{user.avatar}</Link>
+
+              {/* Notifications Button with Text & Badge */}
+              <button 
+                type="button" 
+                className={`${styles.navActionButton} ${styles.desktopOnly}`} 
+                onClick={() => addToast("No new alerts. You're all caught up!", "info")}
+                title="View Notifications & Announcements" 
+                aria-label="Notifications"
+              >
+                <span className={styles.navActionIcon}>🔔</span>
+                <span className={styles.navActionLabel}>{t('nav_alerts') || "Alerts"}</span>
+                <span className={styles.navBadgePulse}>1</span>
+              </button>
+
+              {/* Saved Ads with Text & Count Badge */}
+              <Link 
+                href="/profile" 
+                className={`${styles.navActionButton} ${styles.desktopOnly}`} 
+                title="View your Saved Ads & Offers" 
+                aria-label="Saved Bookmarks"
+              >
+                <span className={styles.navActionIcon} style={{ color: 'hsl(var(--secondary))' }}>★</span>
+                <span className={styles.navActionLabel}>{t('saved') || "Saved"}</span>
+                {savedAds.length > 0 && (
+                  <span className={styles.navBadgeCount}>{savedAds.length}</span>
+                )}
+              </Link>
+
+              {/* Account Pill with Avatar & Name */}
+              <Link 
+                href="/profile" 
+                className={styles.accountPill} 
+                title="Account Settings & Privacy" 
+                aria-label="Account Settings"
+              >
+                <div className={styles.avatarMini}>{user.avatar}</div>
+                <div className={styles.accountInfo}>
+                  <span className={styles.accountName}>{user.name.split(' ')[0]}</span>
+                  <span className={styles.accountRole}>{user.role === 'business' ? 'Studio' : 'Member'}</span>
+                </div>
+              </Link>
             </>
           )}
         </div>
