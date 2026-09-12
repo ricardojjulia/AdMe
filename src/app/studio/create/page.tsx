@@ -297,7 +297,7 @@ export default function CreateAdPage() {
         </p>
       </header>
 
-      {!hasSufficientFunds && (
+      {user && !hasSufficientFunds && (
         <div style={{
           background: "hsl(var(--destructive) / 0.12)",
           border: "1px solid hsl(var(--destructive) / 0.3)",

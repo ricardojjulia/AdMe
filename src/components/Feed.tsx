@@ -146,9 +146,12 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
       // 2. Zero-Knowledge Category Matcher
       if (activeTab === 'Local') {
         filteredAds = filteredAds.filter((ad: Ad) => ad.category === 'Local Eateries' || ad.category === 'Local' || !!ad.location);
-      } else {
+      } else if (searchQuery.trim() !== '') {
+        // When user explicitly searches, match across all categories
+      } else if (preferences.length > 0) {
         filteredAds = filteredAds.filter((ad: Ad) => preferences.includes(ad.category));
       }
+      // If preferences are empty and not searching, show full curated showcase across categories
 
       // 3. Advertiser Budget Pacemaker Pacing
       const elapsedFraction = (new Date().getHours() * 60 + new Date().getMinutes()) / 1440.0;
@@ -223,7 +226,9 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
       let filteredPosts = generateMockOrganicPosts();
       if (activeTab === 'Local') {
         filteredPosts = filteredPosts.filter(p => p.category === 'Local Eateries');
-      } else {
+      } else if (searchQuery.trim() !== '') {
+        // When searching, match across all categories
+      } else if (preferences.length > 0) {
         filteredPosts = filteredPosts.filter(p => preferences.includes(p.category));
       }
 

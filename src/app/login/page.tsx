@@ -43,6 +43,20 @@ export default function LoginPage() {
     const formData = new FormData(event.currentTarget);
     formData.append("type", type);
     formData.append("authMode", authMode);
+
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    // Immediately synchronize browser auth state on sign in
+    if (authMode === "signin" && email && password) {
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        await supabase.auth.signInWithPassword({ email, password });
+      } catch (e) {
+        // Continue to server action
+      }
+    }
     
     const { loginWithEmail } = await import("./actions");
     const result = await loginWithEmail(formData);

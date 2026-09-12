@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import canonicalCatalog from "./i18n/catalog.en-US.json";
 import spanishCatalog from "./i18n/catalog.es-PR.json";
@@ -63,6 +64,7 @@ interface UserContextType {
   claimViewportReward: (adId: string, dwellSeconds: number, proof: string, points: number) => Promise<boolean>;
   sessionMode: 'authenticated' | 'demo' | 'unauthenticated';
   exitDemoMode: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -132,6 +134,7 @@ export const DEMO_PERSONAS = [
 ];
 
 export function UserProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const [locale, setLocaleState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const savedLocale = localStorage.getItem('adme_locale');
@@ -336,128 +339,130 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return { enabled: false, start: "22:00", end: "08:00" };
   });
 
-  useEffect(() => {
-    const loadData = async () => {
-      const demoPersonaId = typeof window !== 'undefined' ? localStorage.getItem('adme_demo_persona_id') : null;
-      const hasSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here';
-      setIsSupabaseEnabled(!!hasSupabase);
+  const loadData = useCallback(async () => {
+    const demoPersonaId = typeof window !== 'undefined' ? localStorage.getItem('adme_demo_persona_id') : null;
+    const hasSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here';
+    setIsSupabaseEnabled(!!hasSupabase);
 
-      // Load settings from localStorage
-      if (typeof window !== 'undefined') {
-        const savedFrequency = localStorage.getItem("adme_ad_frequency") as 'low' | 'balanced' | 'high' | null;
-        if (savedFrequency) setAdFrequency(savedFrequency);
+    // Load settings from localStorage
+    if (typeof window !== 'undefined') {
+      const savedFrequency = localStorage.getItem("adme_ad_frequency") as 'low' | 'balanced' | 'high' | null;
+      if (savedFrequency) setAdFrequency(savedFrequency);
 
-        const savedChannels = localStorage.getItem("adme_delivery_channels");
-        if (savedChannels) {
-          try { setDeliveryChannels(JSON.parse(savedChannels)); } catch (e) {}
-        }
-
-        const savedQuietHours = localStorage.getItem("adme_quiet_hours");
-        if (savedQuietHours) {
-          try { setQuietHours(JSON.parse(savedQuietHours)); } catch (e) {}
-        }
+      const savedChannels = localStorage.getItem("adme_delivery_channels");
+      if (savedChannels) {
+        try { setDeliveryChannels(JSON.parse(savedChannels)); } catch (e) {}
       }
 
-      if (demoPersonaId) {
-        const persona = DEMO_PERSONAS.find(p => p.id === demoPersonaId);
-        if (persona) {
-          setSessionMode('demo');
-          setUser({
-            id: persona.id,
-            name: persona.name,
-            avatar: persona.avatar,
-            rewardsBalance: persona.rewardsBalance,
-            role: persona.role,
-            adCreditsBalance: persona.adCreditsBalance,
-            currentStreak: persona.currentStreak,
-            lastActiveDate: persona.lastActiveDate,
-            subscriptionTier: persona.subscriptionTier,
-            subscriptionRenewal: null
-          });
-          setPreferences(persona.preferences);
-          
-          if (hasSupabase) {
-            try {
-              const supabase = createClient();
-              const { data: couponData } = await supabase.from('coupons').select('*').eq('user_id', persona.id).order('created_at', { ascending: false });
-              if (couponData) {
-                setCoupons(couponData);
-              }
-            } catch (e) {
-              console.error("Failed to load coupons for demo user:", e);
-            }
-          }
-          return;
-        }
+      const savedQuietHours = localStorage.getItem("adme_quiet_hours");
+      if (savedQuietHours) {
+        try { setQuietHours(JSON.parse(savedQuietHours)); } catch (e) {}
       }
+    }
 
-      if (hasSupabase) {
-        try {
-          const supabase = createClient();
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session?.user) {
-             setUser(null);
-             setSessionMode('unauthenticated');
-             return;
-          }
-          
-          const { data: userData } = await supabase.from('users').select('*').eq('id', session.user.id).single();
-          
-          if (userData) {
-            setSessionMode('authenticated');
-            setUser({
-              id: userData.id,
-              name: userData.name || session.user.email?.split('@')[0] || 'User',
-              avatar: userData.avatar || 'RJ',
-              rewardsBalance: userData.rewards_balance || 0,
-              role: userData.role || 'consumer',
-              adCreditsBalance: userData.ad_credits_balance || 0,
-              currentStreak: userData.current_streak || 0,
-              lastActiveDate: userData.last_active_date || null,
-              subscriptionTier: userData.subscription_tier || 'free',
-              subscriptionRenewal: userData.subscription_renewal || null
-            });
-
-            const { data: prefData } = await supabase.from('user_preferences').select('category').eq('user_id', userData.id);
-            if (prefData && prefData.length > 0) {
-              setPreferences(prefData.map(p => p.category));
-            } else {
-              setPreferences([]);
-            }
-
-            const { data: couponData } = await supabase.from('coupons').select('*').eq('user_id', userData.id).order('created_at', { ascending: false });
+    if (demoPersonaId) {
+      const persona = DEMO_PERSONAS.find(p => p.id === demoPersonaId);
+      if (persona) {
+        setSessionMode('demo');
+        setUser({
+          id: persona.id,
+          name: persona.name,
+          avatar: persona.avatar,
+          rewardsBalance: persona.rewardsBalance,
+          role: persona.role,
+          adCreditsBalance: persona.adCreditsBalance,
+          currentStreak: persona.currentStreak,
+          lastActiveDate: persona.lastActiveDate,
+          subscriptionTier: persona.subscriptionTier,
+          subscriptionRenewal: null
+        });
+        setPreferences(persona.preferences);
+        
+        if (hasSupabase) {
+          try {
+            const supabase = createClient();
+            const { data: couponData } = await supabase.from('coupons').select('*').eq('user_id', persona.id).order('created_at', { ascending: false });
             if (couponData) {
               setCoupons(couponData);
             }
+          } catch (e) {
+            console.error("Failed to load coupons for demo user:", e);
           }
-        } catch (error) {
-          console.error("Supabase load error:", error);
-          setUser(null);
         }
-      } else {
-        const defaultPersona = DEMO_PERSONAS[0];
-        setUser({
-          id: defaultPersona.id,
-          name: defaultPersona.name,
-          avatar: defaultPersona.avatar,
-          rewardsBalance: defaultPersona.rewardsBalance,
-          role: defaultPersona.role,
-          adCreditsBalance: defaultPersona.adCreditsBalance,
-          currentStreak: defaultPersona.currentStreak,
-          lastActiveDate: defaultPersona.lastActiveDate,
-          subscriptionTier: defaultPersona.subscriptionTier,
-          subscriptionRenewal: null
-        });
-        setPreferences(defaultPersona.preferences);
+        return;
       }
-    };
+    }
 
+    if (hasSupabase) {
+      try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) {
+           setUser(null);
+           setSessionMode('unauthenticated');
+           return;
+        }
+        
+        const { data: userData } = await supabase.from('users').select('*').eq('id', session.user.id).single();
+        
+        if (userData) {
+          setSessionMode('authenticated');
+          setUser({
+            id: userData.id,
+            name: userData.name || session.user.email?.split('@')[0] || 'User',
+            avatar: userData.avatar || 'RJ',
+            rewardsBalance: userData.rewards_balance || 0,
+            role: userData.role || 'consumer',
+            adCreditsBalance: userData.ad_credits_balance || 0,
+            currentStreak: userData.current_streak || 0,
+            lastActiveDate: userData.last_active_date || null,
+            subscriptionTier: userData.subscription_tier || 'free',
+            subscriptionRenewal: userData.subscription_renewal || null
+          });
+
+          const { data: prefData } = await supabase.from('user_preferences').select('category').eq('user_id', userData.id);
+          if (prefData && prefData.length > 0) {
+            setPreferences(prefData.map(p => p.category));
+          } else {
+            setPreferences([]);
+          }
+
+          const { data: couponData } = await supabase.from('coupons').select('*').eq('user_id', userData.id).order('created_at', { ascending: false });
+          if (couponData) {
+            setCoupons(couponData);
+          }
+        }
+      } catch (error) {
+        console.error("Supabase load error:", error);
+        setUser(null);
+      }
+    } else {
+      const defaultPersona = DEMO_PERSONAS[0];
+      setUser({
+        id: defaultPersona.id,
+        name: defaultPersona.name,
+        avatar: defaultPersona.avatar,
+        rewardsBalance: defaultPersona.rewardsBalance,
+        role: defaultPersona.role,
+        adCreditsBalance: defaultPersona.adCreditsBalance,
+        currentStreak: defaultPersona.currentStreak,
+        lastActiveDate: defaultPersona.lastActiveDate,
+        subscriptionTier: defaultPersona.subscriptionTier,
+        subscriptionRenewal: null
+      });
+      setPreferences(defaultPersona.preferences);
+    }
+  }, []);
+
+  useEffect(() => {
     loadData();
+  }, [loadData, pathname]);
 
+  useEffect(() => {
     if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url_here') {
       const supabase = createClient();
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
            loadData();
         }
       });
@@ -466,7 +471,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         subscription.unsubscribe();
       };
     }
-  }, []);
+  }, [loadData]);
 
   const addReward = async (amount: number, actionName: string = "Earned Reward") => {
     setUser((prev) => prev ? { ...prev, rewardsBalance: prev.rewardsBalance + amount } : prev);
@@ -961,7 +966,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, locationState, setLocationMode, setManualCity, clearLocation, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, redeemPerk, setLocation, selectPersona, adFrequency, deliveryChannels, quietHours, updateAdControlSettings, locale, setLocale, t, loadingCatalog, claimGeofenceReward, claimViewportReward, sessionMode, exitDemoMode }}>
+    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, locationState, setLocationMode, setManualCity, clearLocation, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, redeemPerk, setLocation, selectPersona, adFrequency, deliveryChannels, quietHours, updateAdControlSettings, locale, setLocale, t, loadingCatalog, claimGeofenceReward, claimViewportReward, sessionMode, exitDemoMode, refreshUser: loadData }}>
       {children}
     </UserContext.Provider>
   );
