@@ -33,7 +33,12 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('For You');
   const [searchQuery, setSearchQuery] = useState('');
   const [showTransparency, setShowTransparency] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const spotlight = {
     badge: t('spotlight_badge'),
@@ -79,8 +84,8 @@ export default function Home() {
           </div>
           <div>
             <p className={styles.brandTitle}>{t('app_name')}</p>
-            <p className={styles.brandTagline} suppressHydrationWarning>
-              {user ? t('welcome_message', { name: user.name }) : t('app_tagline')}
+            <p className={styles.brandTagline}>
+              {mounted && user ? t('welcome_message', { name: user.name }) : t('app_tagline')}
             </p>
           </div>
         </div>
@@ -95,7 +100,7 @@ export default function Home() {
           <span className={`${styles.searchKbd} ${styles.desktopOnly}`}>⌘K</span>
         </div>
 
-        <div className={styles.actions} suppressHydrationWarning>
+        <div className={styles.actions}>
           <select
             className={styles.langSelector}
             value={locale}
@@ -106,7 +111,9 @@ export default function Home() {
             <option value="en-US">🌐 English (US)</option>
             <option value="es-PR">🌐 Español (PR)</option>
           </select>
-          {!user ? (
+          {!mounted ? (
+            <div style={{ width: "90px", height: "36px" }} />
+          ) : !user ? (
             <Link href="/login" className={styles.loginLink}>Log in</Link>
           ) : (
             <>
@@ -204,7 +211,7 @@ export default function Home() {
           </div>
 
           <div className={styles.insights}>
-            {user?.role === 'business' ? (
+            {mounted && user?.role === 'business' ? (
               <Link href="/studio" style={{ textDecoration: 'none' }}>
                 <div className={`${styles.insightCard} ${styles.primary} hover-lift`}>
                   <span className={styles.insightValue}>{user?.adCreditsBalance.toLocaleString() || '0'}</span>
@@ -215,11 +222,11 @@ export default function Home() {
               <>
                 <Link href="/rewards" style={{ textDecoration: 'none' }}>
                   <div className={`${styles.insightCard} ${styles.primary} hover-lift`}>
-                    <span className={styles.insightValue}>{user?.rewardsBalance.toLocaleString() || '0'}</span>
-                    <span className={styles.insightLabel}>{t('points_balance', { points: user?.rewardsBalance.toLocaleString() || '0' })}</span>
+                    <span className={styles.insightValue}>{mounted && user ? user.rewardsBalance.toLocaleString() : '0'}</span>
+                    <span className={styles.insightLabel}>{t('points_balance', { points: mounted && user ? user.rewardsBalance.toLocaleString() : '0' })}</span>
                   </div>
                 </Link>
-                {user && user.currentStreak > 0 && (
+                {mounted && user && user.currentStreak > 0 && (
                   <div className={`${styles.insightCard} ${styles.secondary} hover-lift`}>
                     <span className={styles.insightValue}>🔥 {user.currentStreak}</span>
                     <span className={styles.insightLabel}>{t('day_streak')}</span>
