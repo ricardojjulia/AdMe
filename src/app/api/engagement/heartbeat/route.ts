@@ -43,6 +43,12 @@ export async function POST(request: Request) {
     }
 
     // Upsert the engagement log
+    const isAdUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(adId);
+    if (!isAdUuid) {
+      // Local discovery or syndicated community item - logged client-side; avoid UUID parse error
+      return NextResponse.json({ success: true, localDiscovery: true });
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
     const validUserId = isUuid ? userId : null;

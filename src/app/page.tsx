@@ -195,7 +195,7 @@ export default function Home() {
 
           <div className={styles.filterRow} id="vibe-filter-section">
             {topFilters.map((filter) => {
-              const isActive = preferences.includes(filter);
+              const isActive = mounted && preferences.includes(filter);
               return (
                 <button 
                   key={filter} 
@@ -300,7 +300,7 @@ export default function Home() {
             </div>
             <div className={styles.sideGrid}>
               {sideFilters.map((item) => {
-                const isActive = preferences.includes(item);
+                const isActive = mounted && preferences.includes(item);
                 return (
                   <button 
                     key={item} 

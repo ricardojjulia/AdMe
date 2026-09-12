@@ -7,6 +7,9 @@ import { calculateDistanceMiles } from "@/lib/utils/distance";
 import { FeedCard } from "./FeedCard";
 import { OrganicPostCard } from "./OrganicPostCard";
 import { useUser } from "@/lib/UserContext";
+import { rankSmartFeed } from "@/lib/services/smart-feed";
+import { getLocalDiscoveryAds } from "@/lib/services/local-discovery";
+import { getPublicSyndicatedPosts } from "@/lib/services/public-syndication";
 import styles from "./Feed.module.css";
 
 interface FeedProps {
@@ -210,6 +213,14 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
         return 0;
       });
 
+      // Fetch Local Discovery spots to backfill and enrich local ecosystem (Cold Start Engine)
+      try {
+        const localDiscoveryAds = await getLocalDiscoveryAds(location || null, searchQuery || undefined);
+        filteredAds = [...filteredAds, ...localDiscoveryAds];
+      } catch (e) {
+        console.warn("Local discovery fetch error:", e);
+      }
+
       // Filter out duplicate variations via split testing
       filteredAds = performABSplitTest(filteredAds, user?.id || null);
 
@@ -218,25 +229,51 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
         filteredAds = filteredAds.filter(ad => 
           ad.content.headline.toLowerCase().includes(q) || 
           ad.content.text.toLowerCase().includes(q) ||
-          ad.advertiser.name.toLowerCase().includes(q)
+          ad.advertiser.name.toLowerCase().includes(q) ||
+          (ad.placeDetails?.address && ad.placeDetails.address.toLowerCase().includes(q))
         );
       }
 
-      // Now generate and filter Organic Posts
+      // Zero-Knowledge Smart Ranking Pipeline:
+      // Evaluates Taste Affinity, Time-of-Day match, Exponential Proximity decay, and assigns explainable badges
+      filteredAds = rankSmartFeed(filteredAds, {
+        preferences,
+        userLocation: location,
+        activeTab,
+        savedAdIds: []
+      });
+
+      // Now generate and filter Organic & Public Syndicated Posts (Marketplace, Google Reviews, Local Events)
       let filteredPosts = generateMockOrganicPosts();
+      try {
+        const syndicatedPosts = await getPublicSyndicatedPosts(location || null, searchQuery || undefined);
+        filteredPosts = [...syndicatedPosts, ...filteredPosts];
+      } catch (e) {
+        console.warn("Public syndication load error:", e);
+      }
+
       if (activeTab === 'Local') {
-        filteredPosts = filteredPosts.filter(p => p.category === 'Local Eateries');
+        filteredPosts = filteredPosts.filter(p => 
+          p.category === 'Local Eateries' || 
+          p.category === 'Specialty Coffee' ||
+          p.syndication?.sourceType === 'marketplace' ||
+          p.syndication?.sourceType === 'local_event' ||
+          p.syndication?.sourceType === 'google_review'
+        );
       } else if (searchQuery.trim() !== '') {
         // When searching, match across all categories
       } else if (preferences.length > 0) {
-        filteredPosts = filteredPosts.filter(p => preferences.includes(p.category));
+        filteredPosts = filteredPosts.filter(p => preferences.includes(p.category) || p.syndication !== undefined);
       }
 
       if (searchQuery.trim() !== '') {
         const q = searchQuery.toLowerCase();
         filteredPosts = filteredPosts.filter(post => 
           post.content.toLowerCase().includes(q) || 
-          post.author.name.toLowerCase().includes(q)
+          post.author.name.toLowerCase().includes(q) ||
+          post.category.toLowerCase().includes(q) ||
+          (post.syndication?.neighborhood && post.syndication.neighborhood.toLowerCase().includes(q)) ||
+          (post.syndication?.venue && post.syndication.venue.toLowerCase().includes(q))
         );
       }
 

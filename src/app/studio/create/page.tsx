@@ -68,11 +68,12 @@ const CATEGORY_PRESETS: Record<string, PhotoPreset[]> = {
 };
 
 const CITY_PRESETS = [
+  { name: "San Juan, PR", lat: 18.4655, lng: -66.1167 },
   { name: "Santa Monica, CA", lat: 34.0195, lng: -118.4912 },
-  { name: "San Francisco, CA", lat: 37.7749, lng: -122.4194 },
+  { name: "Miami, FL", lat: 25.7617, lng: -80.1918 },
   { name: "Austin, TX", lat: 30.2672, lng: -97.7431 },
-  { name: "Denver, CO", lat: 39.7392, lng: -104.9903 },
-  { name: "New York, NY", lat: 40.7128, lng: -74.0060 }
+  { name: "New York, NY", lat: 40.7128, lng: -74.0060 },
+  { name: "San Francisco, CA", lat: 37.7749, lng: -122.4194 }
 ];
 
 export default function CreateAdPage() {
@@ -100,14 +101,35 @@ export default function CreateAdPage() {
   const [previewVariant, setPreviewVariant] = useState<'A' | 'B'>('A');
 
   // Location for Geofenced Drop
-  const [latitude, setLatitude] = useState<number>(34.0195);
-  const [longitude, setLongitude] = useState<number>(-118.4912);
-  const [selectedCity, setSelectedCity] = useState("Santa Monica, CA");
+  const [latitude, setLatitude] = useState<number>(18.4655);
+  const [longitude, setLongitude] = useState<number>(-66.1167);
+  const [selectedCity, setSelectedCity] = useState("San Juan, PR");
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
 
   // Submission State
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Claim Spot Onboarding Flywheel
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const isClaim = params.get('claim') === 'true';
+      const claimName = params.get('name');
+      const claimCategory = params.get('category');
+      const claimAddress = params.get('address');
+      const claimMedia = params.get('mediaUrl');
+
+      if (isClaim && claimName) {
+        setHeadline(`${claimName} · Community Special`);
+        if (claimCategory) setCategory(claimCategory);
+        if (claimAddress) setText(`Visit ${claimName} at ${claimAddress}. Present this offer to claim your exclusive local discount!`);
+        if (claimMedia) setImageUrl(claimMedia);
+        setCtaLabel("Redeem Deal");
+        addToast(`🏪 Welcome, ${claimName}! 500 free ad credits unlocked to activate your campaign.`, "success");
+      }
+    }
+  }, [addToast]);
 
   // Update image when category changes if using defaults
   const handleCategoryChange = (newCat: string) => {

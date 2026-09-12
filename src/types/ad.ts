@@ -35,4 +35,16 @@ export interface Ad {
     ownerId?: string;
     maxCpcBid?: number;
     status?: 'active' | 'paused' | 'archived';
+    isLocalDiscovery?: boolean;
+    claimed?: boolean;
+    placeDetails?: {
+        address?: string;
+        rating?: number;
+        userRatingsTotal?: number;
+        openNow?: boolean;
+        priceLevel?: string;
+    };
+    smartScore?: number;
+    smartScoreReasons?: string[];
+    claimUrl?: string;
 }

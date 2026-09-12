@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/lib/UserContext";
@@ -9,6 +10,11 @@ export function MobileBottomNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, coupons, t } = useUser();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // If user is inside onboarding, don't show the bottom nav dock
   if (pathname === "/onboarding") {
@@ -83,7 +89,7 @@ export function MobileBottomNav() {
             <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
             <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
           </svg>
-          {user && user.rewardsBalance > 0 && (
+          {mounted && user && user.rewardsBalance > 0 && (
             <span className={styles.badge}>
               {user.rewardsBalance > 999 ? `${Math.floor(user.rewardsBalance / 1000)}k` : user.rewardsBalance}
             </span>
@@ -105,7 +111,7 @@ export function MobileBottomNav() {
             <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
             <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
           </svg>
-          {activeCouponCount > 0 && (
+          {mounted && activeCouponCount > 0 && (
             <span className={styles.streakBadge}>{activeCouponCount}</span>
           )}
         </div>
@@ -113,7 +119,7 @@ export function MobileBottomNav() {
       </Link>
 
       {/* Profile or Studio Tab */}
-      {user?.role === "business" ? (
+      {mounted && user?.role === "business" ? (
         <Link 
           href="/studio" 
           className={`${styles.item} ${isStudioActive ? styles.active : ""}`}

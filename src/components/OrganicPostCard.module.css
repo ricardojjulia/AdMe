@@ -132,3 +132,139 @@
 .icon {
   font-size: 1rem;
 }
+
+/* Public Community Syndication Enhancements */
+.syndicationPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.pillMarketplace {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.pillReview {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.pillEvent {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  color: white;
+}
+
+.syndicationDetails {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.6rem;
+}
+
+.priceTag {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #10b981;
+}
+
+.conditionBadge {
+  font-size: 0.75rem;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.35rem;
+  color: hsl(var(--foreground));
+  font-weight: 600;
+}
+
+.metaItem {
+  font-size: 0.8rem;
+  color: hsl(var(--muted-foreground));
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.outboundBtn {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.4rem 0.85rem;
+  border-radius: 0.4rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.outboundMarketplace {
+  background: rgba(16, 185, 129, 0.18);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.outboundMarketplace:hover {
+  background: #10b981;
+  color: white;
+}
+
+.outboundReview {
+  background: rgba(245, 158, 11, 0.18);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.outboundReview:hover {
+  background: #f59e0b;
+  color: white;
+}
+
+.outboundEvent {
+  background: rgba(139, 92, 246, 0.18);
+  color: #a78bfa;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+}
+
+.outboundEvent:hover {
+  background: #8b5cf6;
+  color: white;
+}
+
+.disclaimerBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  color: hsl(var(--muted-foreground));
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  padding-top: 0.45rem;
+  margin-top: 0.25rem;
+}
+
+.hideBtn {
+  background: none;
+  border: none;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  font-size: 0.72rem;
+  text-decoration: underline;
+  padding: 0.1rem 0.3rem;
+}
+
+.hideBtn:hover {
+  color: hsl(var(--foreground));
+}
+

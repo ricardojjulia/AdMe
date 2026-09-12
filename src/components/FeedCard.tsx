@@ -150,7 +150,19 @@ export function FeedCard({ ad }: FeedCardProps) {
             <p className={styles.name}>{ad.advertiser.name}</p>
             <p className={styles.meta}>
               {ad.isBoosted && <span style={{ marginRight: '0.4rem', background: 'hsl(var(--primary)/0.2)', color: 'hsl(var(--primary))', padding: '0.1rem 0.3rem', borderRadius: '0.25rem', fontSize: '0.7rem', fontWeight: 'bold' }}>{t('featured')}</span>}
-              {t('sponsored')} · {ad.category}
+              {ad.isLocalDiscovery ? (
+                <span style={{ background: '#10b981', color: 'white', padding: '0.1rem 0.35rem', borderRadius: '0.2rem', fontSize: '0.7rem', fontWeight: 'bold', marginRight: '0.35rem' }}>
+                  ✨ {t('local_spotlight') || "Spotlight"}
+                </span>
+              ) : (
+                `${t('sponsored')} · `
+              )}
+              {ad.category}
+              {ad.smartScore && (
+                <span style={{ marginLeft: '0.35rem', color: 'hsl(var(--primary))', fontWeight: 600 }}>
+                  · ⚡ {ad.smartScore}%
+                </span>
+              )}
               {ad.distanceMiles !== undefined && ` · 📍 ${t('miles_away', { distance: ad.distanceMiles.toFixed(1) })}`}
             </p>
           </div>

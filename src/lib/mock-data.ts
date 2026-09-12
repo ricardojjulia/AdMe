@@ -551,6 +551,18 @@ export interface OrganicPost {
   likes: number;
   createdAt: string;
   mediaUrl?: string;
+  syndication?: {
+    sourceType: 'marketplace' | 'google_review' | 'local_event' | 'open_data';
+    sourceName: string;
+    sourceUrl: string;
+    price?: string;
+    condition?: string;
+    rating?: number;
+    eventDate?: string;
+    venue?: string;
+    neighborhood?: string;
+    disclaimer?: string;
+  };
 }
 
 const MOCK_ORGANIC_TEMPLATES = [

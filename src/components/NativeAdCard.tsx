@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Ad } from "@/types/ad";
 import { Comments } from "./Comments";
 import { ShareModal } from "./ShareModal";
@@ -176,11 +177,53 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
               <span className={styles.category} style={{ color: ad.content.primaryColor }}>
                 {ad.category}
               </span>
-              <span className={styles.sponsor}>
-                {ad.isBoosted && <span style={{ marginRight: '0.4rem', background: 'hsl(var(--primary)/0.2)', color: 'hsl(var(--primary))', padding: '0.1rem 0.3rem', borderRadius: '0.25rem', fontSize: '0.7rem', fontWeight: 'bold' }}>{t('featured')}</span>}
-                • {t('sponsored')} · {ad.advertiser.name}
-                {ad.distanceMiles !== undefined && ` • 📍 ${t('miles_away', { distance: ad.distanceMiles.toFixed(1) })}`}
-              </span>
+              {ad.isLocalDiscovery ? (
+                <span style={{ 
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
+                  color: 'white', 
+                  padding: '0.15rem 0.5rem', 
+                  borderRadius: '0.25rem', 
+                  fontSize: '0.7rem', 
+                  fontWeight: 'bold',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem'
+                }}>
+                  ✨ {t('local_spotlight') || "Local Spotlight"}
+                </span>
+              ) : (
+                <span className={styles.sponsor}>
+                  {ad.isBoosted && <span style={{ marginRight: '0.4rem', background: 'hsl(var(--primary)/0.2)', color: 'hsl(var(--primary))', padding: '0.1rem 0.3rem', borderRadius: '0.25rem', fontSize: '0.7rem', fontWeight: 'bold' }}>{t('featured')}</span>}
+                  • {t('sponsored')} · {ad.advertiser.name}
+                  {ad.distanceMiles !== undefined && ` • 📍 ${t('miles_away', { distance: ad.distanceMiles.toFixed(1) })}`}
+                </span>
+              )}
+              {ad.smartScore && (
+                <span style={{ 
+                  background: 'hsl(var(--primary)/0.12)', 
+                  border: '1px solid hsl(var(--primary)/0.35)', 
+                  color: 'hsl(var(--primary))', 
+                  borderRadius: '999px', 
+                  fontSize: '0.7rem', 
+                  padding: '0.15rem 0.5rem', 
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem'
+                }}>
+                  ⚡ {ad.smartScore}% {t('smart_match') || "Match"} {ad.smartScoreReasons?.[0] ? `· ${ad.smartScoreReasons[0]}` : ''}
+                </span>
+              )}
+              {ad.distanceMiles !== undefined && ad.isLocalDiscovery && (
+                <span style={{ fontSize: '0.75rem', color: 'hsl(var(--muted-foreground))' }}>
+                  📍 {t('miles_away', { distance: ad.distanceMiles.toFixed(1) })}
+                </span>
+              )}
+              {ad.placeDetails?.rating && (
+                <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 'bold' }}>
+                  ★ {ad.placeDetails.rating.toFixed(1)} {ad.placeDetails.userRatingsTotal ? `(${ad.placeDetails.userRatingsTotal})` : ''}
+                </span>
+              )}
               <button
                 type="button"
                 onClick={() => setShowWhyThis(!showWhyThis)}
@@ -240,7 +283,7 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
             )}
           </div>
 
-          {/* Zero-Knowledge Privacy Disclosure Drawer */}
+          {/* Zero-Knowledge Privacy & Smart Match Disclosure Drawer */}
           {showWhyThis && (
             <div style={{
               margin: '0.75rem 0',
@@ -254,7 +297,7 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                 <strong style={{ color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem' }}>
-                  🛡️ {t('why_this_ad_title') || "Zero-Knowledge Match"}
+                  🛡️ {t('why_this_ad_title') || "Zero-Knowledge Match"} {ad.smartScore ? `· ${ad.smartScore}% Score` : ''}
                 </strong>
                 <button 
                   type="button" 
@@ -264,8 +307,21 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
                   ✕
                 </button>
               </div>
+
+              {ad.smartScoreReasons && ad.smartScoreReasons.length > 0 && (
+                <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                  {ad.smartScoreReasons.map((reason, idx) => (
+                    <span key={idx} style={{ fontSize: '0.7rem', background: 'hsl(var(--primary)/0.15)', color: 'hsl(var(--primary))', padding: '0.15rem 0.45rem', borderRadius: '0.25rem', fontWeight: 600 }}>
+                      ⚡ {reason}
+                    </span>
+                  ))}
+                </div>
+              )}
+
               <p style={{ color: 'hsl(var(--foreground))', margin: '0 0 0.6rem 0', lineHeight: '1.4' }}>
-                {t('why_this_ad_desc', { category: ad.category }) || `Matched directly on your device based on your '${ad.category}' preference. AdMe never sells your profile, identity, or browsing history.`}
+                {ad.isLocalDiscovery 
+                  ? (t('local_discovery_desc') || "Discovered for your local community based on proximity and high guest ratings. Not a paid ad.")
+                  : (t('why_this_ad_desc', { category: ad.category }) || `Matched directly on your device based on your '${ad.category}' preference. AdMe never sells your profile, identity, or browsing history.`)}
               </p>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '0.75rem', color: 'hsl(var(--secondary))', fontWeight: 'bold' }}>
@@ -308,8 +364,52 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
             </div>
           )}
 
+          {/* Claim This Spot Banner for Local Businesses (Cold Start Flywheel) */}
+          {ad.isLocalDiscovery && !ad.claimed && (
+            <div style={{
+              margin: '0.75rem 0',
+              padding: '0.65rem 0.85rem',
+              borderRadius: '0.5rem',
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(6, 182, 212, 0.08) 100%)',
+              border: '1px dashed rgba(16, 185, 129, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '0.5rem',
+              flexWrap: 'wrap'
+            }}>
+              <div style={{ fontSize: '0.78rem', color: 'hsl(var(--muted-foreground))' }}>
+                <strong style={{ color: 'hsl(var(--foreground))' }}>🏪 {t('own_this_business') || "Own this business?"}</strong> {t('claim_incentive') || "Claim on Studio & get 500 bonus ad credits!"}
+              </div>
+              <Link
+                href={ad.claimUrl || `/studio/create?claim=true&name=${encodeURIComponent(ad.advertiser.name)}&category=${encodeURIComponent(ad.category)}`}
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 'bold',
+                  color: '#10b981',
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  border: '1px solid rgba(16, 185, 129, 0.35)',
+                  padding: '0.35rem 0.7rem',
+                  borderRadius: '0.35rem',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {t('claim_this_spot') || "Claim Spot"} ➔
+              </Link>
+            </div>
+          )}
+
           <h3 className={styles.headline}>{ad.content.headline}</h3>
           <p className={styles.text}>{ad.content.text}</p>
+          {ad.placeDetails?.address && (
+            <p style={{ fontSize: '0.78rem', color: 'hsl(var(--muted-foreground))', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              📍 {ad.placeDetails.address}
+            </p>
+          )}
           <div style={{ position: 'relative', marginTop: '0.5rem' }}>
             <button 
               onClick={() => setShowReportOptions(!showReportOptions)}
