@@ -314,5 +314,17 @@
   "onboarding_vibes_sub": "Tell us what you actually want to see.",
   "onboarding_continue": "Continue",
   "onboarding_generating_title": "Generating your feed...",
-  "onboarding_generating_sub": "We're curating campaigns that match your vibe."
+  "onboarding_generating_sub": "We're curating campaigns that match your vibe.",
+  "nav_feed": "Feed",
+  "nav_explore": "Vibes",
+  "nav_rewards": "Rewards",
+  "nav_wallet": "Wallet",
+  "nav_profile": "Profile",
+  "nav_studio": "Studio",
+  "why_this_ad": "Why this? ✨",
+  "why_this_ad_title": "Zero-Knowledge Match",
+  "why_this_ad_desc": "Matched directly on your device based on your '{category}' preference. AdMe never sells your profile, identity, or browsing history.",
+  "attention_dividend": "+{pts} pts Dividend",
+  "see_less_of_this": "See less of this",
+  "understood": "Got it"
 }

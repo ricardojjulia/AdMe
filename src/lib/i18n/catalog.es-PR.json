@@ -314,5 +314,17 @@
   "onboarding_vibes_sub": "Dinos qué quieres ver realmente.",
   "onboarding_continue": "Continuar",
   "onboarding_generating_title": "Generando tu feed...",
-  "onboarding_generating_sub": "Estamos seleccionando campañas que coinciden con tu estilo."
+  "onboarding_generating_sub": "Estamos seleccionando campañas que coinciden con tu estilo.",
+  "nav_feed": "Feed",
+  "nav_explore": "Estilos",
+  "nav_rewards": "Premios",
+  "nav_wallet": "Billetera",
+  "nav_profile": "Perfil",
+  "nav_studio": "Estudio",
+  "why_this_ad": "¿Por qué este? ✨",
+  "why_this_ad_title": "Coincidencia Cero-Rastreo",
+  "why_this_ad_desc": "Emparejado en tu dispositivo según tu preferencia '{category}'. AdMe nunca vende tu perfil, identidad ni historial de navegación.",
+  "attention_dividend": "+{pts} pts Dividendo",
+  "see_less_of_this": "Ver menos de esto",
+  "understood": "Entendido"
 }

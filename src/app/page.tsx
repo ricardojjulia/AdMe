@@ -11,7 +11,19 @@ import { LocationBadge } from "@/components/location/LocationBadge";
 import { TransparencyModal } from "@/components/TransparencyModal";
 import styles from "./page.module.css";
 
-const topFilters = ["Tech & SaaS", "Local Eateries", "Faith & Books", "Veteran-owned"];
+const topFilters = [
+  "Tech & SaaS",
+  "Local Eateries",
+  "Faith & Books",
+  "Veteran-owned",
+  "Specialty Coffee",
+  "Design",
+  "Outdoors",
+  "Gaming",
+  "Wellness",
+  "Beauty",
+  "Finance"
+];
 const sideFilters = ["Design", "Outdoors", "Gaming", "Wellness", "Beauty", "Finance"];
 
 export default function Home() {
@@ -44,7 +56,6 @@ export default function Home() {
         await enableLocation();
       } catch (e) {
         console.error("Location permission denied", e);
-        // still set tab so they can see empty state or whatever
       }
     }
     setActiveTab(tab);
@@ -66,7 +77,7 @@ export default function Home() {
           </div>
           <div>
             <p className={styles.brandTitle}>{t('app_name')}</p>
-            <p className={styles.brandTagline}>
+            <p className={styles.brandTagline} suppressHydrationWarning>
               {user ? t('welcome_message', { name: user.name }) : t('app_tagline')}
             </p>
           </div>
@@ -97,15 +108,15 @@ export default function Home() {
             <>
               <button 
                 type="button" 
-                className={styles.ctaGhost} 
+                className={`${styles.ctaGhost} ${styles.desktopOnly}`} 
                 onClick={() => switchRole(user?.role === 'consumer' ? 'business' : 'consumer')}
                 style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
               >
                 {user?.role === 'consumer' ? t('switch_role_business') : t('switch_role_consumer')}
               </button>
-              <button type="button" className={styles.iconButton} aria-label="Notifications">🔔</button>
-              <Link href="/profile" className={styles.iconButton} aria-label="Saved" style={{ textDecoration: 'none' }}>★</Link>
-              <Link href="/profile" className={styles.avatar} aria-hidden style={{ textDecoration: 'none' }}>{user.avatar}</Link>
+              <button type="button" className={`${styles.iconButton} ${styles.desktopOnly}`} aria-label="Notifications">🔔</button>
+              <Link href="/profile" className={`${styles.iconButton} ${styles.desktopOnly}`} aria-label="Saved" style={{ textDecoration: 'none' }}>★</Link>
+              <Link href="/profile" className={styles.avatar} aria-label="Profile" style={{ textDecoration: 'none' }}>{user.avatar}</Link>
             </>
           )}
         </div>
@@ -117,7 +128,7 @@ export default function Home() {
           <h1>{t('hero_title')}</h1>
           <p>{t('hero_description')}</p>
 
-          <div className={styles.filterRow}>
+          <div className={styles.filterRow} id="vibe-filter-section">
             {topFilters.map((filter) => {
               const isActive = preferences.includes(filter);
               return (
@@ -128,7 +139,7 @@ export default function Home() {
                   onClick={() => togglePreference(filter)}
                   style={isActive ? { backgroundColor: 'var(--foreground)', color: 'var(--background)' } : {}}
                 >
-                  {t(filter)}
+                  {t(filter) || filter}
                 </button>
               );
             })}

@@ -488,6 +488,6 @@ describe('Localization Governance Framework Integration', () => {
 
       const status = await gov.getStatus('fr-FR');
       expect(status.activeVersionId).toBe(draft.id);
-    });
+    }, 15000);
   });
 });

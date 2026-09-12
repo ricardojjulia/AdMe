@@ -31,6 +31,7 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
 
   const [activeInteraction, setActiveInteraction] = useState<boolean>(false);
   const [isInteractionCompleted, setIsInteractionCompleted] = useState<boolean>(false);
+  const [showWhyThis, setShowWhyThis] = useState<boolean>(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -171,7 +172,7 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
       <div className={styles.content}>
         <div>
           <div className={styles.meta} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
               <span className={styles.category} style={{ color: ad.content.primaryColor }}>
                 {ad.category}
               </span>
@@ -180,6 +181,25 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
                 • {t('sponsored')} · {ad.advertiser.name}
                 {ad.distanceMiles !== undefined && ` • 📍 ${t('miles_away', { distance: ad.distanceMiles.toFixed(1) })}`}
               </span>
+              <button
+                type="button"
+                onClick={() => setShowWhyThis(!showWhyThis)}
+                style={{
+                  background: 'hsl(var(--card))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '999px',
+                  fontSize: '0.7rem',
+                  color: 'hsl(var(--muted-foreground))',
+                  padding: '0.15rem 0.45rem',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.2rem'
+                }}
+                title={t('why_this_ad_title') || "Zero-Knowledge Match"}
+              >
+                {t('why_this_ad') || "Why this? ✨"}
+              </button>
             </div>
 
             {/* Value Exchange Interaction Badge */}
@@ -199,10 +219,11 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
                   fontSize: '0.75rem',
                   fontWeight: 'bold',
                   cursor: 'pointer',
-                  padding: '0.2rem 0.5rem',
+                  padding: '0.25rem 0.6rem',
+                  minHeight: '36px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.25rem',
+                  gap: '0.35rem',
                   transition: 'all 0.2s'
                 }}
                 onMouseOver={(e) => {
@@ -218,6 +239,75 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
               </button>
             )}
           </div>
+
+          {/* Zero-Knowledge Privacy Disclosure Drawer */}
+          {showWhyThis && (
+            <div style={{
+              margin: '0.75rem 0',
+              padding: '0.75rem 0.9rem',
+              background: 'linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--background)) 100%)',
+              border: '1px solid hsl(var(--primary) / 0.5)',
+              borderRadius: '0.5rem',
+              fontSize: '0.8rem',
+              boxShadow: '0 8px 24px hsl(0 0% 0% / 0.35)',
+              animation: 'fadeIn 0.2s ease-out'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                <strong style={{ color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem' }}>
+                  🛡️ {t('why_this_ad_title') || "Zero-Knowledge Match"}
+                </strong>
+                <button 
+                  type="button" 
+                  onClick={() => setShowWhyThis(false)}
+                  style={{ background: 'none', border: 'none', color: 'hsl(var(--muted-foreground))', cursor: 'pointer', fontSize: '0.9rem', padding: '0.2rem' }}
+                >
+                  ✕
+                </button>
+              </div>
+              <p style={{ color: 'hsl(var(--foreground))', margin: '0 0 0.6rem 0', lineHeight: '1.4' }}>
+                {t('why_this_ad_desc', { category: ad.category }) || `Matched directly on your device based on your '${ad.category}' preference. AdMe never sells your profile, identity, or browsing history.`}
+              </p>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.75rem', color: 'hsl(var(--secondary))', fontWeight: 'bold' }}>
+                  💎 {t('attention_dividend', { pts: 50 }) || "+50 pts Dividend"}
+                </span>
+                <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.4rem' }}>
+                  <button
+                    type="button"
+                    onClick={handleSkip}
+                    style={{
+                      background: 'hsl(var(--muted))',
+                      border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--muted-foreground))',
+                      fontSize: '0.75rem',
+                      borderRadius: '0.35rem',
+                      padding: '0.25rem 0.5rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {t('see_less_of_this') || "See less of this"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowWhyThis(false)}
+                    style={{
+                      background: 'hsl(var(--primary))',
+                      border: 'none',
+                      color: 'hsl(var(--primary-foreground))',
+                      fontSize: '0.75rem',
+                      fontWeight: '700',
+                      borderRadius: '0.35rem',
+                      padding: '0.25rem 0.65rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {t('understood') || "Got it"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <h3 className={styles.headline}>{ad.content.headline}</h3>
           <p className={styles.text}>{ad.content.text}</p>
           <div style={{ position: 'relative', marginTop: '0.5rem' }}>

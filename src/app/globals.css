@@ -109,6 +109,22 @@ p {
   padding: 0 1.25rem;
 }
 
+/* Mobile Safe Area & Bottom Dock Compensation */
+@media (max-width: 768px) {
+  .container {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Smooth Touch Scroll Utility without scrollbars */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Components */
 .btn {
   display: inline-flex;

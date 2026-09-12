@@ -44,11 +44,14 @@ export async function POST(request: Request) {
 
     // Upsert the engagement log
     const supabaseAdmin = getSupabaseAdmin();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+    const validUserId = isUuid ? userId : null;
+
     const { error } = await supabaseAdmin
       .from('engagements')
       .upsert({
         id: engagementId,
-        user_id: userId,
+        user_id: validUserId,
         ad_id: adId,
         engagement_type: 'view',
         view_duration_seconds: duration

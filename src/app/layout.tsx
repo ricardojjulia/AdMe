@@ -3,6 +3,7 @@ import { Space_Grotesk } from "next/font/google";
 import { UserProvider } from "@/lib/UserContext";
 import { ToastProvider } from "@/lib/ToastContext";
 import { DemoPanel } from "@/components/DemoPanel";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 import "./globals.css";
 
 const display = Space_Grotesk({
@@ -54,6 +55,7 @@ export default function RootLayout({
             <main className="container h-full">
               {children}
             </main>
+            <MobileBottomNav />
             {showDemoPanel && <DemoPanel />}
           </UserProvider>
         </ToastProvider>
