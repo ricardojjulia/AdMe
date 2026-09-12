@@ -2,7 +2,9 @@
 
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useUser } from "@/lib/UserContext";
+import { loginWithEmail, loginWithMagicLink } from "./actions";
 import styles from "./page.module.css";
 
 const accountOptions = [
@@ -21,7 +23,8 @@ const accountOptions = [
 ] as const;
 
 export default function LoginPage() {
-  const { sessionMode, exitDemoMode } = useUser();
+  const router = useRouter();
+  const { sessionMode, exitDemoMode, refreshUser } = useUser();
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [type, setType] = useState<(typeof accountOptions)[number]["key"]>("individual");
 
@@ -47,27 +50,42 @@ export default function LoginPage() {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    // Immediately synchronize browser auth state on sign in
-    if (authMode === "signin" && email && password) {
-      try {
-        const { createClient } = await import("@/lib/supabase/client");
-        const supabase = createClient();
-        await supabase.auth.signInWithPassword({ email, password });
-      } catch (e) {
-        // Continue to server action
+    try {
+      // Synchronize client-side supabase session if possible
+      if (email && password) {
+        try {
+          const { createClient } = await import("@/lib/supabase/client");
+          const supabase = createClient();
+          await supabase.auth.signInWithPassword({ email, password });
+        } catch {
+          // Ignore client sync errors; server action will set cookies
+        }
       }
+
+      const result = await loginWithEmail(formData);
+
+      if (result?.error) {
+        setErrorMsg(result.error);
+        setLoading(false);
+      } else if (result?.redirectTo) {
+        if (refreshUser) {
+          await refreshUser();
+        }
+        router.push(result.redirectTo);
+        // Leave loading true during page transition to prevent button flicker
+        return;
+      } else if (typeof result?.success === "string") {
+        setSuccessMsg(result.success);
+        setLoading(false);
+      } else {
+        setLoading(false);
+      }
+    } catch (err: any) {
+      console.error("Login submission error:", err);
+      setErrorMsg(err?.message || "Connection error. Please try again.");
+      setLoading(false);
     }
-    
-    const { loginWithEmail } = await import("./actions");
-    const result = await loginWithEmail(formData);
-    
-    if (result?.error) {
-      setErrorMsg(result.error);
-    } else if (result?.success) {
-      setSuccessMsg(result.success);
-    }
-    setLoading(false);
-  }, [type, authMode]);
+  }, [type, authMode, router, refreshUser]);
 
   const handleMagicLink = useCallback(async () => {
     const emailInput = document.querySelector('input[name="email"]') as HTMLInputElement;
@@ -84,15 +102,19 @@ export default function LoginPage() {
     formData.append("email", emailInput.value);
     formData.append("type", type);
 
-    const { loginWithMagicLink } = await import("./actions");
-    const result = await loginWithMagicLink(formData);
+    try {
+      const result = await loginWithMagicLink(formData);
 
-    if (result?.error) {
-      setErrorMsg(result.error);
-    } else if (result?.success) {
-      setSuccessMsg(result.success);
+      if (result?.error) {
+        setErrorMsg(result.error);
+      } else if (result?.success) {
+        setSuccessMsg(result.success);
+      }
+    } catch (err: any) {
+      setErrorMsg(err?.message || "Failed to send magic link. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [type]);
 
   return (
