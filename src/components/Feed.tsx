@@ -195,7 +195,11 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
 
       // Fetch Local Discovery spots to backfill and enrich local ecosystem (Cold Start Engine)
       try {
-        const localDiscoveryAds = await getLocalDiscoveryAds(location || null, searchQuery || undefined);
+        const localDiscoveryAds = await getLocalDiscoveryAds(
+          location || null,
+          locationState?.coarseLocation || null,
+          searchQuery || (preferences.length === 1 ? preferences[0] : undefined)
+        );
         filteredAds = [...filteredAds, ...localDiscoveryAds];
       } catch (e) {
         console.warn("Local discovery fetch error:", e);

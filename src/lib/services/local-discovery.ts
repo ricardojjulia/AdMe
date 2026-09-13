@@ -85,17 +85,29 @@ export function spotToAd(spot: LocalDiscoverySpot, userLocation?: { lat: number;
  */
 export async function getLocalDiscoveryAds(
   userLocation?: { lat: number; lng: number } | null,
+  coarseLocation?: { city?: string; region?: string } | null,
   categoryFilter?: string
 ): Promise<Ad[]> {
-  if (!userLocation || typeof window === 'undefined') {
+  if (typeof window === 'undefined') {
+    return [];
+  }
+
+  if (!userLocation && !coarseLocation?.city) {
     return [];
   }
 
   try {
-    const query = new URLSearchParams({
-      lat: userLocation.lat.toString(),
-      lng: userLocation.lng.toString()
-    });
+    const query = new URLSearchParams();
+    if (userLocation) {
+      query.set('lat', userLocation.lat.toString());
+      query.set('lng', userLocation.lng.toString());
+    }
+    if (coarseLocation?.city) {
+      query.set('city', coarseLocation.city);
+    }
+    if (coarseLocation?.region) {
+      query.set('region', coarseLocation.region);
+    }
     if (categoryFilter && categoryFilter.trim() !== '') {
       query.set('category', categoryFilter.trim());
     }
