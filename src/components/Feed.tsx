@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Ad } from "@/types/ad";
-import { generateMockAds, generateMockOrganicPosts, OrganicPost } from "@/lib/mock-data";
+import { OrganicPost } from "@/lib/mock-data";
 import { calculateDistanceMiles } from "@/lib/utils/distance";
 import { FeedCard } from "./FeedCard";
 import { OrganicPostCard } from "./OrganicPostCard";
@@ -120,26 +120,6 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
         }
       }
 
-      // Fallback to mock ads if remote failed/empty
-      if (filteredAds.length === 0) {
-        filteredAds = generateMockAds(18, location || undefined).map((ad, idx) => {
-          const isStatic = idx < 18;
-          const isVariation = !isStatic && (idx % 2 === 1);
-          const campaignId = isStatic ? ad.id : (isVariation ? `mock-campaign-${Math.floor(idx / 2)}` : undefined);
-          return {
-            ...ad,
-            isBoosted: ad.isBoosted ?? (idx % 4 === 0),
-            campaignId: campaignId,
-            variationName: isVariation ? 'B' : 'A',
-            dailyBudget: 1200,
-            creditsSpentToday: 0,
-            ownerId: '00000000-0000-0000-0000-000000000001',
-            maxCpcBid: ad.maxCpcBid ?? 20,
-            status: 'active' as const
-          };
-        });
-      }
-
       // Filter out paused or archived campaigns
       filteredAds = filteredAds.filter((ad: Ad) => !ad.status || ad.status === 'active');
 
@@ -243,11 +223,11 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
         savedAdIds: []
       });
 
-      // Now generate and filter Organic & Public Syndicated Posts (Marketplace, Google Reviews, Local Events)
-      let filteredPosts = generateMockOrganicPosts();
+      // Fetch public syndicated community posts (if available from live sources)
+      let filteredPosts: OrganicPost[] = [];
       try {
         const syndicatedPosts = await getPublicSyndicatedPosts(location || null, searchQuery || undefined);
-        filteredPosts = [...syndicatedPosts, ...filteredPosts];
+        filteredPosts = [...syndicatedPosts];
       } catch (e) {
         console.warn("Public syndication load error:", e);
       }
@@ -344,7 +324,21 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
     <div className={styles.feed}>
       {visibleItems.length === 0 && !loading && (
         <div className={styles.empty}>
-          {t('feed_empty')}
+          <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🎯</div>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 600, color: 'hsl(var(--foreground))', marginBottom: '0.5rem' }}>
+            {t('feed_empty')}
+          </h3>
+          <p style={{ fontSize: '0.9rem', color: 'hsl(var(--muted-foreground))', maxWidth: '420px', margin: '0 auto 1.5rem', lineHeight: '1.5' }}>
+            No verified active campaigns currently match your selected filters. Try broadening your categories or adjusting location preferences.
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a 
+              href="/studio/create" 
+              style={{ padding: '0.65rem 1.25rem', fontSize: '0.9rem', textDecoration: 'none', borderRadius: '0.5rem', background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+            >
+              + Create Campaign in Studio
+            </a>
+          </div>
         </div>
       )}
 

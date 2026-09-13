@@ -135,10 +135,8 @@ describe('Local Discovery Cold-Start Engine', () => {
     expect(ad.distanceMiles!).toBeLessThan(1.0);
   });
 
-  it('generates localized discovery spots when offline or without Google Places API key', async () => {
+  it('strictly adheres to zero-mock policy by returning empty array when unconfigured or offline', async () => {
     const spots = await getLocalDiscoveryAds({ lat: 18.4655, lng: -66.1167 });
-    expect(spots.length).toBeGreaterThan(0);
-    expect(spots[0].isLocalDiscovery).toBe(true);
-    expect(spots[0].placeDetails?.address).toBeDefined();
+    expect(spots).toEqual([]);
   });
 });

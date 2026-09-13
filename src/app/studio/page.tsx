@@ -104,113 +104,7 @@ export default function StudioDashboard() {
         }
       }
 
-      // If no supabase data or empty, fallback to mock data
-      if (!hasSupabase || campaigns.length === 0) {
-        campaigns = [
-          {
-            id: "campaign-1-var-a",
-            owner_id: user.id,
-            category: "Local Eateries",
-            format_type: "social",
-            advertiser_name: user.name,
-            advertiser_avatar: user.avatar,
-            headline: "Valor Brews: Single Origin Espresso Drops!",
-            content_text: "Get a free double shot with any bean bag purchase this weekend. Premium roasting, ethically sourced.",
-            media_url: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800",
-            primary_color: "#1bf693",
-            cta_label: "Get Offer",
-            cta_url: "https://example.com/valor",
-            likes: 42,
-            shares: 15,
-            campaign_id: "campaign-1",
-            variation_name: "A",
-            is_boosted: true,
-            created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-            daily_budget: 1000,
-            credits_spent_today: 750,
-            max_cpc_bid: 20
-          },
-          {
-            id: "campaign-1-var-b",
-            owner_id: user.id,
-            category: "Local Eateries",
-            format_type: "social",
-            advertiser_name: user.name,
-            advertiser_avatar: user.avatar,
-            headline: "Tired? Valor Brews Roasted Fresh for You",
-            content_text: "Ethically sourced single origin beans roasted weekly. Get a free double espresso card inside.",
-            media_url: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800",
-            primary_color: "#1bf693",
-            cta_label: "Redeem Card",
-            cta_url: "https://example.com/valor",
-            likes: 24,
-            shares: 8,
-            campaign_id: "campaign-1",
-            variation_name: "B",
-            is_boosted: true,
-            created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-            daily_budget: 1000,
-            credits_spent_today: 950,
-            max_cpc_bid: 25
-          },
-          {
-            id: "campaign-2",
-            owner_id: user.id,
-            category: "Tech & SaaS",
-            format_type: "native",
-            advertiser_name: user.name,
-            advertiser_avatar: user.avatar,
-            headline: "WorkStation: Focus Timer for Devs",
-            content_text: "A beautiful, premium macOS menu bar app to shield your productivity. Zero tracking.",
-            media_url: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800",
-            primary_color: "#6366f1",
-            cta_label: "Try Free",
-            cta_url: "https://example.com/workstation",
-            likes: 88,
-            shares: 32,
-            campaign_id: "campaign-2",
-            variation_name: "A",
-            is_boosted: false,
-            created_at: new Date(Date.now() - 86400000 * 7).toISOString(),
-            daily_budget: 1500,
-            credits_spent_today: 250,
-            max_cpc_bid: 15
-          }
-        ];
-
-        const mockEngs: any[] = [];
-        const generateMockEngs = (adId: string, viewsCount: number, clicksCount: number, likesCount: number, avgDur: number) => {
-          const engs = [];
-          for (let i = 0; i < viewsCount; i++) {
-            const duration = Math.max(0.5, parseFloat((avgDur + (Math.random() - 0.5) * avgDur * 1.5).toFixed(1)));
-            engs.push({
-              ad_id: adId,
-              engagement_type: 'view',
-              view_duration_seconds: duration
-            });
-          }
-          for (let i = 0; i < clicksCount; i++) {
-            engs.push({
-              ad_id: adId,
-              engagement_type: 'click'
-            });
-          }
-          for (let i = 0; i < likesCount; i++) {
-            engs.push({
-              ad_id: adId,
-              engagement_type: 'like'
-            });
-          }
-          return engs;
-        };
-
-        mockEngs.push(...generateMockEngs("campaign-1-var-a", 140, 18, 42, 3.8));
-        mockEngs.push(...generateMockEngs("campaign-1-var-b", 110, 9, 24, 2.1));
-        mockEngs.push(...generateMockEngs("campaign-2", 320, 48, 88, 5.2));
-
-        engagements = mockEngs;
-      }
-
+      // Set real campaigns and engagements (zero mock data)
       setCampaignsList(campaigns);
       setEngagementsList(engagements);
 
@@ -285,7 +179,10 @@ export default function StudioDashboard() {
 
   // Compute activeAds based on campaignsList and engagementsList
   useEffect(() => {
-    if (campaignsList.length === 0) return;
+    if (campaignsList.length === 0) {
+      setActiveAds([]);
+      return;
+    }
 
     const mappedAds = campaignsList.map(ad => {
       const adEngagements = engagementsList.filter(e => e.ad_id === ad.id);

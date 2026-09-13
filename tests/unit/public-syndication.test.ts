@@ -29,25 +29,13 @@ describe('Public Community Syndication Engine', () => {
     expect(post.syndication?.disclaimer).toContain('Non-commercial community curation');
   });
 
-  it('syndicates Google reviews and local community events', async () => {
+  it('strictly adheres to zero-mock policy by returning empty array when no live syndication source is connected', async () => {
     const posts = await getPublicSyndicatedPosts();
-    expect(posts.length).toBeGreaterThan(0);
-
-    const reviewPost = posts.find(p => p.syndication?.sourceType === 'google_review');
-    expect(reviewPost).toBeDefined();
-    expect(reviewPost?.syndication?.rating).toBeGreaterThanOrEqual(4.5);
-
-    const eventPost = posts.find(p => p.syndication?.sourceType === 'local_event');
-    expect(eventPost).toBeDefined();
-    expect(eventPost?.syndication?.eventDate).toBeDefined();
-    expect(eventPost?.syndication?.venue).toBeDefined();
+    expect(posts).toEqual([]);
   });
 
-  it('filters syndicated posts by category when requested', async () => {
+  it('strictly returns empty array for category filters when no live external source is connected', async () => {
     const coffeePosts = await getPublicSyndicatedPosts(null, 'Specialty Coffee');
-    expect(coffeePosts.length).toBeGreaterThan(0);
-    coffeePosts.forEach(p => {
-      expect(p.category.toLowerCase()).toContain('coffee');
-    });
+    expect(coffeePosts).toEqual([]);
   });
 });

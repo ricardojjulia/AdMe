@@ -42,7 +42,7 @@ export default function Home() {
 
   const spotlight = {
     badge: t('spotlight_badge'),
-    brand: "Aurora Mobility",
+    brand: "AdMe Zero-Knowledge Protocol",
     headline: t('spotlight_headline'),
     perks: [
       t('spotlight_perk_1'),
@@ -255,11 +255,20 @@ export default function Home() {
               <span key={perk} className={styles.perkChip}>{perk}</span>
             ))}
           </div>
-          <button type="button" className={styles.cta}>{t('preview_offer')}</button>
+          <button 
+            type="button" 
+            className={styles.cta}
+            onClick={() => {
+              const el = document.getElementById('feed-section');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
+            {t('preview_offer')}
+          </button>
         </div>
       </section>
 
-      <section className={styles.layout}>
+      <section id="feed-section" className={styles.layout}>
         <div className={styles.feedColumn}>
           <div className={styles.feedHeader}>
             <div className={styles.tabs}>
@@ -322,14 +331,26 @@ export default function Home() {
               <span className={styles.sideMeta}>{t('brands_new_count')}</span>
             </div>
             <div className={styles.brandList}>
-              {["Lumen", "UrbanEat", "Shift Studio", "Wayfinder", "Monocle"].map((brand) => (
-                <div key={brand} className={styles.brandRow}>
-                  <div className={styles.brandAvatar}>{brand[0]}</div>
+              {[
+                { name: "Valor Brews", category: "Veteran-owned" },
+                { name: "The Green Kitchen", category: "Local Eateries" },
+                { name: "Bloom & Branch Nursery", category: "Home & Garden" },
+                { name: "GuildCraft Hardware", category: "Gaming" },
+                { name: "ClearPath Financial", category: "Finance" }
+              ].map((brand) => (
+                <div key={brand.name} className={styles.brandRow}>
+                  <div className={styles.brandAvatar}>{brand.name[0]}</div>
                   <div>
-                    <p className={styles.brandName}>{brand}</p>
-                    <p className={styles.brandSubtext}>{t('fresh_drops')}</p>
+                    <p className={styles.brandName}>{brand.name}</p>
+                    <p className={styles.brandSubtext}>{brand.category}</p>
                   </div>
-                  <button type="button" className={styles.followButton}>{t('following')}</button>
+                  <button 
+                    type="button" 
+                    className={styles.followButton}
+                    onClick={() => togglePreference(brand.category)}
+                  >
+                    {mounted && preferences.includes(brand.category) ? "Active" : "+ Filter"}
+                  </button>
                 </div>
               ))}
             </div>
@@ -339,7 +360,7 @@ export default function Home() {
           <div className={styles.sideCard}>
             <div className={styles.sideHeader}>
               <h4>📍 {t('proximity_simulator')}</h4>
-              <span className={styles.sideMeta}>Local Mock</span>
+              <span className={styles.sideMeta}>Coordinates</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.75rem' }}>
               <p style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))', margin: '0 0 0.25rem 0', lineHeight: '1.3' }}>
