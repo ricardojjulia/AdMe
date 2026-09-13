@@ -93,31 +93,41 @@ export async function GET(request: NextRequest) {
     const places: any[] = [];
     const seenNames = new Set<string>();
 
-    const searchQueries: { query: string; defaultCat: string; img: string }[] = [];
+    const searchQueries: { query: string; defaultCat: string; img: string; typeTag?: string }[] = [];
     if (category) {
       const lower = category.toLowerCase();
       if (lower.includes('coffee')) {
         searchQueries.push({ query: `cafe in ${areaQuery}`, defaultCat: 'Specialty Coffee', img: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&q=80&w=800' });
       } else if (lower.includes('eat') || lower.includes('food')) {
         searchQueries.push({ query: `restaurant in ${areaQuery}`, defaultCat: 'Local Eateries', img: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=800' });
-      } else if (lower.includes('well') || lower.includes('health')) {
-        searchQueries.push({ query: `gym in ${areaQuery}`, defaultCat: 'Wellness', img: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&q=80&w=800' });
-      } else if (lower.includes('book') || lower.includes('faith')) {
-        searchQueries.push({ query: `bookstore in ${areaQuery}`, defaultCat: 'Faith & Books', img: 'https://images.unsplash.com/photo-1507842229452-9b2f6efd5c07?auto=format&fit=crop&q=80&w=800' });
+      } else if (lower.includes('well') || lower.includes('health') || lower.includes('dental')) {
+        searchQueries.push(
+          { query: `dentist in ${areaQuery}`, defaultCat: 'Health & Dental', img: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=800' },
+          { query: `optician in ${areaQuery}`, defaultCat: 'Vision & Care', img: 'https://images.unsplash.com/photo-1591076482161-42ce6da69f67?auto=format&fit=crop&q=80&w=800' }
+        );
+      } else if (lower.includes('finance') || lower.includes('bank')) {
+        searchQueries.push({ query: `bank in ${areaQuery}`, defaultCat: 'Finance & Banking', img: 'https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?auto=format&fit=crop&q=80&w=800' });
+      } else if (lower.includes('home') || lower.includes('furniture') || lower.includes('design')) {
+        searchQueries.push({ query: `furniture in ${areaQuery}`, defaultCat: 'Home & Living', img: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=800' });
       } else {
         searchQueries.push({ query: `${category} in ${areaQuery}`, defaultCat: category, img: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=800' });
       }
     } else {
+      // Balanced cross-section of diverse local business pillars (not just eateries!)
       searchQueries.push(
-        { query: `cafe in ${areaQuery}`, defaultCat: 'Specialty Coffee', img: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&q=80&w=800' },
-        { query: `restaurant in ${areaQuery}`, defaultCat: 'Local Eateries', img: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=800' },
-        { query: `bakery in ${areaQuery}`, defaultCat: 'Local Eateries', img: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=800' }
+        { query: `dentist in ${areaQuery}`, defaultCat: 'Health & Dental', img: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=800', typeTag: 'dentist' },
+        { query: `optician in ${areaQuery}`, defaultCat: 'Vision & Care', img: 'https://images.unsplash.com/photo-1591076482161-42ce6da69f67?auto=format&fit=crop&q=80&w=800', typeTag: 'optician' },
+        { query: `bank in ${areaQuery}`, defaultCat: 'Finance & Banking', img: 'https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?auto=format&fit=crop&q=80&w=800', typeTag: 'bank' },
+        { query: `furniture in ${areaQuery}`, defaultCat: 'Home & Living', img: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=800', typeTag: 'furniture' },
+        { query: `supermarket in ${areaQuery}`, defaultCat: 'Local Grocers', img: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&q=80&w=800', typeTag: 'supermarket' },
+        { query: `cafe in ${areaQuery}`, defaultCat: 'Specialty Coffee', img: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&q=80&w=800', typeTag: 'cafe' },
+        { query: `restaurant in ${areaQuery}`, defaultCat: 'Local Eateries', img: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=800', typeTag: 'restaurant' }
       );
     }
 
     for (const sq of searchQueries) {
       try {
-        const searchUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(sq.query)}&format=json&limit=5`;
+        const searchUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(sq.query)}&format=json&limit=3`;
         const res = await fetch(searchUrl, {
           headers: { "User-Agent": "AdMe-LocalDiscovery/1.0 (contact@adforme.io)" },
           next: { revalidate: 7200 }
@@ -134,11 +144,45 @@ export async function GET(request: NextRequest) {
               const parts = (item.display_name || '').split(',').map((s: string) => s.trim());
               const streetOrArea = parts.slice(1, 3).join(', ') || resolvedCity;
 
+              let finalCat = sq.defaultCat;
+              let headline = `Spotlight in ${resolvedCity}`;
+              let description = `Verified local business on ${streetOrArea}. Supporting local commerce in ${resolvedCity}.`;
+
+              if (item.type === 'dentist' || sq.defaultCat === 'Health & Dental') {
+                finalCat = 'Health & Dental';
+                headline = `Healthcare Provider in ${resolvedCity}`;
+                description = `Trusted local healthcare practice on ${streetOrArea}. Verified location in ${resolvedCity}.`;
+              } else if (item.type === 'optician' || sq.defaultCat === 'Vision & Care') {
+                finalCat = 'Vision & Care';
+                headline = `Vision & Eyewear in ${resolvedCity}`;
+                description = `Local vision clinic and optometry services on ${streetOrArea}. Verified location in ${resolvedCity}.`;
+              } else if (item.type === 'bank' || sq.defaultCat === 'Finance & Banking') {
+                finalCat = 'Finance & Banking';
+                headline = `Community Financial Services in ${resolvedCity}`;
+                description = `Local branch banking and financial services on ${streetOrArea}. Verified in ${resolvedCity}.`;
+              } else if (item.type === 'furniture' || sq.defaultCat === 'Home & Living') {
+                finalCat = 'Home & Living';
+                headline = `Home Furnishings in ${resolvedCity}`;
+                description = `Local showroom and furnishings destination on ${streetOrArea}. Verified in ${resolvedCity}.`;
+              } else if (item.type === 'supermarket' || sq.defaultCat === 'Local Grocers') {
+                finalCat = 'Local Grocers';
+                headline = `Provisions & Market in ${resolvedCity}`;
+                description = `Local community market and everyday essentials on ${streetOrArea}. Verified in ${resolvedCity}.`;
+              } else if (item.type === 'cafe') {
+                finalCat = 'Specialty Coffee';
+                headline = `Specialty Coffee in ${resolvedCity}`;
+                description = `Artisanal brews and cafe gathering space on ${streetOrArea}. Verified location in ${resolvedCity}.`;
+              } else if (item.type === 'restaurant') {
+                finalCat = 'Local Eateries';
+                headline = `Community Dining in ${resolvedCity}`;
+                description = `Beloved local culinary spot on ${streetOrArea}. Verified location in ${resolvedCity}.`;
+              }
+
               places.push({
                 name: name,
-                category: item.type === 'cafe' ? 'Specialty Coffee' : sq.defaultCat,
-                headline: `Community Favorite in ${resolvedCity}`,
-                description: `Real local destination on ${streetOrArea}. Verified location in ${resolvedCity}.`,
+                category: finalCat,
+                headline: headline,
+                description: description,
                 mediaUrl: sq.img,
                 avatarUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&q=80&w=200',
                 address: item.display_name,

@@ -50,18 +50,67 @@ export function syndicationItemToOrganicPost(item: PublicSyndicationItem): Organ
   };
 }
 
-/**
- * Fetches public syndicated community posts (Marketplace, Google Reviews, Local Events).
- * Purely non-commercial fair use to enrich the user's localized feed with zero ad monetization.
- * Strict policy: Returns [] when no real, verified live feed or external API is available.
- * Zero made-up, demo, or synthetic data.
- */
 export async function getPublicSyndicatedPosts(
   userLocation?: { lat: number; lng: number } | null,
+  coarseOrCategory?: { city?: string; region?: string } | string | null,
   categoryFilter?: string
 ): Promise<OrganicPost[]> {
-  // If no external live RSS/syndication API endpoint is connected, return empty array.
-  return [];
+  if (typeof window === 'undefined') {
+    return [];
+  }
+
+  let coarseLocation: { city?: string; region?: string } | null = null;
+  let resolvedCategory = categoryFilter;
+
+  if (typeof coarseOrCategory === 'string') {
+    resolvedCategory = coarseOrCategory;
+  } else if (coarseOrCategory) {
+    coarseLocation = coarseOrCategory;
+  }
+
+  if (!userLocation && !coarseLocation?.city) {
+    return [];
+  }
+
+  const city = coarseLocation?.city || '';
+  const region = coarseLocation?.region || '';
+
+  try {
+    const query = new URLSearchParams();
+    if (city) query.set('city', city);
+    if (region) query.set('region', region);
+    if (resolvedCategory && resolvedCategory.trim() !== '') {
+      query.set('category', resolvedCategory.trim());
+    }
+
+    const res = await fetch(`/api/marketplace/nearby?${query.toString()}`);
+    if (!res.ok) return [];
+
+    const data = await res.json();
+    if (!data.items || !Array.isArray(data.items)) return [];
+
+    return data.items.map((item: any) =>
+      syndicationItemToOrganicPost({
+        id: item.id,
+        sourceType: 'marketplace',
+        sourceName: item.sourceName || 'Facebook Marketplace',
+        sourceUrl: item.sourceUrl,
+        authorName: item.authorName,
+        authorAvatar: item.authorAvatar,
+        title: item.title,
+        content: `${item.title}: ${item.content}`,
+        category: item.category || 'Marketplace',
+        mediaUrl: item.mediaUrl,
+        price: item.price,
+        condition: item.condition,
+        neighborhood: item.neighborhood,
+        likes: item.likes || 15
+      })
+    );
+  } catch (e) {
+    console.warn('Failed to load public syndicated posts:', e);
+    return [];
+  }
 }
 
 

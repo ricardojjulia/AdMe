@@ -46,5 +46,18 @@ export interface Ad {
     };
     smartScore?: number;
     smartScoreReasons?: string[];
+    heuristicsBreakdown?: HeuristicsBreakdown;
     claimUrl?: string;
+}
+
+export interface HeuristicsFactor {
+    factor: string;
+    points: number;
+    description: string;
+}
+
+export interface HeuristicsBreakdown {
+    baseScore: number;
+    factors: HeuristicsFactor[];
+    totalScore: number;
 }

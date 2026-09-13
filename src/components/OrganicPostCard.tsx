@@ -42,8 +42,16 @@ export function OrganicPostCard({ post }: OrganicPostCardProps) {
     <article className={`${styles.card} glass`}>
       <header className={styles.header}>
         <div className={styles.authorSection}>
-          <div className={styles.avatar}>
-            {post.author.avatar}
+          <div className={styles.avatar} style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {post.author.avatar && (post.author.avatar.startsWith('http') || post.author.avatar.startsWith('/')) ? (
+              <img 
+                src={post.author.avatar} 
+                alt={post.author.name} 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+              />
+            ) : (
+              post.author.avatar
+            )}
           </div>
           <div className={styles.authorMeta}>
             <span className={styles.authorName}>{post.author.name}</span>

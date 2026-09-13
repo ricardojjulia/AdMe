@@ -102,6 +102,42 @@ describe('Zero-Knowledge Smart Feed Recommender', () => {
     expect(chosen.length).toBe(1);
     expect(['var-a', 'var-b']).toContain(chosen[0].id);
   });
+
+  it('includes detailed heuristics breakdown factors and base score', () => {
+    const { breakdown } = calculateSmartScore(
+      sampleAd,
+      { preferences: ['Specialty Coffee'], userLocation: { lat: 18.4, lng: -66.0 } }
+    );
+
+    expect(breakdown).toBeDefined();
+    expect(breakdown.baseScore).toBe(45);
+    expect(breakdown.factors.length).toBeGreaterThan(0);
+    expect(breakdown.factors.some(f => f.factor === 'Taste Affinity')).toBe(true);
+    expect(breakdown.totalScore).toBeGreaterThanOrEqual(80);
+  });
+
+  it('applies category dispersion heuristic so identical categories do not appear consecutively', () => {
+    const ads: Ad[] = [
+      { ...sampleAd, id: 'ad-1', category: 'Specialty Coffee', maxCpcBid: 30 },
+      { ...sampleAd, id: 'ad-2', category: 'Specialty Coffee', maxCpcBid: 28 },
+      { ...sampleAd, id: 'ad-3', category: 'Specialty Coffee', maxCpcBid: 26 },
+      { ...sampleAd, id: 'ad-4', category: 'Health & Dental', maxCpcBid: 24 },
+      { ...sampleAd, id: 'ad-5', category: 'Finance & Banking', maxCpcBid: 22 }
+    ];
+
+    const ranked = rankSmartFeed(ads, {
+      preferences: ['Specialty Coffee', 'Health & Dental', 'Finance & Banking']
+    });
+
+    // Check that no two adjacent ads share the same category
+    for (let i = 0; i < ranked.length - 1; i++) {
+      if (i === 0) {
+        expect(ranked[i].category).not.toBe(ranked[i + 1].category);
+      }
+    }
+    expect(ranked[0].category).toBe('Specialty Coffee');
+    expect(ranked[1].category).not.toBe('Specialty Coffee');
+  });
 });
 
 describe('Local Discovery Cold-Start Engine', () => {

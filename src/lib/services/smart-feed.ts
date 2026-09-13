@@ -1,4 +1,4 @@
-import { Ad } from "@/types/ad";
+import { Ad, HeuristicsBreakdown, HeuristicsFactor } from "@/types/ad";
 
 export interface TemporalContext {
   period: 'morning' | 'lunch' | 'afternoon' | 'evening' | 'night';
@@ -38,21 +38,21 @@ export function getTemporalContext(now: Date = new Date()): TemporalContext {
   } else if (hour >= 15 && hour < 18) {
     return {
       period: 'afternoon',
-      boostCategories: ['Tech & SaaS', 'Design', 'Auto under $40k', 'Gaming'],
+      boostCategories: ['Tech & SaaS', 'Design', 'Auto under $40k', 'Gaming', 'Vision & Care'],
       labelKey: 'afternoon_match',
       defaultLabel: 'Afternoon Pick'
     };
   } else if (hour >= 18 && hour < 22) {
     return {
       period: 'evening',
-      boostCategories: ['Local Eateries', 'Gaming', 'Outdoors', 'Beauty', 'Home & Garden'],
+      boostCategories: ['Local Eateries', 'Gaming', 'Outdoors', 'Beauty', 'Home & Living', 'Home & Garden'],
       labelKey: 'evening_match',
       defaultLabel: 'Evening Social'
     };
   } else {
     return {
       period: 'night',
-      boostCategories: ['Tech & SaaS', 'Gaming', 'Finance', 'Faith & Books'],
+      boostCategories: ['Tech & SaaS', 'Gaming', 'Finance & Banking', 'Faith & Books'],
       labelKey: 'night_match',
       defaultLabel: 'Night Discovery'
     };
@@ -67,25 +67,41 @@ export function calculateSmartScore(
   ad: Ad,
   context: SmartFeedContext,
   temporal: TemporalContext = getTemporalContext()
-): { score: number; reasons: string[] } {
+): { score: number; reasons: string[]; breakdown: HeuristicsBreakdown } {
   let score = 45; // Base baseline score
   const reasons: string[] = [];
+  const factors: HeuristicsFactor[] = [];
 
   // 1. Taste & Vibe Preference Match
   if (context.preferences && context.preferences.length > 0) {
     if (context.preferences.includes(ad.category)) {
       score += 28;
       reasons.push('Vibe Match');
+      factors.push({
+        factor: 'Taste Affinity',
+        points: 28,
+        description: `Aligned with your '${ad.category}' preference`
+      });
     }
   } else {
     // If no explicit preferences set, provide general discovery points
     score += 15;
+    factors.push({
+      factor: 'Open Exploration',
+      points: 15,
+      description: 'Discovery mode across trending local categories'
+    });
   }
 
   // 2. Temporal / Time-of-Day Contextual Relevance
   if (temporal.boostCategories.includes(ad.category)) {
     score += 12;
     reasons.push(temporal.defaultLabel);
+    factors.push({
+      factor: 'Time Context',
+      points: 12,
+      description: `Optimal timing for ${temporal.defaultLabel}`
+    });
   }
 
   // 3. Hyper-Local Proximity Decay: score += 20 * exp(-distance / 4)
@@ -93,6 +109,11 @@ export function calculateSmartScore(
     const dist = ad.distanceMiles;
     const proxBonus = Math.round(20 * Math.exp(-dist / 4.0));
     score += proxBonus;
+    factors.push({
+      factor: 'Proximity Decay',
+      points: proxBonus,
+      description: `${dist.toFixed(1)} miles from your detected area`
+    });
 
     if (dist <= 0.8) {
       reasons.push('Walking distance (<1 mi)');
@@ -107,23 +128,48 @@ export function calculateSmartScore(
   if (ad.isLocalDiscovery) {
     score += 10;
     reasons.push('Community Spotlight');
+    factors.push({
+      factor: 'Local Spotlight',
+      points: 10,
+      description: 'Physical brick-and-mortar venue in your immediate town'
+    });
   }
 
-  // 5. High-Quality / Boosted Campaign Signal
+  // 5. Community Rating & Patron Satisfaction
+  if (ad.placeDetails?.rating && ad.placeDetails.rating >= 4.5) {
+    score += 8;
+    factors.push({
+      factor: 'Community Trust',
+      points: 8,
+      description: `High patron satisfaction (${ad.placeDetails.rating}★ rating)`
+    });
+  }
+
+  // 6. High-Quality / Boosted Campaign Signal
   if (ad.isBoosted) {
     score += 6;
+    factors.push({
+      factor: 'Featured Merchant',
+      points: 6,
+      description: 'Active advertiser verified on AdMe network'
+    });
   }
 
-  // 6. Interaction History & Taste Drift (Zero-Knowledge on-device weights)
+  // 7. Interaction History & Taste Drift (Zero-Knowledge on-device weights)
   if (context.interactionHistory && context.interactionHistory[ad.category]) {
     const interactionBonus = Math.min(10, context.interactionHistory[ad.category] * 2);
     score += interactionBonus;
+    factors.push({
+      factor: 'Attention History',
+      points: interactionBonus,
+      description: 'Correlated with on-device viewing dwell time'
+    });
     if (interactionBonus >= 4 && !reasons.includes('Vibe Match')) {
       reasons.push('Trending with you');
     }
   }
 
-  // 7. Max CPC Bid Weighting
+  // 8. Max CPC Bid Weighting
   const bidBonus = Math.min(5, Math.round(((ad.maxCpcBid ?? 15) - 15) / 5));
   score += Math.max(0, bidBonus);
 
@@ -132,7 +178,12 @@ export function calculateSmartScore(
 
   return {
     score: finalScore,
-    reasons: reasons.slice(0, 2) // Keep top 2 concise tags for badge display
+    reasons: reasons.slice(0, 2), // Keep top 2 concise tags for badge display
+    breakdown: {
+      baseScore: 45,
+      factors,
+      totalScore: finalScore
+    }
   };
 }
 
@@ -199,22 +250,54 @@ export function smartBanditSelect(ads: Ad[], deviceId: string | null = 'anon'): 
 }
 
 /**
+ * Category Dispersion Heuristic (Anti-Clustering):
+ * Reorders scored candidates so no two adjacent cards share the identical category.
+ * Prevents "echo-chamber clustering" where 4 restaurants or 4 coffee shops group together.
+ */
+export function applyCategoryDispersion(ads: Ad[]): Ad[] {
+  if (ads.length <= 2) return ads;
+
+  const dispersed: Ad[] = [];
+  const remaining = [...ads];
+
+  // Start with the top-ranked item
+  dispersed.push(remaining.shift()!);
+
+  while (remaining.length > 0) {
+    const lastCategory = dispersed[dispersed.length - 1].category;
+
+    // Find the next highest-scoring item with a DIFFERENT category
+    const diffIndex = remaining.findIndex(ad => ad.category !== lastCategory);
+
+    if (diffIndex !== -1) {
+      dispersed.push(remaining.splice(diffIndex, 1)[0]);
+    } else {
+      // All remaining items belong to the same category; append the next best
+      dispersed.push(remaining.shift()!);
+    }
+  }
+
+  return dispersed;
+}
+
+/**
  * Smart Rank Pipeline: Scores, enriches with explainable transparency reasons,
- * and sorts ads by smart score.
+ * and sorts ads by smart score with category dispersion heuristics.
  */
 export function rankSmartFeed(ads: Ad[], context: SmartFeedContext): Ad[] {
   const temporal = getTemporalContext();
 
   const scoredAds = ads.map(ad => {
-    const { score, reasons } = calculateSmartScore(ad, context, temporal);
+    const { score, reasons, breakdown } = calculateSmartScore(ad, context, temporal);
     return {
       ...ad,
       smartScore: score,
-      smartScoreReasons: reasons
+      smartScoreReasons: reasons,
+      heuristicsBreakdown: breakdown
     };
   });
 
-  // Sort by smart score descending
+  // Sort primarily by smart score descending
   scoredAds.sort((a, b) => {
     // When on Local tab, boost distance factor
     if (context.activeTab === 'Local') {
@@ -228,5 +311,7 @@ export function rankSmartFeed(ads: Ad[], context: SmartFeedContext): Ad[] {
     return (b.smartScore ?? 50) - (a.smartScore ?? 50);
   });
 
-  return scoredAds;
+  // Apply Category Dispersion Heuristic to guarantee a diverse, well-balanced feed
+  return applyCategoryDispersion(scoredAds);
 }
+

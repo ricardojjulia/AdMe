@@ -320,9 +320,54 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
 
               <p style={{ color: 'hsl(var(--foreground))', margin: '0 0 0.6rem 0', lineHeight: '1.4' }}>
                 {ad.isLocalDiscovery 
-                  ? (t('local_discovery_desc') || "Discovered for your local community based on proximity and high guest ratings. Not a paid ad.")
+                  ? (t('local_discovery_desc') || "Discovered for your local community based on proximity, category dispersion, and community trust. Not a paid ad.")
                   : (t('why_this_ad_desc', { category: ad.category }) || `Matched directly on your device based on your '${ad.category}' preference. AdMe never sells your profile, identity, or browsing history.`)}
               </p>
+
+              {/* Detailed Heuristics Scoring Breakdown */}
+              {ad.heuristicsBreakdown && ad.heuristicsBreakdown.factors.length > 0 && (
+                <div style={{
+                  margin: '0.6rem 0',
+                  padding: '0.6rem 0.75rem',
+                  borderRadius: '0.4rem',
+                  background: 'hsl(var(--background)/0.7)',
+                  border: '1px solid hsl(var(--border))',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.35rem',
+                  fontSize: '0.75rem'
+                }}>
+                  <div style={{ fontSize: '0.7rem', color: 'hsl(var(--muted-foreground))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    📐 Mathematical Heuristics Weighting:
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'hsl(var(--muted-foreground))' }}>
+                    <span>Baseline Prior (Zero-Knowledge)</span>
+                    <span style={{ fontWeight: 600 }}>+{ad.heuristicsBreakdown.baseScore} pts</span>
+                  </div>
+                  {ad.heuristicsBreakdown.factors.map((f, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                      <div>
+                        <strong style={{ color: 'hsl(var(--foreground))' }}>{f.factor}</strong>: {f.description}
+                      </div>
+                      <span style={{ color: '#10b981', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                        +{f.points} pts
+                      </span>
+                    </div>
+                  ))}
+                  <div style={{
+                    marginTop: '0.2rem',
+                    paddingTop: '0.35rem',
+                    borderTop: '1px solid hsl(var(--border))',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontWeight: 700,
+                    color: 'hsl(var(--primary))'
+                  }}>
+                    <span>Total Heuristic Match</span>
+                    <span>{ad.heuristicsBreakdown.totalScore}% Smart Score</span>
+                  </div>
+                </div>
+              )}
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '0.75rem', color: 'hsl(var(--secondary))', fontWeight: 'bold' }}>
                   💎 {t('attention_dividend', { pts: 50 }) || "+50 pts Dividend"}

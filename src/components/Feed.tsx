@@ -227,10 +227,14 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
         savedAdIds: []
       });
 
-      // Fetch public syndicated community posts (if available from live sources)
+      // Fetch public syndicated community posts (Marketplace & local finds)
       let filteredPosts: OrganicPost[] = [];
       try {
-        const syndicatedPosts = await getPublicSyndicatedPosts(location || null, searchQuery || undefined);
+        const syndicatedPosts = await getPublicSyndicatedPosts(
+          location || null,
+          locationState?.coarseLocation || null,
+          searchQuery || undefined
+        );
         filteredPosts = [...syndicatedPosts];
       } catch (e) {
         console.warn("Public syndication load error:", e);
@@ -261,34 +265,22 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
         );
       }
 
-      // 4. Interleave Timeline Items (Contextual Injection)
+      // 4. Interleave Timeline Items (Harmonic Content + Ad Dispersion Heuristic)
       const interleaveTimeline: (Ad | OrganicPost)[] = [];
-      const usedAdIds = new Set<string>();
-      const adSpacing = adFrequency === 'low' ? 5 : (adFrequency === 'balanced' ? 3 : 2);
+      let adIdx = 0;
+      let postIdx = 0;
+      const adBatchSize = adFrequency === 'low' ? 3 : (adFrequency === 'balanced' ? 2 : 1);
 
-      filteredPosts.forEach((post) => {
-        interleaveTimeline.push(post);
-
-        // Try to contextually place a matching ad directly adjacent
-        const matchingAd = filteredAds.find(ad => ad.category === post.category && !usedAdIds.has(ad.id));
-        if (matchingAd) {
-          interleaveTimeline.push(matchingAd);
-          usedAdIds.add(matchingAd.id);
-        } else {
-          // Fallback to standard spacing
-          const unusedAds = filteredAds.filter(ad => !usedAdIds.has(ad.id));
-          if (unusedAds.length > 0 && interleaveTimeline.length % adSpacing === 0) {
-            interleaveTimeline.push(unusedAds[0]);
-            usedAdIds.add(unusedAds[0].id);
-          }
+      while (adIdx < filteredAds.length || postIdx < filteredPosts.length) {
+        // Insert a batch of category-dispersed ads
+        for (let i = 0; i < adBatchSize && adIdx < filteredAds.length; i++) {
+          interleaveTimeline.push(filteredAds[adIdx++]);
         }
-      });
-
-      // Append remaining unused ads
-      const remainingUnused = filteredAds.filter(ad => !usedAdIds.has(ad.id));
-      remainingUnused.forEach(ad => {
-        interleaveTimeline.push(ad);
-      });
+        // Insert an organic/marketplace post
+        if (postIdx < filteredPosts.length) {
+          interleaveTimeline.push(filteredPosts[postIdx++]);
+        }
+      }
 
       setTimeline(interleaveTimeline);
       setLoading(false);
@@ -309,7 +301,7 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
   }
 
   // Filter out reported / skipped ads and enforce frequency cap for visible items
-  const maxAds = adFrequency === 'low' ? 3 : (adFrequency === 'balanced' ? 6 : 10);
+  const maxAds = adFrequency === 'low' ? 5 : (adFrequency === 'balanced' ? 14 : 25);
   let adCount = 0;
   
   const visibleItems = timeline.filter(item => {
