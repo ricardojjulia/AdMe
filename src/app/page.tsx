@@ -328,86 +328,26 @@ export default function Home() {
           <div className={styles.sideCard}>
             <div className={styles.sideHeader}>
               <h4>{t('brands_follow')}</h4>
-              <span className={styles.sideMeta}>{t('brands_new_count')}</span>
+              <span className={styles.sideMeta}>Verified</span>
             </div>
-            <div className={styles.brandList}>
-              {[
-                { name: "Valor Brews", category: "Veteran-owned" },
-                { name: "The Green Kitchen", category: "Local Eateries" },
-                { name: "Bloom & Branch Nursery", category: "Home & Garden" },
-                { name: "GuildCraft Hardware", category: "Gaming" },
-                { name: "ClearPath Financial", category: "Finance" }
-              ].map((brand) => (
-                <div key={brand.name} className={styles.brandRow}>
-                  <div className={styles.brandAvatar}>{brand.name[0]}</div>
-                  <div>
-                    <p className={styles.brandName}>{brand.name}</p>
-                    <p className={styles.brandSubtext}>{brand.category}</p>
-                  </div>
-                  <button 
-                    type="button" 
-                    className={styles.followButton}
-                    onClick={() => togglePreference(brand.category)}
-                  >
-                    {mounted && preferences.includes(brand.category) ? "Active" : "+ Filter"}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Proximity Simulator Widget Card */}
-          <div className={styles.sideCard}>
-            <div className={styles.sideHeader}>
-              <h4>📍 {t('proximity_simulator')}</h4>
-              <span className={styles.sideMeta}>Coordinates</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.75rem' }}>
-              <p style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))', margin: '0 0 0.25rem 0', lineHeight: '1.3' }}>
-                {t('proximity_desc')}
+            <div style={{ marginTop: '0.5rem' }}>
+              <p style={{ fontSize: '0.82rem', color: 'hsl(var(--muted-foreground))', margin: '0 0 0.75rem 0', lineHeight: '1.4' }}>
+                Follow verified merchants as you discover them in your feed.
               </p>
-              <button 
-                type="button" 
-                onClick={() => setLocation({ lat: 34.0196, lng: -118.4913 })}
-                className="btn" 
-                style={{ display: 'flex', justifyContent: 'flex-start', padding: '0.5rem 0.75rem', fontSize: '0.85rem', background: location?.lat === 34.0196 ? 'hsl(var(--primary)/0.2)' : 'hsl(var(--muted))', color: location?.lat === 34.0196 ? 'hsl(var(--primary))' : 'white', border: location?.lat === 34.0196 ? '1px solid hsl(var(--primary))' : '1px solid transparent', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: '500' }}
+              <a 
+                href="/studio/create"
+                style={{ 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: '0.35rem', 
+                  fontSize: '0.82rem', 
+                  color: 'hsl(var(--primary))', 
+                  textDecoration: 'none', 
+                  fontWeight: 600 
+                }}
               >
-                {t('at_valor_brews')}
-              </button>
-              <button 
-                type="button" 
-                onClick={() => setLocation({ lat: 34.0123, lng: -118.4921 })}
-                className="btn" 
-                style={{ display: 'flex', justifyContent: 'flex-start', padding: '0.5rem 0.75rem', fontSize: '0.85rem', background: location?.lat === 34.0123 ? 'hsl(var(--primary)/0.2)' : 'hsl(var(--muted))', color: location?.lat === 34.0123 ? 'hsl(var(--primary))' : 'white', border: location?.lat === 34.0123 ? '1px solid hsl(var(--primary))' : '1px solid transparent', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: '500' }}
-              >
-                {t('at_green_kitchen')}
-              </button>
-              <button 
-                type="button" 
-                onClick={() => setLocation({ lat: 34.0523, lng: -118.2438 })}
-                className="btn" 
-                style={{ display: 'flex', justifyContent: 'flex-start', padding: '0.5rem 0.75rem', fontSize: '0.85rem', background: location?.lat === 34.0523 ? 'hsl(var(--primary)/0.2)' : 'hsl(var(--muted))', color: location?.lat === 34.0523 ? 'hsl(var(--primary))' : 'white', border: location?.lat === 34.0523 ? '1px solid hsl(var(--primary))' : '1px solid transparent', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: '500' }}
-              >
-                {t('at_nomad_motors')}
-              </button>
-              <button 
-                type="button" 
-                onClick={() => setLocation({ lat: 37.7750, lng: -122.4195 })}
-                className="btn" 
-                style={{ display: 'flex', justifyContent: 'flex-start', padding: '0.5rem 0.75rem', fontSize: '0.85rem', background: location?.lat === 37.7750 ? 'hsl(var(--primary)/0.2)' : 'hsl(var(--muted))', color: location?.lat === 37.7750 ? 'hsl(var(--primary))' : 'white', border: location?.lat === 37.7750 ? '1px solid hsl(var(--primary))' : '1px solid transparent', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: '500' }}
-              >
-                {t('sf_downtown')}
-              </button>
-              {location && (
-                <button 
-                  type="button" 
-                  onClick={() => setLocation(null)}
-                  className="btn" 
-                  style={{ padding: '0.5rem', fontSize: '0.85rem', background: 'hsl(var(--destructive)/0.2)', color: 'hsl(var(--destructive))', border: '1px solid hsl(var(--destructive)/0.4)', borderRadius: '0.5rem', cursor: 'pointer', marginTop: '0.25rem', fontWeight: 'bold' }}
-                >
-                  {t('clear_mock_location')}
-                </button>
-              )}
+                + Register as a Merchant →
+              </a>
             </div>
           </div>
 
