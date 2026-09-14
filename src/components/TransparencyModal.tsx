@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import styles from "./TransparencyModal.module.css";
 
 interface TransparencyModalProps {
@@ -9,6 +10,12 @@ interface TransparencyModalProps {
 }
 
 export function TransparencyModal({ isOpen, onClose }: TransparencyModalProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -18,14 +25,14 @@ export function TransparencyModal({ isOpen, onClose }: TransparencyModalProps) {
       window.addEventListener("keydown", handleKeyDown);
     }
     return () => {
-      document.body.style.overflow = "auto";
+      document.body.style.overflow = "";
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
+  return createPortal(
     <div className={styles.backdrop} onClick={onClose}>
       <div 
         className={`${styles.modal} animate-fade-in`} 
@@ -150,6 +157,7 @@ export function TransparencyModal({ isOpen, onClose }: TransparencyModalProps) {
           Documentation verified under <code>docs/BUSINESS_MODEL_AND_UNIT_ECONOMICS.md</code>.
         </p>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

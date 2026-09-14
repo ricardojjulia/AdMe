@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
 import styles from "./ReportModal.module.css";
@@ -69,8 +70,29 @@ export function ReportModal({
   const [selectedReason, setSelectedReason] = useState<string>(REPORT_REASONS[0].key);
   const [notes, setNotes] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [mounted, setMounted] = useState<boolean>(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !mounted) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,7 +131,7 @@ export function ReportModal({
       ? "Community Event"
       : "Advertisement";
 
-  return (
+  return createPortal(
     <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <header className={styles.header}>
@@ -234,6 +256,7 @@ export function ReportModal({
           </footer>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

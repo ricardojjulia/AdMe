@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
 import styles from "./ShareModal.module.css";
@@ -26,6 +27,11 @@ export function ShareModal({
   const { addToast } = useToast();
   const [copied, setCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState(url || "");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -39,11 +45,17 @@ export function ShareModal({
         onClose();
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const handleRewardAndSuccess = () => {
     addReward(3, "Shared Ad");
@@ -103,7 +115,7 @@ export function ShareModal({
 
   const hasNativeShare = typeof navigator !== "undefined" && !!navigator.share;
 
-  return (
+  return createPortal(
     <div className={styles.backdrop} onClick={onClose} role="dialog" aria-modal="true">
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <button className={styles.closeBtn} onClick={onClose} aria-label="Close modal">
@@ -193,6 +205,7 @@ export function ShareModal({
           </button>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

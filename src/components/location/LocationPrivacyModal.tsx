@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useUser } from '@/lib/UserContext';
 import { LocationPrivacyMode } from '@/types/location';
 import styles from './LocationPrivacyModal.module.css';
@@ -23,19 +24,30 @@ export function LocationPrivacyModal({ isOpen, onClose }: LocationPrivacyModalPr
   const { locationState, setLocationMode, setManualCity, clearLocation } = useUser();
   const [customCity, setCustomCity] = useState('');
   const [customRegion, setCustomRegion] = useState('');
+  const [mounted, setMounted] = useState(false);
 
-  // Handle ESC key to close
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Handle ESC key to close and body scroll locking
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
         onClose();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const currentMode = locationState.privacyMode;
   const currentCity = locationState.coarseLocation?.city;
@@ -59,7 +71,7 @@ export function LocationPrivacyModal({ isOpen, onClose }: LocationPrivacyModalPr
     }
   };
 
-  return (
+  return createPortal(
     <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="location-modal-title">
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
@@ -275,6 +287,7 @@ export function LocationPrivacyModal({ isOpen, onClose }: LocationPrivacyModalPr
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

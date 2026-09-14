@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Ad } from "@/types/ad";
 import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
@@ -13,13 +14,34 @@ interface LeadModalProps {
 }
 
 export function LeadModal({ isOpen, onClose, ad }: LeadModalProps) {
-  const { user, submitLead, locale, t } = useUser();
+  const { user, submitLead, t } = useUser();
   const { addToast } = useToast();
   const [message, setMessage] = useState("");
   const [contactInfo, setContactInfo] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !mounted) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,8 +62,14 @@ export function LeadModal({ isOpen, onClose, ad }: LeadModalProps) {
     }
   };
 
-  return (
-    <div className={styles.backdrop} onClick={onClose}>
+  const modalJSX = (
+    <div 
+      className={styles.backdrop} 
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="lead-modal-title"
+    >
       <div 
         className={styles.modal} 
         onClick={(e) => e.stopPropagation()}
@@ -50,7 +78,7 @@ export function LeadModal({ isOpen, onClose, ad }: LeadModalProps) {
         <button className={styles.closeBtn} onClick={onClose} aria-label="Close modal">✕</button>
         
         <header className={styles.header}>
-          <h3>{t('inquire_title')}</h3>
+          <h3 id="lead-modal-title">{t('inquire_title')}</h3>
           <p className={styles.advertiser}>{t('campaign_by', { name: ad.advertiser.name })}</p>
         </header>
 
@@ -92,4 +120,6 @@ export function LeadModal({ isOpen, onClose, ad }: LeadModalProps) {
       </div>
     </div>
   );
+
+  return createPortal(modalJSX, document.body);
 }

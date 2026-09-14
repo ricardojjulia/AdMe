@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
 import { createClient } from "@/lib/supabase/client";
@@ -23,6 +24,11 @@ export function CouponWallet() {
   const [isMerchantMode, setIsMerchantMode] = useState(false);
   const [merchantPin, setMerchantPin] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Sync state with context coupons
@@ -324,7 +330,7 @@ export function CouponWallet() {
       )}
 
       {/* Barcode & QR Code Visualizer Modal */}
-      {activeCoupon && (
+      {activeCoupon && mounted && createPortal(
         <div style={{
           position: 'fixed',
           top: 0,
@@ -333,7 +339,7 @@ export function CouponWallet() {
           bottom: 0,
           background: 'rgba(0, 0, 0, 0.82)',
           backdropFilter: 'blur(10px)',
-          zIndex: 1000,
+          zIndex: 9999,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -480,7 +486,8 @@ export function CouponWallet() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </section>
   );
