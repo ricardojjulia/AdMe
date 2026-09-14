@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
 import { createClient } from "@/lib/supabase/client";
+import { ImageUploader } from "@/components/ImageUploader";
 import styles from "./page.module.css";
 
 const ALL_CATEGORIES = [
@@ -457,35 +458,48 @@ export default function CreateAdPage() {
             />
           </div>
 
-          {/* 5. Image URL & 1-Click Curated Photography Presets */}
+          {/* 5. Direct Upload & 1-Click Curated Presets */}
           <div className={styles.fieldGroup}>
             <div className={styles.fieldLabel}>
               <span>Photography & Creative Asset</span>
-              <span style={{ fontSize: "0.75rem", color: "hsl(var(--primary))" }}>1-Click Presets or Custom URL</span>
+              <span style={{ fontSize: "0.75rem", color: "hsl(var(--primary))" }}>Direct Upload (Max 5MB) or 1-Click Presets</span>
             </div>
 
-            {/* Presets Gallery Chips */}
-            <div className={styles.presetGallery}>
-              {(CATEGORY_PRESETS[category] || []).map((preset, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => setImageUrl(preset.url)}
-                  className={`${styles.presetThumb} ${imageUrl === preset.url ? styles.presetThumbActive : ''}`}
-                >
-                  <img src={preset.url} alt={preset.label} className={styles.presetImg} />
-                  <span className={styles.presetLabel}>{preset.label}</span>
-                </div>
-              ))}
-            </div>
-
-            <input
-              type="url"
-              required
+            <ImageUploader
               value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="https://images.unsplash.com/..."
-              className={styles.inputField}
+              onChange={(newUrl) => setImageUrl(newUrl)}
+              label="Upload Creative Image (Drag & Drop)"
+              onError={(err) => addToast(err, "error")}
             />
+
+            <div style={{ marginTop: "0.75rem" }}>
+              <span style={{ fontSize: "0.75rem", color: "hsl(var(--muted-foreground))", display: "block", marginBottom: "0.35rem" }}>
+                Or select a 1-click curated photo for {category}:
+              </span>
+              <div className={styles.presetGallery}>
+                {(CATEGORY_PRESETS[category] || []).map((preset, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => setImageUrl(preset.url)}
+                    className={`${styles.presetThumb} ${imageUrl === preset.url ? styles.presetThumbActive : ''}`}
+                  >
+                    <img src={preset.url} alt={preset.label} className={styles.presetImg} />
+                    <span className={styles.presetLabel}>{preset.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginTop: "0.5rem" }}>
+              <input
+                type="url"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="Or paste external image URL (https://...)"
+                className={styles.inputField}
+                style={{ fontSize: "0.85rem", padding: "0.5rem 0.75rem" }}
+              />
+            </div>
           </div>
 
           {/* 6. Geofence Location Controls (if Local Drop format) */}
@@ -575,14 +589,22 @@ export default function CreateAdPage() {
                   />
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))' }}>Alternative Image URL (Variant B)</span>
+                  <span style={{ fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))', display: 'block', marginBottom: '0.25rem' }}>
+                    Alternative Creative Image (Variant B)
+                  </span>
+                  <ImageUploader
+                    value={imageUrlB}
+                    onChange={(newUrl) => setImageUrlB(newUrl)}
+                    label="Upload Variant B Image"
+                    onError={(err) => addToast(err, "error")}
+                  />
                   <input
                     type="url"
                     value={imageUrlB}
                     onChange={(e) => setImageUrlB(e.target.value)}
-                    placeholder="https://..."
+                    placeholder="Or enter custom URL for Variant B"
                     className={styles.inputField}
-                    style={{ marginTop: '0.25rem' }}
+                    style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}
                   />
                 </div>
               </div>

@@ -11,6 +11,7 @@ import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
 import { LeadModal } from "./LeadModal";
 import { ScratchCard, QuizCard } from "./InteractionUnits";
+import { ReportModal } from "./ReportModal";
 import styles from "./NativeAdCard.module.css";
 
 interface NativeAdCardProps {
@@ -21,7 +22,7 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
   const { ref, logClick, logLike, isLiked } = useEngagementAnalytics(ad.id);
   const { toggleSavedAd, savedAds, reportAd, skipAd, addReward, t } = useUser();
   const { addToast } = useToast();
-  const [showReportOptions, setShowReportOptions] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const isSaved = savedAds.includes(ad.id);
   const [likesCount, setLikesCount] = useState(ad.metrics.likes);
   const [sharesCount, setSharesCount] = useState(ad.metrics.shares || 0);
@@ -90,11 +91,6 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
       }
     };
   }, [ad.id]);
-
-  const handleReport = (reason: string) => {
-    reportAd(ad.id, reason);
-    setShowReportOptions(false);
-  };
 
   const handleMouseEnter = () => {
     document.documentElement.style.setProperty('--dynamic-glow-color', ad.content.primaryColor);
@@ -457,32 +453,13 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
           )}
           <div style={{ position: 'relative', marginTop: '0.5rem' }}>
             <button 
-              onClick={() => setShowReportOptions(!showReportOptions)}
+              type="button"
+              onClick={() => setIsReportOpen(true)}
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'hsl(var(--muted-foreground))', fontSize: '0.8rem', padding: '0', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+              title="Report ad for offensive, scam, or misleading content"
             >
               ⚑ {t('report_ad')}
             </button>
-            {showReportOptions && (
-              <div style={{ position: 'absolute', left: 0, bottom: '100%', marginBottom: '0.5rem', background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '0.5rem', padding: '0.5rem', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: '150px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', padding: '0.25rem 0.5rem', color: 'hsl(var(--muted-foreground))' }}>{t('report_ad')}</div>
-                {[
-                  { key: 'report_spam', label: 'Spam' },
-                  { key: 'report_offensive', label: 'Offensive' },
-                  { key: 'report_dangerous', label: 'Dangerous' },
-                  { key: 'report_misleading', label: 'Misleading' }
-                ].map(({ key, label }) => (
-                  <button 
-                    key={key}
-                    onClick={() => handleReport(label)}
-                    style={{ background: 'none', border: 'none', textAlign: 'left', padding: '0.5rem', cursor: 'pointer', borderRadius: '0.25rem', fontSize: '0.9rem', color: 'hsl(var(--foreground))' }}
-                    onMouseOver={(e) => e.currentTarget.style.background = 'hsl(var(--muted))'}
-                    onMouseOut={(e) => e.currentTarget.style.background = 'none'}
-                  >
-                    {t(key)}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         </div>
 
@@ -531,6 +508,14 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
         text={ad.content.text}
         url={typeof window !== 'undefined' ? `${window.location.origin}/?ad=${ad.id}` : ''}
         onShareSuccess={() => setSharesCount(prev => prev + 1)}
+      />
+      <ReportModal
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        itemId={ad.id}
+        headline={ad.content.headline}
+        contentText={ad.content.text}
+        itemType="ad"
       />
     </article>
   );

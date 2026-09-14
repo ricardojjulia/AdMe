@@ -9,6 +9,7 @@ import { useEngagementAnalytics } from "@/lib/hooks/useEngagementAnalytics";
 import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
 import { LeadModal } from "./LeadModal";
+import { ReportModal } from "./ReportModal";
 import styles from "./CarouselAdCard.module.css";
 
 interface CarouselAdCardProps {
@@ -21,7 +22,7 @@ export function CarouselAdCard({ ad }: CarouselAdCardProps) {
   const { addToast } = useToast();
   const isSaved = savedAds.includes(ad.id);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [showReportOptions, setShowReportOptions] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const [likesCount, setLikesCount] = useState(ad.metrics.likes);
   const [sharesCount, setSharesCount] = useState(ad.metrics.shares || 0);
   const [isSkipping, setIsSkipping] = useState(false);
@@ -61,11 +62,6 @@ export function CarouselAdCard({ ad }: CarouselAdCardProps) {
       }
     };
   }, [ad.id]);
-
-  const handleReport = (reason: string) => {
-    reportAd(ad.id, reason);
-    setShowReportOptions(false);
-  };
 
   const images = ad.content.carouselMediaUrls || [ad.content.mediaUrl];
 
@@ -119,32 +115,13 @@ export function CarouselAdCard({ ad }: CarouselAdCardProps) {
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <div style={{ position: 'relative' }}>
             <button 
-              onClick={() => setShowReportOptions(!showReportOptions)}
+              type="button"
+              onClick={() => setIsReportOpen(true)}
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'hsl(var(--muted-foreground))', fontSize: '1.2rem', padding: '0 0.5rem' }}
+              title="Report ad"
             >
               ⚑
             </button>
-            {showReportOptions && (
-              <div style={{ position: 'absolute', right: 0, top: '100%', background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '0.5rem', padding: '0.5rem', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: '150px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', padding: '0.25rem 0.5rem', color: 'hsl(var(--muted-foreground))' }}>{t('report_ad')}</div>
-                {[
-                  { key: 'report_spam', label: 'Spam' },
-                  { key: 'report_offensive', label: 'Offensive' },
-                  { key: 'report_dangerous', label: 'Dangerous' },
-                  { key: 'report_misleading', label: 'Misleading' }
-                ].map(({ key, label }) => (
-                  <button 
-                    key={key}
-                    onClick={() => handleReport(label)}
-                    style={{ background: 'none', border: 'none', textAlign: 'left', padding: '0.5rem', cursor: 'pointer', borderRadius: '0.25rem', fontSize: '0.9rem', color: 'hsl(var(--foreground))' }}
-                    onMouseOver={(e) => e.currentTarget.style.background = 'hsl(var(--muted))'}
-                    onMouseOut={(e) => e.currentTarget.style.background = 'none'}
-                  >
-                    {t(key)}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </header>
@@ -227,6 +204,14 @@ export function CarouselAdCard({ ad }: CarouselAdCardProps) {
         text={ad.content.text}
         url={typeof window !== 'undefined' ? `${window.location.origin}/?ad=${ad.id}` : ''}
         onShareSuccess={() => setSharesCount(prev => prev + 1)}
+      />
+      <ReportModal
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        itemId={ad.id}
+        headline={ad.content.headline}
+        contentText={ad.content.text}
+        itemType="ad"
       />
     </article>
   );

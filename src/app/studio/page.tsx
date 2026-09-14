@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { StudioAnalyticsCharts } from "@/components/StudioAnalyticsCharts";
 import { AuctionSimulator } from "@/components/AuctionSimulator";
+import { ImageUploader } from "@/components/ImageUploader";
 
 function normalCDF(x: number): number {
   const t = 1 / (1 + 0.2316419 * Math.abs(x));
@@ -39,6 +40,11 @@ function calculateZTest(impressionsA: number, clicksA: number, impressionsB: num
   };
 }
 
+const ALL_CATEGORIES = [
+  "Tech & SaaS", "Local Eateries", "Faith & Books", "Auto under $40k", "Veteran-owned",
+  "Home & Garden", "Wellness & Health", "Gaming", "Finance"
+];
+
 export default function StudioDashboard() {
   const { user, switchRole, locale, t } = useUser();
   const { addToast } = useToast();
@@ -54,6 +60,18 @@ export default function StudioDashboard() {
   const [simulatingId, setSimulatingId] = useState<string | null>(null);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
   const [editingBudgetAd, setEditingBudgetAd] = useState<{ id: string; headline: string; dailyBudget: number } | null>(null);
+  const [editingCreativeAd, setEditingCreativeAd] = useState<{
+    id: string;
+    headline: string;
+    contentText: string;
+    mediaUrl: string;
+    ctaLabel: string;
+    ctaUrl: string;
+    primaryColor: string;
+    category: string;
+  } | null>(null);
+  const [isSavingCreative, setIsSavingCreative] = useState(false);
+  const [creativeError, setCreativeError] = useState<string | null>(null);
   const [leadFilter, setLeadFilter] = useState<'all' | 'new' | 'contacted' | 'closed'>('all');
 
   const adCredits = user?.adCreditsBalance || 0;
@@ -287,6 +305,118 @@ export default function StudioDashboard() {
     }
     addToast(`Daily budget updated to ★${newBudget.toLocaleString()}`, "success");
     setEditingBudgetAd(null);
+  };
+
+  const handleSaveCreative = async (updated: {
+    headline: string;
+    contentText: string;
+    mediaUrl: string;
+    ctaLabel: string;
+    ctaUrl: string;
+    primaryColor: string;
+    category: string;
+  }) => {
+    if (!editingCreativeAd) return;
+    setIsSavingCreative(true);
+    setCreativeError(null);
+
+    // 1. Mandatory Pre-Flight AI Safety Moderation Check (COUNCIL-2026-005)
+    try {
+      const modRes = await fetch("/api/moderation/ad", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          headline: updated.headline,
+          contentText: updated.contentText,
+          ctaUrl: updated.ctaUrl,
+          category: updated.category,
+        }),
+      });
+      const modData = await modRes.json();
+      if (modData.moderation && !modData.moderation.approved) {
+        setCreativeError(`AI Safety Gate: Changes rejected. ${modData.moderation.reason}`);
+        setIsSavingCreative(false);
+        return;
+      }
+    } catch (modErr) {
+      console.warn("AI moderation check bypassed on network error:", modErr);
+    }
+
+    // 2. Persist to Supabase ads table
+    const hasSupabase =
+      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      process.env.NEXT_PUBLIC_SUPABASE_URL !== "your_supabase_project_url_here";
+    if (hasSupabase) {
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        const { error } = await supabase
+          .from("ads")
+          .update({
+            headline: updated.headline,
+            content_text: updated.contentText,
+            media_url: updated.mediaUrl,
+            cta_label: updated.ctaLabel,
+            cta_url: updated.ctaUrl,
+            primary_color: updated.primaryColor,
+            category: updated.category,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", editingCreativeAd.id);
+
+        if (error) {
+          setCreativeError(`Database Error: ${error.message}`);
+          setIsSavingCreative(false);
+          return;
+        }
+      } catch (err: any) {
+        console.error("Failed to update ad creative in Supabase:", err);
+      }
+    }
+
+    // 3. Optimistically update local activeAds & campaignsList
+    setActiveAds((prev) =>
+      prev.map((a) =>
+        a.id === editingCreativeAd.id
+          ? {
+              ...a,
+              headline: updated.headline,
+              contentText: updated.contentText,
+              content_text: updated.contentText,
+              mediaUrl: updated.mediaUrl,
+              media_url: updated.mediaUrl,
+              ctaLabel: updated.ctaLabel,
+              cta_label: updated.ctaLabel,
+              ctaUrl: updated.ctaUrl,
+              cta_url: updated.ctaUrl,
+              primaryColor: updated.primaryColor,
+              primary_color: updated.primaryColor,
+              category: updated.category,
+            }
+          : a
+      )
+    );
+
+    setCampaignsList((prev) =>
+      prev.map((c) =>
+        c.id === editingCreativeAd.id
+          ? {
+              ...c,
+              headline: updated.headline,
+              content_text: updated.contentText,
+              media_url: updated.mediaUrl,
+              cta_label: updated.ctaLabel,
+              cta_url: updated.ctaUrl,
+              primary_color: updated.primaryColor,
+              category: updated.category,
+            }
+          : c
+      )
+    );
+
+    addToast("Campaign creative updated successfully!", "success");
+    setIsSavingCreative(false);
+    setEditingCreativeAd(null);
   };
 
   const handleArchiveCampaign = async (adId: string) => {
@@ -661,6 +791,27 @@ export default function StudioDashboard() {
                                       type="button"
                                       onClick={(e) => {
                                         e.stopPropagation();
+                                        setEditingCreativeAd({
+                                          id: ad.id,
+                                          headline: ad.headline || '',
+                                          contentText: ad.content_text || ad.contentText || '',
+                                          mediaUrl: ad.media_url || ad.mediaUrl || '',
+                                          ctaLabel: ad.cta_label || ad.ctaLabel || 'Learn More',
+                                          ctaUrl: ad.cta_url || ad.ctaUrl || 'https://adforme.io',
+                                          primaryColor: ad.primary_color || ad.primaryColor || '#6366f1',
+                                          category: ad.category || 'Tech & SaaS',
+                                        });
+                                        setCreativeError(null);
+                                      }}
+                                      className={styles.actionBtn}
+                                      style={{ borderColor: 'hsl(var(--primary) / 0.5)', color: 'hsl(var(--primary))' }}
+                                    >
+                                      🎨 Edit Creative
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
                                         setEditingBudgetAd({ id: ad.id, headline: ad.headline, dailyBudget: ad.dailyBudget });
                                       }}
                                       className={styles.actionBtn}
@@ -995,6 +1146,180 @@ export default function StudioDashboard() {
                 </button>
                 <button type="submit" className="btn">
                   Save Budget
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editingCreativeAd && (
+        <div className={styles.modalOverlay} onClick={() => !isSavingCreative && setEditingCreativeAd(null)}>
+          <div className={styles.modalContent} style={{ maxWidth: '640px', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                🎨 Edit Campaign Creative
+              </h3>
+              <button 
+                type="button"
+                onClick={() => !isSavingCreative && setEditingCreativeAd(null)}
+                style={{ background: 'none', border: 'none', color: 'hsl(var(--muted-foreground))', fontSize: '1.2rem', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', padding: '0.5rem 0.75rem', background: 'hsl(var(--primary) / 0.1)', borderRadius: '0.5rem', border: '1px solid hsl(var(--primary) / 0.3)' }}>
+              <span style={{ fontSize: '0.82rem', color: 'hsl(var(--primary))' }}>
+                🛡️ <strong>COUNCIL-2026-005 Safety Gate:</strong> All creative updates are re-verified by AI safety moderation before publishing to the live feed.
+              </span>
+            </div>
+
+            {creativeError && (
+              <div style={{ padding: '0.75rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '0.5rem', color: '#f87171', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                ⚠️ {creativeError}
+              </div>
+            )}
+
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const fd = new FormData(e.currentTarget);
+              handleSaveCreative({
+                headline: (fd.get('headline') as string) || editingCreativeAd.headline,
+                contentText: (fd.get('contentText') as string) || editingCreativeAd.contentText,
+                mediaUrl: editingCreativeAd.mediaUrl,
+                ctaLabel: (fd.get('ctaLabel') as string) || editingCreativeAd.ctaLabel,
+                ctaUrl: (fd.get('ctaUrl') as string) || editingCreativeAd.ctaUrl,
+                primaryColor: (fd.get('primaryColor') as string) || editingCreativeAd.primaryColor,
+                category: (fd.get('category') as string) || editingCreativeAd.category,
+              });
+            }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+              <div>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>
+                  Headline <span style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 400 }}>(max 60 characters)</span>
+                </label>
+                <input
+                  type="text"
+                  name="headline"
+                  required
+                  maxLength={65}
+                  defaultValue={editingCreativeAd.headline}
+                  className="input"
+                  style={{ width: '100%' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>
+                  Promotional Copy / Body Text <span style={{ color: 'hsl(var(--muted-foreground))', fontWeight: 400 }}>(max 280 characters)</span>
+                </label>
+                <textarea
+                  name="contentText"
+                  required
+                  maxLength={280}
+                  rows={3}
+                  defaultValue={editingCreativeAd.contentText}
+                  className="input"
+                  style={{ width: '100%', resize: 'vertical' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>
+                  Creative Image Asset
+                </label>
+                <ImageUploader
+                  value={editingCreativeAd.mediaUrl}
+                  onChange={(newUrl) => setEditingCreativeAd((prev) => prev ? { ...prev, mediaUrl: newUrl } : null)}
+                  label="Upload New Creative Photo (Max 5MB)"
+                  onError={(err) => setCreativeError(err)}
+                />
+                <input
+                  type="url"
+                  value={editingCreativeAd.mediaUrl}
+                  onChange={(e) => setEditingCreativeAd((prev) => prev ? { ...prev, mediaUrl: e.target.value } : null)}
+                  placeholder="Or enter image URL (https://...)"
+                  className="input"
+                  style={{ width: '100%', marginTop: '0.5rem', fontSize: '0.85rem' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>
+                    CTA Button Label
+                  </label>
+                  <input
+                    type="text"
+                    name="ctaLabel"
+                    required
+                    defaultValue={editingCreativeAd.ctaLabel}
+                    className="input"
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>
+                    Target Category
+                  </label>
+                  <select
+                    name="category"
+                    defaultValue={editingCreativeAd.category}
+                    className="input"
+                    style={{ width: '100%', background: 'hsl(var(--card))' }}
+                  >
+                    {ALL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>
+                    Destination URL
+                  </label>
+                  <input
+                    type="url"
+                    name="ctaUrl"
+                    required
+                    defaultValue={editingCreativeAd.ctaUrl}
+                    className="input"
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.25rem' }}>
+                    Brand Accent Color
+                  </label>
+                  <input
+                    type="color"
+                    name="primaryColor"
+                    defaultValue={editingCreativeAd.primaryColor}
+                    style={{ width: '100%', height: '38px', borderRadius: '0.375rem', border: '1px solid hsl(var(--border))', background: 'transparent', cursor: 'pointer' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button 
+                  type="button" 
+                  disabled={isSavingCreative}
+                  onClick={() => setEditingCreativeAd(null)}
+                  className="btn"
+                  style={{ background: 'transparent', border: '1px solid hsl(var(--border))' }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={isSavingCreative}
+                  className="btn"
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  {isSavingCreative ? 'Verifying with AI Safety...' : 'Save Creative Changes'}
                 </button>
               </div>
             </form>

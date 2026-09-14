@@ -39,7 +39,7 @@ interface UserContextType {
   addReward: (amount: number, actionName?: string) => void;
   togglePreference: (category: string) => void;
   toggleSavedAd: (adId: string) => void;
-  reportAd: (adId: string, reason: string) => void;
+  reportAd: (adId: string, reason: string, meta?: { headline?: string; contentText?: string; notes?: string }) => Promise<void>;
   skipAd: (adId: string) => void;
   updateStreak: () => void;
   switchRole: (role: 'consumer' | 'business') => void;
@@ -240,7 +240,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
   });
 
   const [savedAds, setSavedAds] = useState<string[]>([]);
-  const [reportedAds, setReportedAds] = useState<string[]>([]);
+  const [reportedAds, setReportedAds] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return JSON.parse(localStorage.getItem("adme_reported_items") || "[]");
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
   const [skippedAds, setSkippedAds] = useState<string[]>([]);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationState, setLocationState] = useState<LocationState>({
@@ -592,32 +601,57 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const reportAd = async (adId: string, reason: string) => {
-    setReportedAds((prev) => [...prev, adId]);
-    
-    if (isSupabaseEnabled && user) {
+  const reportAd = async (
+    adId: string,
+    reason: string,
+    meta?: { headline?: string; contentText?: string; notes?: string }
+  ) => {
+    setReportedAds((prev) => (prev.includes(adId) ? prev : [...prev, adId]));
+
+    if (typeof window !== "undefined") {
+      try {
+        const existing = JSON.parse(localStorage.getItem("adme_reported_items") || "[]");
+        if (!existing.includes(adId)) {
+          localStorage.setItem("adme_reported_items", JSON.stringify([...existing, adId]));
+        }
+      } catch {}
+    }
+
+    let reportId: string | undefined = undefined;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(adId);
+
+    if (isSupabaseEnabled && user && isUuid) {
       try {
         const supabase = createClient();
-        const { data: reportData } = await supabase.from('ad_reports').insert({
+        const { data: reportData } = await supabase.from("ad_reports").insert({
           user_id: user.id,
           ad_id: adId,
           reason: reason,
-          status: 'pending'
-        }).select('id').single();
+          status: "pending",
+        }).select("id").single();
 
-        // Trigger instant automated AI arbitration and takedown pipeline
-        await fetch('/api/moderation/report', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            adId,
-            reason,
-            reportId: reportData?.id
-          })
-        });
+        reportId = reportData?.id;
       } catch (err) {
-        console.error("Failed to arbitrate report:", err);
+        console.warn("Failed to insert ad_report row:", err);
       }
+    }
+
+    // Always trigger automated AI arbitration and takedown pipeline
+    try {
+      await fetch("/api/moderation/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adId,
+          reason,
+          reportId,
+          headline: meta?.headline,
+          contentText: meta?.contentText,
+          notes: meta?.notes,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to arbitrate report:", err);
     }
   };
 

@@ -6,6 +6,7 @@ import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
 import { Comments } from "./Comments";
 import { ShareModal } from "./ShareModal";
+import { ReportModal } from "./ReportModal";
 import styles from "./OrganicPostCard.module.css";
 
 interface OrganicPostCardProps {
@@ -13,16 +14,17 @@ interface OrganicPostCardProps {
 }
 
 export function OrganicPostCard({ post }: OrganicPostCardProps) {
-  const { t } = useUser();
+  const { t, reportedAds } = useUser();
   const { addToast } = useToast();
   const [likes, setLikes] = useState(post.likes);
   const [hasLiked, setHasLiked] = useState(false);
   const [shares, setShares] = useState(post.likes ? Math.floor(post.likes / 4) : 12);
   const [showComments, setShowComments] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
 
-  if (isHidden) return null;
+  if (isHidden || (reportedAds && reportedAds.includes(post.id))) return null;
 
   const handleLike = () => {
     if (hasLiked) {
@@ -166,9 +168,20 @@ export function OrganicPostCard({ post }: OrganicPostCardProps) {
         {post.syndication && (
           <div className={styles.disclaimerBar}>
             <span>🛡️ {t('fair_use_disclaimer') || "Non-commercial community curation · 0% commission · Full credit to original source"}</span>
-            <button type="button" onClick={handleHide} className={styles.hideBtn}>
-              {t('hide_listing') || "Hide"}
-            </button>
+            <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+              <button 
+                type="button" 
+                onClick={() => setIsReportOpen(true)} 
+                className={styles.hideBtn}
+                style={{ color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+                title="Report offensive or fraudulent post"
+              >
+                ⚑ {t('report') || "Report"}
+              </button>
+              <button type="button" onClick={handleHide} className={styles.hideBtn}>
+                {t('hide_listing') || "Hide"}
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -200,6 +213,17 @@ export function OrganicPostCard({ post }: OrganicPostCardProps) {
           <span className={styles.icon}>📤</span>
           <span>{t('share')} {shares > 0 ? `(${shares})` : ''}</span>
         </button>
+
+        <button 
+          onClick={() => setIsReportOpen(true)}
+          className={styles.actionBtn} 
+          aria-label="Report offensive post"
+          title="Report this post"
+          style={{ color: 'hsl(var(--muted-foreground))' }}
+        >
+          <span className={styles.icon}>⚑</span>
+          <span>{t('report') || "Report"}</span>
+        </button>
       </footer>
       {showComments && <Comments adId={post.id} />}
       <ShareModal 
@@ -209,6 +233,15 @@ export function OrganicPostCard({ post }: OrganicPostCardProps) {
         text={post.content}
         url={typeof window !== 'undefined' ? `${window.location.origin}/?post=${post.id}` : ''}
         onShareSuccess={() => setShares(prev => prev + 1)}
+      />
+      <ReportModal
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        itemId={post.id}
+        headline={post.author.name}
+        contentText={post.content}
+        itemType={post.syndication?.sourceType === 'marketplace' ? 'marketplace' : 'post'}
+        onReportSuccess={() => setIsHidden(true)}
       />
     </article>
   );
