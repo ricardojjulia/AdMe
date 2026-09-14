@@ -7,6 +7,7 @@ import { useToast } from "@/lib/ToastContext";
 import { Comments } from "./Comments";
 import { ShareModal } from "./ShareModal";
 import { ReportModal } from "./ReportModal";
+import EditorialVisual from "./EditorialVisual";
 import styles from "./OrganicPostCard.module.css";
 
 interface OrganicPostCardProps {
@@ -23,6 +24,7 @@ export function OrganicPostCard({ post }: OrganicPostCardProps) {
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   if (isHidden || (reportedAds && reportedAds.includes(post.id))) return null;
 
@@ -154,16 +156,26 @@ export function OrganicPostCard({ post }: OrganicPostCardProps) {
           </div>
         )}
         
-        {post.mediaUrl && (
+        {post.mediaUrl && !imageError ? (
           <div className={styles.mediaWrapper}>
             <img 
               src={post.mediaUrl} 
-              alt="Social content photo" 
+              alt={post.syndication?.sourceType === 'marketplace' ? (post.content || "Marketplace listing") : "Social content photo"} 
               className={styles.media}
               loading="lazy"
+              onError={() => setImageError(true)}
             />
           </div>
-        )}
+        ) : post.syndication ? (
+          <div className={styles.mediaWrapper}>
+            <EditorialVisual
+              title={post.author.name || post.category}
+              category={post.category}
+              subtitle={post.content}
+              rating={post.syndication.rating}
+            />
+          </div>
+        ) : null}
 
         {post.syndication && (
           <div className={styles.disclaimerBar}>

@@ -12,6 +12,7 @@ import { useToast } from "@/lib/ToastContext";
 import { LeadModal } from "./LeadModal";
 import { ScratchCard, QuizCard } from "./InteractionUnits";
 import { ReportModal } from "./ReportModal";
+import EditorialVisual from "./EditorialVisual";
 import styles from "./NativeAdCard.module.css";
 
 interface NativeAdCardProps {
@@ -34,6 +35,7 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
   const [activeInteraction, setActiveInteraction] = useState<boolean>(false);
   const [isInteractionCompleted, setIsInteractionCompleted] = useState<boolean>(false);
   const [showWhyThis, setShowWhyThis] = useState<boolean>(false);
+  const [imageError, setImageError] = useState<boolean>(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -154,7 +156,7 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
             ✕
           </button>
         </div>
-      ) : (
+      ) : ad.content.mediaUrl && !imageError ? (
         <div className={styles.media}>
           <Image
             src={ad.content.mediaUrl}
@@ -162,6 +164,17 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
             fill
             className={styles.mediaImg}
             unoptimized
+            onError={() => setImageError(true)}
+          />
+        </div>
+      ) : (
+        <div className={styles.media}>
+          <EditorialVisual
+            title={ad.advertiser.name || ad.content.headline}
+            category={ad.category}
+            subtitle={ad.content.headline}
+            primaryColor={ad.content.primaryColor}
+            rating={ad.placeDetails?.rating}
           />
         </div>
       )}

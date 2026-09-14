@@ -10,13 +10,21 @@
 
 .media {
   position: relative;
-  width: 30%;
-  min-width: 200px;
+  width: 36%;
+  min-width: 240px;
   background-color: var(--muted);
+  overflow: hidden;
+  display: flex;
 }
 
 .mediaImg {
   object-fit: cover;
+  object-position: center;
+  transition: transform 0.4s ease;
+}
+
+.card:hover .mediaImg {
+  transform: scale(1.02);
 }
 
 .content {

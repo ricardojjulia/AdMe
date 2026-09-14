@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { resolvePlacePhoto } from '@/lib/services/media-resolver';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -127,7 +128,7 @@ export async function GET(request: NextRequest) {
 
     for (const sq of searchQueries) {
       try {
-        const searchUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(sq.query)}&format=json&limit=3`;
+        const searchUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(sq.query)}&format=json&limit=3&extratags=1&addressdetails=1`;
         const res = await fetch(searchUrl, {
           headers: { "User-Agent": "AdMe-LocalDiscovery/1.0 (contact@adforme.io)" },
           next: { revalidate: 7200 }
@@ -178,12 +179,24 @@ export async function GET(request: NextRequest) {
                 description = `Beloved local culinary spot on ${streetOrArea}. Verified location in ${resolvedCity}.`;
               }
 
+              const resolvedPhoto = await resolvePlacePhoto({
+                name,
+                address: item.display_name,
+                category: finalCat,
+                typeTag: item.type || sq.typeTag,
+                cuisine: item.extratags?.cuisine,
+                brand: item.extratags?.brand || item.extratags?.operator,
+                wikidataId: item.extratags?.wikidata,
+                wikipediaTag: item.extratags?.wikipedia,
+                directImage: item.extratags?.image || item.extratags?.wikimedia_commons
+              });
+
               places.push({
                 name: name,
                 category: finalCat,
                 headline: headline,
                 description: description,
-                mediaUrl: sq.img,
+                mediaUrl: resolvedPhoto,
                 avatarUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&q=80&w=200',
                 address: item.display_name,
                 rating: 4.8,
