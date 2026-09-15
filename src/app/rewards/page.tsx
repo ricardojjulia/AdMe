@@ -102,7 +102,7 @@ export default function RewardsPage() {
     .slice(0, 3)
     .map((ad, idx) => ({
       id: `partner-drop-${ad.id || idx}`,
-      name: `${ad.advertiser_name} In-Store Drop: $5 Voucher`,
+      name: ad.headline ? `${ad.headline} Drop` : `${ad.advertiser_name} In-Store Drop: $5 Voucher`,
       cost: 350 + (idx * 50),
       emoji: "🎟️",
       category: t("cat_local_deals"),
@@ -113,7 +113,7 @@ export default function RewardsPage() {
   // Curated perks catalog across all categories
   const perks = [
     // 1. Food & Drink
-    { id: "coffee", name: t("perk_coffee_name"), cost: 350, emoji: "☕", category: t("cat_food_drink"), categories: ["Food & Drink", "Local Deals"], description: t("perk_coffee_desc") },
+    { id: "coffee", name: t("perk_coffee_name"), cost: 500, emoji: "☕", category: t("cat_food_drink"), categories: ["Food & Drink", "Local Deals"], description: t("perk_coffee_desc") },
     { id: "green-kitchen", name: t("perk_green_kitchen_name"), cost: 500, emoji: "🥗", category: t("cat_food_drink"), categories: ["Food & Drink", "Local Deals"], description: t("perk_green_kitchen_desc") },
     { id: "artisan-sourdough", name: t("perk_artisan_sourdough_name"), cost: 250, emoji: "🥐", category: t("cat_food_drink"), categories: ["Food & Drink", "Local Deals"], description: t("perk_artisan_sourdough_desc") },
     { id: "uber", name: t("perk_uber_name"), cost: 2500, emoji: "🍔", category: t("cat_food_drink"), categories: ["Food & Drink"], description: t("perk_uber_desc") },

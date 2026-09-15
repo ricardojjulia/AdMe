@@ -61,7 +61,7 @@ export function performABSplitTest(ads: Ad[], userId: string | null): Ad[] {
 export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
   const [timeline, setTimeline] = useState<(Ad | OrganicPost)[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user, preferences, reportedAds, skippedAds, location, locationState, adFrequency, deliveryChannels, t } = useUser();
+  const { user, preferences, reportedAds, skippedAds, snoozedMerchants, categoryWeights, location, locationState, adFrequency, deliveryChannels, t } = useUser();
 
   useEffect(() => {
     setLoading(true);
@@ -208,6 +208,13 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
       // Filter out duplicate variations via split testing
       filteredAds = performABSplitTest(filteredAds, user?.id || null);
 
+      // Filter out snoozed merchants and reported ads
+      filteredAds = filteredAds.filter(ad => 
+        !snoozedMerchants.includes(ad.advertiser.name) &&
+        !snoozedMerchants.includes(ad.id) &&
+        !reportedAds.includes(ad.id)
+      );
+
       if (searchQuery.trim() !== '') {
         const q = searchQuery.toLowerCase();
         filteredAds = filteredAds.filter(ad => 
@@ -288,7 +295,7 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
 
     const timer = setTimeout(loadTimeline, 800);
     return () => clearTimeout(timer);
-  }, [preferences.join(','), searchQuery, activeTab, location, locationState.privacyMode, locationState.coarseLocation?.city, adFrequency, deliveryChannels]);
+  }, [preferences.join(','), snoozedMerchants.join(','), searchQuery, activeTab, location, locationState.privacyMode, locationState.coarseLocation?.city, adFrequency, deliveryChannels]);
 
   if (!deliveryChannels.feed) {
     return (
@@ -300,7 +307,7 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
     );
   }
 
-  // Filter out reported / skipped ads and enforce frequency cap for visible items
+  // Filter out reported / skipped / snoozed ads and enforce frequency cap for visible items
   const maxAds = adFrequency === 'low' ? 5 : (adFrequency === 'balanced' ? 14 : 25);
   let adCount = 0;
   
@@ -309,6 +316,7 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
     if (isAdItem) {
       const ad = item as Ad;
       if (reportedAds.includes(ad.id) || skippedAds.includes(ad.id)) return false;
+      if (snoozedMerchants.includes(ad.advertiser.name) || snoozedMerchants.includes(ad.id)) return false;
       if (adCount >= maxAds) return false;
       adCount++;
       return true;

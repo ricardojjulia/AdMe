@@ -63,6 +63,11 @@ interface UserContextType {
   claimGeofenceReward: (adId: string, points: number, brandName: string) => Promise<boolean>;
   claimViewportReward: (adId: string, dwellSeconds: number, proof: string, points: number) => Promise<boolean>;
   sessionMode: 'authenticated' | 'demo' | 'unauthenticated';
+  snoozedMerchants: string[];
+  categoryWeights: Record<string, number>;
+  snoozeMerchant: (brandName: string) => void;
+  adjustCategoryWeight: (category: string, multiplier?: number) => void;
+  sendAdFeedback: (adId: string, action: 'snooze_advertiser' | 'downweight_category' | 'irrelevant' | 'helpful', category: string) => Promise<void>;
   exitDemoMode: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -251,6 +256,26 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return [];
   });
   const [skippedAds, setSkippedAds] = useState<string[]>([]);
+  const [snoozedMerchants, setSnoozedMerchants] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return JSON.parse(localStorage.getItem("adme_snoozed_merchants") || "[]");
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
+  const [categoryWeights, setCategoryWeights] = useState<Record<string, number>>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return JSON.parse(localStorage.getItem("adme_category_weights") || "{}");
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  });
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationState, setLocationState] = useState<LocationState>({
     privacyMode: 'coarse-edge',
@@ -663,6 +688,49 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const snoozeMerchant = (brandName: string) => {
+    setSnoozedMerchants((prev) => {
+      if (prev.includes(brandName)) return prev;
+      const next = [...prev, brandName];
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("adme_snoozed_merchants", JSON.stringify(next));
+        } catch {}
+      }
+      return next;
+    });
+  };
+
+  const adjustCategoryWeight = (category: string, multiplier: number = 0.5) => {
+    setCategoryWeights((prev) => {
+      const current = prev[category] ?? 1.0;
+      const nextWeight = Math.max(0.1, parseFloat((current * multiplier).toFixed(2)));
+      const next = { ...prev, [category]: nextWeight };
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("adme_category_weights", JSON.stringify(next));
+        } catch {}
+      }
+      return next;
+    });
+  };
+
+  const sendAdFeedback = async (
+    adId: string,
+    action: 'snooze_advertiser' | 'downweight_category' | 'irrelevant' | 'helpful',
+    category: string
+  ) => {
+    try {
+      await fetch('/api/engagement/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adId, action, category })
+      });
+    } catch (e) {
+      console.warn("Feedback telemetry ignored:", e);
+    }
+  };
+
   const updateStreak = async () => {
     if (!user || !isSupabaseEnabled) return;
     const today = new Date().toISOString().split('T')[0];
@@ -1000,7 +1068,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, location, locationState, setLocationMode, setManualCity, clearLocation, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, redeemPerk, setLocation, selectPersona, adFrequency, deliveryChannels, quietHours, updateAdControlSettings, locale, setLocale, t, loadingCatalog, claimGeofenceReward, claimViewportReward, sessionMode, exitDemoMode, refreshUser: loadData }}>
+    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, snoozedMerchants, categoryWeights, snoozeMerchant, adjustCategoryWeight, sendAdFeedback, location, locationState, setLocationMode, setManualCity, clearLocation, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, redeemPerk, setLocation, selectPersona, adFrequency, deliveryChannels, quietHours, updateAdControlSettings, locale, setLocale, t, loadingCatalog, claimGeofenceReward, claimViewportReward, sessionMode, exitDemoMode, refreshUser: loadData }}>
       {children}
     </UserContext.Provider>
   );

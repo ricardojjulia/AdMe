@@ -226,6 +226,21 @@ export default function StudioDashboard() {
         deep: Math.round((deep / totalViews) * 100)
       };
 
+      const negativeFeedback = adEngagements.filter(e => 
+        e.engagement_type === 'snooze_advertiser' || 
+        e.engagement_type === 'downweight_category' || 
+        e.engagement_type === 'irrelevant'
+      ).length;
+      const positiveFeedback = adEngagements.filter(e => 
+        e.engagement_type === 'helpful' || 
+        e.engagement_type === 'like' || 
+        e.engagement_type === 'click'
+      ).length;
+      const feedbackTotal = negativeFeedback + positiveFeedback;
+      const relevanceScore = feedbackTotal > 0 
+        ? Math.round((positiveFeedback / feedbackTotal) * 100) 
+        : 98;
+
       return {
         id: ad.id,
         headline: ad.headline,
@@ -243,7 +258,8 @@ export default function StudioDashboard() {
         creditsSpentToday: ad.credits_spent_today ?? 0,
         maxCpcBid: ad.max_cpc_bid ?? 15,
         inStoreRedemptions: ad.in_store_redemptions ?? 0,
-        category: ad.category
+        category: ad.category,
+        relevanceScore
       };
     });
 
@@ -759,6 +775,17 @@ export default function StudioDashboard() {
                                     </div>
                                     <span className={`${styles.qualityBadge} ${quality.style}`}>
                                       {quality.label} ({ad.avgDuration}s avg)
+                                    </span>
+                                    <span style={{ 
+                                      background: ad.relevanceScore >= 80 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)', 
+                                      color: ad.relevanceScore >= 80 ? '#34d399' : '#f87171', 
+                                      border: ad.relevanceScore >= 80 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)', 
+                                      padding: '0.1rem 0.4rem', 
+                                      borderRadius: '4px', 
+                                      fontSize: '0.75rem', 
+                                      fontWeight: 'bold' 
+                                    }}>
+                                      🎯 Relevance: {ad.relevanceScore}%
                                     </span>
                                     {isExhausted ? (
                                       <span style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '0.1rem 0.4rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>

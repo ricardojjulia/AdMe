@@ -10,6 +10,7 @@ import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
 import { LeadModal } from "./LeadModal";
 import { ReportModal } from "./ReportModal";
+import { AdTransparencyModal } from "./AdTransparencyModal";
 import styles from "./CarouselAdCard.module.css";
 
 interface CarouselAdCardProps {
@@ -23,6 +24,7 @@ export function CarouselAdCard({ ad }: CarouselAdCardProps) {
   const isSaved = savedAds.includes(ad.id);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [isTransparencyOpen, setIsTransparencyOpen] = useState(false);
   const [likesCount, setLikesCount] = useState(ad.metrics.likes);
   const [sharesCount, setSharesCount] = useState(ad.metrics.shares || 0);
   const [isSkipping, setIsSkipping] = useState(false);
@@ -113,6 +115,27 @@ export function CarouselAdCard({ ad }: CarouselAdCardProps) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <button 
+            type="button" 
+            onClick={() => setIsTransparencyOpen(true)}
+            aria-label="Why am I seeing this ad?"
+            style={{
+              background: 'hsl(var(--card) / 0.8)',
+              border: '1px solid hsl(var(--border) / 0.7)',
+              borderRadius: '999px',
+              padding: '0.2rem 0.55rem',
+              fontSize: '0.72rem',
+              color: 'hsl(var(--muted-foreground))',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              fontWeight: 500
+            }}
+          >
+            <span style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>ⓘ</span>
+            <span>Why this ad?</span>
+          </button>
           <div style={{ position: 'relative' }}>
             <button 
               type="button"
@@ -212,6 +235,16 @@ export function CarouselAdCard({ ad }: CarouselAdCardProps) {
         headline={ad.content.headline}
         contentText={ad.content.text}
         itemType="ad"
+      />
+      <AdTransparencyModal
+        isOpen={isTransparencyOpen}
+        onClose={() => setIsTransparencyOpen(false)}
+        adId={ad.id}
+        advertiserName={ad.advertiser.name}
+        category={ad.category}
+        headline={ad.content.headline}
+        distanceMiles={ad.distanceMiles}
+        onDismissAd={handleSkip}
       />
     </article>
   );

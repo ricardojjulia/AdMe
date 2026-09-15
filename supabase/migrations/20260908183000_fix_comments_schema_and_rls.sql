@@ -16,5 +16,5 @@ DROP POLICY IF EXISTS "Allow public read comments" ON public.comments;
 CREATE POLICY "Allow public read comments" ON public.comments FOR SELECT USING (true);
 
 -- Allow public insert of comments
-DROP POLICY IF EXISTS "Allow public insert comments" ON public.comments FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow public insert comments" ON public.comments;
 CREATE POLICY "Allow public insert comments" ON public.comments FOR INSERT WITH CHECK (true);

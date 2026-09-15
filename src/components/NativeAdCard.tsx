@@ -12,6 +12,7 @@ import { useToast } from "@/lib/ToastContext";
 import { LeadModal } from "./LeadModal";
 import { ScratchCard, QuizCard } from "./InteractionUnits";
 import { ReportModal } from "./ReportModal";
+import { AdTransparencyModal } from "./AdTransparencyModal";
 import EditorialVisual from "./EditorialVisual";
 import styles from "./NativeAdCard.module.css";
 
@@ -236,6 +237,7 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
               <button
                 type="button"
                 onClick={() => setShowWhyThis(!showWhyThis)}
+                aria-label="Why am I seeing this ad?"
                 style={{
                   background: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',
@@ -529,6 +531,16 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
         headline={ad.content.headline}
         contentText={ad.content.text}
         itemType="ad"
+      />
+      <AdTransparencyModal
+        isOpen={showWhyThis}
+        onClose={() => setShowWhyThis(false)}
+        adId={ad.id}
+        advertiserName={ad.advertiser.name}
+        category={ad.category}
+        headline={ad.content.headline}
+        distanceMiles={ad.distanceMiles}
+        onDismissAd={handleSkip}
       />
     </article>
   );

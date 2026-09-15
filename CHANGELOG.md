@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.0] - 2026-09-15
+
+### Added
+- **Real-Time Consumer Ad Transparency Inspector (COUNCIL-2026-007)**:
+  - Added portaled dialog component `AdTransparencyModal.tsx` accessible via `Why this ad?` / `Why this? ✨` on all sponsored cards (`NativeAdCard`, `FeedCard`, `CarouselAdCard`).
+  - Implemented real-time client-side explainability breakdown displaying matched Zero-Knowledge interest tags, neighborhood coarse proximity factor, category auction status, and cryptographic privacy attestation.
+- **Consumer Direct Relevance & Experience Tuning Agency**:
+  - Added one-click actions: "Snooze [Merchant] for 30 Days", "See 50% Less in [Category]", "Not Relevant to Me (Hide)", and "This Ad Was Relevant".
+  - Incorporated `snoozedMerchants` and `categoryWeights` state in `UserContext`, automatically filtering out snoozed advertisers from the live feed and attenuating category frequency without page reload.
+- **Anonymous Privacy-Preserving Feedback Ingestion**:
+  - Built `/api/engagement/feedback` endpoint to receive un-fingerprinted feedback events with zero user PII, recording anonymous relevance signals in Supabase.
+- **Ad Studio Campaign Relevance & Quality Score Indicators**:
+  - Enhanced `/studio` to calculate real-time campaign relevance ratios from positive vs. negative feedback signals, rendering a high-contrast `🎯 Relevance: XX%` quality badge on campaign rows.
+- **Comprehensive Testing Suite**:
+  - Created unit test suite in `src/components/transparency.test.ts` (119 unit tests passing 100%).
+  - Created automated browser test in `tests/e2e/transparency.spec.ts` (14 Playwright E2E browser tests passing 100%).
+
 ## [5.0.0] - 2026-09-07
 
 ### Added

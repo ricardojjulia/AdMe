@@ -14,6 +14,7 @@ import { LeadModal } from "./LeadModal";
 import { ScratchCard, QuizCard } from "./InteractionUnits";
 import { ZkpWebGLSwiper } from "./ZkpWebGLSwiper";
 import { ReportModal } from "./ReportModal";
+import { AdTransparencyModal } from "./AdTransparencyModal";
 import styles from "./FeedCard.module.css";
 
 interface FeedCardProps {
@@ -22,6 +23,7 @@ interface FeedCardProps {
 
 export function FeedCard({ ad }: FeedCardProps) {
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [isTransparencyOpen, setIsTransparencyOpen] = useState(false);
   const { ref, logClick, logLike, isLiked } = useEngagementAnalytics(ad.id);
   const { toggleSavedAd, savedAds, reportAd, user, skipAd, addReward, t } = useUser();
   const { addToast } = useToast();
@@ -164,6 +166,27 @@ export function FeedCard({ ad }: FeedCardProps) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <button 
+            type="button" 
+            onClick={() => setIsTransparencyOpen(true)}
+            aria-label="Why am I seeing this ad?"
+            style={{
+              background: 'hsl(var(--card) / 0.8)',
+              border: '1px solid hsl(var(--border) / 0.7)',
+              borderRadius: '999px',
+              padding: '0.2rem 0.55rem',
+              fontSize: '0.72rem',
+              color: 'hsl(var(--muted-foreground))',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              fontWeight: 500
+            }}
+          >
+            <span style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>ⓘ</span>
+            <span>Why this ad?</span>
+          </button>
           <button type="button" className={styles.follow}>{t('follow')}</button>
           <div style={{ position: 'relative' }}>
             <button 
@@ -346,6 +369,16 @@ export function FeedCard({ ad }: FeedCardProps) {
         headline={ad.content.headline}
         contentText={ad.content.text}
         itemType="ad"
+      />
+      <AdTransparencyModal
+        isOpen={isTransparencyOpen}
+        onClose={() => setIsTransparencyOpen(false)}
+        adId={ad.id}
+        advertiserName={ad.advertiser.name}
+        category={ad.category}
+        headline={ad.content.headline}
+        distanceMiles={ad.distanceMiles}
+        onDismissAd={handleSkip}
       />
     </article>
   );
