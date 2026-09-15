@@ -163,3 +163,13 @@
   - ESLint: 0 errors clean.
   - Next.js Production Turbopack Build: 24 routes static/dynamic generated clean.
 - Updated `CHANGELOG.md` for version `5.1.0`.
+
+## [2026-09-15T14:54:13-04:00] User Request
+**User**: commit merge push
+
+**Action**:
+- Synchronized package version to `5.1.0` across `package.json` and `package-lock.json`.
+- Verified version consistency check (`npm run version:check`) passing clean.
+- Staged all changes including version bumps and activity logs.
+- Committed release `v5.1.0` to branch `main`.
+- Pushed all local commits to remote `origin/main`.
