@@ -1,0 +1,334 @@
+.copilotCard {
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  border-radius: var(--radius, 0.75rem);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.3), 0 0 16px -2px rgba(139, 92, 246, 0.15);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.copilotCard:hover {
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.4), 0 0 24px -2px rgba(139, 92, 246, 0.25);
+}
+
+.copilotHeader {
+  display: flex;
+  justifyContent: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.headerTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.copilotIcon {
+  font-size: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.copilotTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.aiBadge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  color: white;
+}
+
+.toggleBtn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: hsl(var(--muted-foreground));
+  font-size: 0.8rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggleBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+}
+
+.copilotSubtitle {
+  font-size: 0.8rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0;
+  line-height: 1.4;
+}
+
+.inputRow {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.briefInput {
+  flex: 1;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: white;
+  font-size: 0.825rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.5rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.briefInput:focus {
+  border-color: #8b5cf6;
+}
+
+.generateBtn {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+}
+
+.generateBtn:hover:not(:disabled) {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.generateBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.angleTabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.5rem;
+  overflow-x: auto;
+}
+
+.angleTab {
+  background: transparent;
+  border: none;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.angleTab:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.angleTabActive {
+  color: white;
+  background: rgba(139, 92, 246, 0.2);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+}
+
+.activeVariantPreview {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.5rem;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.previewMetaRow {
+  display: flex;
+  justifyContent: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.boostBadge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.ethicsScorePill {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.scoreExcellent {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.scoreGood {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.scoreFair {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.scoreNeedsRevision {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.previewHeadline {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.previewText {
+  font-size: 0.8rem;
+  color: hsl(var(--foreground));
+  opacity: 0.85;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.previewCtaRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ctaLabelTag {
+  font-size: 0.725rem;
+  font-weight: 600;
+  color: #c084fc;
+  background: rgba(192, 132, 252, 0.1);
+  border: 1px solid rgba(192, 132, 252, 0.25);
+  padding: 0.2rem 0.6rem;
+  border-radius: 0.375rem;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.applyBtnA {
+  flex: 1;
+  background: rgba(139, 92, 246, 0.18);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  color: #ddd6fe;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.applyBtnA:hover {
+  background: rgba(139, 92, 246, 0.35);
+  color: white;
+  border-color: #8b5cf6;
+}
+
+.applyBtnB {
+  flex: 1;
+  background: rgba(236, 72, 153, 0.18);
+  border: 1px solid rgba(236, 72, 153, 0.4);
+  color: #fbcfe8;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.applyBtnB:hover {
+  background: rgba(236, 72, 153, 0.35);
+  color: white;
+  border-color: #ec4899;
+}
+
+.recommendationsBox {
+  font-size: 0.725rem;
+  color: hsl(var(--muted-foreground));
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 0.375rem;
+  padding: 0.4rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.recItem {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.recBullet {
+  color: #8b5cf6;
+  font-weight: bold;
+}

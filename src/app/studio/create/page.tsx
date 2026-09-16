@@ -8,6 +8,8 @@ import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
 import { createClient } from "@/lib/supabase/client";
 import { ImageUploader } from "@/components/ImageUploader";
+import { CreativeCopilot } from "@/components/studio/CreativeCopilot";
+import { scoreAdCreative } from "@/lib/services/ethical-ad-scorer";
 import styles from "./page.module.css";
 
 const ALL_CATEGORIES = [
@@ -305,6 +307,14 @@ export default function CreateAdPage() {
   const activeHeadline = previewVariant === 'B' ? (headlineB || headline) : headline;
   const activeImage = previewVariant === 'B' ? (imageUrlB || imageUrl) : imageUrl;
 
+  // Real-time Ethical Ad Non-Intrusiveness & Resonance Scoring (COUNCIL-2026-008)
+  const currentDraftScore = scoreAdCreative({
+    headline: activeHeadline,
+    contentText: text,
+    ctaLabel,
+    category,
+  });
+
   return (
     <main className={`container ${styles.shell} animate-fade-in`}>
       <header className={styles.header}>
@@ -423,6 +433,25 @@ export default function CreateAdPage() {
             </select>
           </div>
 
+          {/* Autonomous AI Creative Co-Pilot (COUNCIL-2026-008) */}
+          <CreativeCopilot
+            merchantName={user?.name || 'Our Brand'}
+            category={category}
+            currentHeadline={headline}
+            currentText={text}
+            onApplyVariantA={(newHeadline, newText, newCta) => {
+              setHeadline(newHeadline);
+              setText(newText);
+              if (newCta) setCtaLabel(newCta);
+            }}
+            onApplyVariantB={(newHeadline, newText, newCta) => {
+              setIsABTest(true);
+              setHeadlineB(newHeadline);
+              if (!headline) setHeadline(newHeadline);
+              if (newCta) setCtaLabel(newCta);
+            }}
+          />
+
           {/* 3. Headline */}
           <div className={styles.fieldGroup}>
             <label className={styles.fieldLabel}>
@@ -439,6 +468,7 @@ export default function CreateAdPage() {
               onChange={(e) => setHeadline(e.target.value)}
               placeholder="e.g. Fresh Artisan Single-Origin Beans"
               className={styles.inputField}
+              data-testid="headline-a-input"
             />
           </div>
 
@@ -456,6 +486,32 @@ export default function CreateAdPage() {
               placeholder="Describe your offer and value proposition..."
               className={styles.textareaField}
             />
+
+            {/* Live Draft Ethical Score Meter */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                padding: '0.45rem 0.75rem',
+                borderRadius: '0.5rem',
+                fontSize: '0.75rem',
+                marginTop: '0.25rem'
+              }}
+              data-testid="draft-ethics-meter"
+            >
+              <span style={{ color: 'hsl(var(--muted-foreground))' }}>
+                🛡️ Draft Ethical Compliance:
+              </span>
+              <span style={{
+                fontWeight: 700,
+                color: currentDraftScore.overallScore >= 85 ? '#34d399' : currentDraftScore.overallScore >= 70 ? '#60a5fa' : '#fbbf24'
+              }}>
+                {currentDraftScore.overallScore}/100 ({currentDraftScore.rating})
+              </span>
+            </div>
           </div>
 
           {/* 5. Direct Upload & 1-Click Curated Presets */}
@@ -586,6 +642,7 @@ export default function CreateAdPage() {
                     placeholder="Alternative headline"
                     className={styles.inputField}
                     style={{ marginTop: '0.25rem' }}
+                    data-testid="headline-b-input"
                   />
                 </div>
                 <div>
@@ -857,9 +914,25 @@ export default function CreateAdPage() {
 
                 {/* Card Body */}
                 <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'white', lineHeight: '1.3' }}>
-                    {activeHeadline || "Your Campaign Headline"}
-                  </h3>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'white', lineHeight: '1.3' }}>
+                      {activeHeadline || "Your Campaign Headline"}
+                    </h3>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span style={{
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: '9999px',
+                      background: currentDraftScore.overallScore >= 85 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+                      color: currentDraftScore.overallScore >= 85 ? '#34d399' : '#60a5fa',
+                      border: `1px solid ${currentDraftScore.overallScore >= 85 ? 'rgba(16, 185, 129, 0.35)' : 'rgba(59, 130, 246, 0.35)'}`
+                    }} data-testid="preview-ethics-badge">
+                      🛡️ Ethics: {currentDraftScore.overallScore}/100 ({currentDraftScore.rating})
+                    </span>
+                  </div>
                   <p style={{ margin: 0, fontSize: '0.82rem', color: 'hsl(var(--muted-foreground))', lineHeight: '1.4' }}>
                     {text || "Describe your offering and value proposition here."}
                   </p>
