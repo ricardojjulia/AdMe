@@ -321,7 +321,7 @@ export default function CreateAdPage() {
         <div className={styles.headerTop}>
           <Link href="/studio" className={styles.backBtn}>← Back to Studio Dashboard</Link>
           <div style={{ fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}>
-            Balance: <strong style={{ color: 'hsl(var(--primary))' }}>★ {credits} credits</strong>
+            Balance: <strong style={{ color: 'hsl(var(--primary))' }} suppressHydrationWarning>★ {credits} credits</strong>
           </div>
         </div>
         <h1 style={{ margin: '0.25rem 0' }}>Create & Publish Campaign</h1>

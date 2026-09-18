@@ -25,9 +25,11 @@ export function FeedCard({ ad }: FeedCardProps) {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isTransparencyOpen, setIsTransparencyOpen] = useState(false);
   const { ref, logClick, logLike, isLiked } = useEngagementAnalytics(ad.id);
-  const { toggleSavedAd, savedAds, reportAd, user, skipAd, addReward, t } = useUser();
+  const { toggleSavedAd, savedAds, reportAd, user, skipAd, addReward, claimedVouchers, claimAdVoucher, t } = useUser();
   const { addToast } = useToast();
   const isSaved = savedAds.includes(ad.id);
+  const isVoucherClaimed = claimedVouchers.includes(ad.id);
+  const [isClaimingVoucher, setIsClaimingVoucher] = useState(false);
   const [likesCount, setLikesCount] = useState(ad.metrics.likes);
   const [sharesCount, setSharesCount] = useState(ad.metrics.shares || 0);
   const [isSkipping, setIsSkipping] = useState(false);
@@ -67,6 +69,19 @@ export function FeedCard({ ad }: FeedCardProps) {
     setTimeout(() => {
       setActiveInteraction(false);
     }, 3500);
+  };
+
+  const handleClaimVoucher = async () => {
+    if (isVoucherClaimed || isClaimingVoucher) return;
+    setIsClaimingVoucher(true);
+    try {
+      const { code } = await claimAdVoucher(ad);
+      addToast(`🎟️ Voucher ${code} saved to your Wallet! (+25 pts)`, "success");
+    } catch {
+      addToast("Failed to save voucher", "error");
+    } finally {
+      setIsClaimingVoucher(false);
+    }
   };
 
   useEffect(() => {
@@ -207,6 +222,50 @@ export function FeedCard({ ad }: FeedCardProps) {
         <div className={styles.badges}>
           <span className={styles.badge}>{t('just_in')}</span>
           <span className={styles.badgeAccent}>{ad.cta.label}</span>
+
+          {/* Instant Value-Exchange Voucher Stash */}
+          {isVoucherClaimed ? (
+            <a
+              href="/rewards"
+              style={{
+                fontSize: '0.75rem',
+                background: 'rgba(16, 185, 129, 0.15)',
+                color: '#10b981',
+                padding: '0.2rem 0.55rem',
+                borderRadius: '0.25rem',
+                fontWeight: 'bold',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem'
+              }}
+            >
+              🎟️ Saved to Wallet
+            </a>
+          ) : (
+            <button
+              type="button"
+              onClick={handleClaimVoucher}
+              disabled={isClaimingVoucher}
+              style={{
+                background: 'linear-gradient(135deg, hsl(var(--primary)/0.15) 0%, hsl(var(--accent)/0.15) 100%)',
+                border: '1px solid hsl(var(--primary)/0.4)',
+                borderRadius: '0.25rem',
+                color: 'hsl(var(--primary))',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                padding: '0.2rem 0.55rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                transition: 'all 0.15s ease'
+              }}
+              title="Save promo deal directly to your Coupon Wallet"
+            >
+              🎟️ {isClaimingVoucher ? "Claiming..." : "Claim Deal (+25 pts)"}
+            </button>
+          )}
           
           {/* Value Exchange Interaction Badge */}
           {isInteractionCompleted ? (

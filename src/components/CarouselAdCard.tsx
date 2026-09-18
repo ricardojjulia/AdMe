@@ -19,9 +19,11 @@ interface CarouselAdCardProps {
 
 export function CarouselAdCard({ ad }: CarouselAdCardProps) {
   const { ref, logClick, logLike, isLiked } = useEngagementAnalytics(ad.id);
-  const { toggleSavedAd, savedAds, reportAd, skipAd, t } = useUser();
+  const { toggleSavedAd, savedAds, reportAd, skipAd, claimedVouchers, claimAdVoucher, t } = useUser();
   const { addToast } = useToast();
   const isSaved = savedAds.includes(ad.id);
+  const isVoucherClaimed = claimedVouchers.includes(ad.id);
+  const [isClaimingVoucher, setIsClaimingVoucher] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isTransparencyOpen, setIsTransparencyOpen] = useState(false);
@@ -64,6 +66,19 @@ export function CarouselAdCard({ ad }: CarouselAdCardProps) {
       }
     };
   }, [ad.id]);
+
+  const handleClaimVoucher = async () => {
+    if (isVoucherClaimed || isClaimingVoucher) return;
+    setIsClaimingVoucher(true);
+    try {
+      const { code } = await claimAdVoucher(ad);
+      addToast(`🎟️ Voucher ${code} saved to your Wallet! (+25 pts)`, "success");
+    } catch {
+      addToast("Failed to save voucher", "error");
+    } finally {
+      setIsClaimingVoucher(false);
+    }
+  };
 
   const images = ad.content.carouselMediaUrls || [ad.content.mediaUrl];
 
@@ -152,6 +167,50 @@ export function CarouselAdCard({ ad }: CarouselAdCardProps) {
       <div className={styles.body}>
         <h3>{ad.content.headline}</h3>
         <p>{ad.content.text}</p>
+        <div style={{ marginTop: '0.4rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          {isVoucherClaimed ? (
+            <a
+              href="/rewards"
+              style={{
+                fontSize: '0.75rem',
+                background: 'rgba(16, 185, 129, 0.15)',
+                color: '#10b981',
+                padding: '0.2rem 0.55rem',
+                borderRadius: '0.25rem',
+                fontWeight: 'bold',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem'
+              }}
+            >
+              🎟️ Saved to Wallet
+            </a>
+          ) : (
+            <button
+              type="button"
+              onClick={handleClaimVoucher}
+              disabled={isClaimingVoucher}
+              style={{
+                background: 'linear-gradient(135deg, hsl(var(--primary)/0.15) 0%, hsl(var(--accent)/0.15) 100%)',
+                border: '1px solid hsl(var(--primary)/0.4)',
+                borderRadius: '0.25rem',
+                color: 'hsl(var(--primary))',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                padding: '0.2rem 0.55rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                transition: 'all 0.15s ease'
+              }}
+              title="Save promo deal directly to your Coupon Wallet"
+            >
+              🎟️ {isClaimingVoucher ? "Claiming..." : "Claim Deal (+25 pts)"}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className={styles.carouselContainer} style={{ borderColor: ad.content.primaryColor }}>

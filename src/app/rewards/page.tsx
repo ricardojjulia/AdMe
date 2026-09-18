@@ -163,7 +163,7 @@ export default function RewardsPage() {
         <section className={`${styles.balanceCard} glass`}>
           <div className={styles.balanceContent}>
             <h2>{t('available_balance')}</h2>
-            <div className={styles.balanceAmount}>
+            <div className={styles.balanceAmount} suppressHydrationWarning>
               <span className={styles.currency}>★</span>
               {balance.toLocaleString()}
             </div>

@@ -10,6 +10,8 @@ import { useUser } from "@/lib/UserContext";
 import { rankSmartFeed } from "@/lib/services/smart-feed";
 import { getLocalDiscoveryAds } from "@/lib/services/local-discovery";
 import { getPublicSyndicatedPosts } from "@/lib/services/public-syndication";
+import { AttentionShieldBadge } from "./AttentionShieldBadge";
+import { applyAntiClustering, getFatiguedAdIds, recordSessionImpression } from "@/lib/services/attention-shield";
 import styles from "./Feed.module.css";
 
 interface FeedProps {
@@ -61,6 +63,8 @@ export function performABSplitTest(ads: Ad[], userId: string | null): Ad[] {
 export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
   const [timeline, setTimeline] = useState<(Ad | OrganicPost)[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [rotatedCount, setRotatedCount] = useState(0);
   const { user, preferences, reportedAds, skippedAds, snoozedMerchants, categoryWeights, location, locationState, adFrequency, deliveryChannels, t } = useUser();
 
   useEffect(() => {
@@ -272,6 +276,21 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
         );
       }
 
+      // 3.5 Attention Shield: Session Fatigue Deprioritization & Category Anti-Clustering
+      const fatiguedIds = new Set(getFatiguedAdIds());
+      const freshAds = filteredAds.filter(ad => !fatiguedIds.has(ad.id));
+      const tiredAds = filteredAds.filter(ad => fatiguedIds.has(ad.id));
+      filteredAds = [...freshAds, ...tiredAds];
+
+      const { reordered: dispersedAds, rotatedCount: rotCount } = applyAntiClustering(filteredAds);
+      filteredAds = dispersedAds;
+      setRotatedCount(rotCount);
+
+      // Record impressions for leading ads in session
+      filteredAds.slice(0, 8).forEach(ad => {
+        recordSessionImpression(ad.id, ad.category);
+      });
+
       // 4. Interleave Timeline Items (Harmonic Content + Ad Dispersion Heuristic)
       const interleaveTimeline: (Ad | OrganicPost)[] = [];
       let adIdx = 0;
@@ -295,7 +314,7 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
 
     const timer = setTimeout(loadTimeline, 800);
     return () => clearTimeout(timer);
-  }, [preferences.join(','), snoozedMerchants.join(','), searchQuery, activeTab, location, locationState.privacyMode, locationState.coarseLocation?.city, adFrequency, deliveryChannels]);
+  }, [preferences.join(','), snoozedMerchants.join(','), searchQuery, activeTab, location, locationState.privacyMode, locationState.coarseLocation?.city, adFrequency, deliveryChannels, refreshKey]);
 
   if (!deliveryChannels.feed) {
     return (
@@ -326,6 +345,11 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
 
   return (
     <div className={styles.feed}>
+      <AttentionShieldBadge
+        rotatedCount={rotatedCount}
+        onResetFeed={() => setRefreshKey(k => k + 1)}
+      />
+
       {visibleItems.length === 0 && !loading && (
         <div className={styles.empty}>
           <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🎯</div>

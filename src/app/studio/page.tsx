@@ -207,6 +207,7 @@ export default function StudioDashboard() {
       const views = adEngagements.filter(e => e.engagement_type === 'view');
       const clicks = adEngagements.filter(e => e.engagement_type === 'click');
       const likes = adEngagements.filter(e => e.engagement_type === 'like');
+      const voucherClaims = adEngagements.filter(e => e.engagement_type === 'voucher_claim');
 
       const totalDuration = views.reduce((sum, e) => sum + (Number(e.view_duration_seconds) || 0), 0);
       const avgDuration = views.length > 0 ? parseFloat((totalDuration / views.length).toFixed(1)) : 0;
@@ -234,7 +235,8 @@ export default function StudioDashboard() {
       const positiveFeedback = adEngagements.filter(e => 
         e.engagement_type === 'helpful' || 
         e.engagement_type === 'like' || 
-        e.engagement_type === 'click'
+        e.engagement_type === 'click' ||
+        e.engagement_type === 'voucher_claim'
       ).length;
       const feedbackTotal = negativeFeedback + positiveFeedback;
       const relevanceScore = feedbackTotal > 0 
@@ -248,6 +250,7 @@ export default function StudioDashboard() {
         impressions: views.length,
         clicks: clicks.length,
         likes: likes.length,
+        voucherClaims: voucherClaims.length,
         avgDuration,
         ctr,
         attentionBreakdown,
@@ -478,7 +481,7 @@ export default function StudioDashboard() {
     }, 1500);
   };
 
-  const handleSimulate = async (adId: string, type: 'bounce' | 'deep' | 'click') => {
+  const handleSimulate = async (adId: string, type: 'bounce' | 'deep' | 'click' | 'voucher_claim') => {
     if (simulatingId) return;
     setSimulatingId(adId);
 
@@ -512,6 +515,13 @@ export default function StudioDashboard() {
         id: crypto.randomUUID(),
         ad_id: adId,
         engagement_type: 'click',
+        created_at: new Date().toISOString()
+      });
+    } else if (type === 'voucher_claim') {
+      newEngs.push({
+        id: crypto.randomUUID(),
+        ad_id: adId,
+        engagement_type: 'voucher_claim',
         created_at: new Date().toISOString()
       });
     }
@@ -606,7 +616,7 @@ export default function StudioDashboard() {
       <div className={styles.grid}>
         <section className={`${styles.metricCard} glass`}>
           <h2>Current Plan</h2>
-          <div className={styles.metricAmount} style={{ fontSize: '1.8rem', textTransform: 'uppercase', color: 'hsl(var(--primary))' }}>
+          <div className={styles.metricAmount} suppressHydrationWarning style={{ fontSize: '1.8rem', textTransform: 'uppercase', color: 'hsl(var(--primary))' }}>
             {currentPlan}
           </div>
           <p className={styles.subtext}>Limits apply based on tier.</p>
@@ -615,7 +625,7 @@ export default function StudioDashboard() {
 
         <section className={`${styles.metricCard} glass`}>
           <h2>{t('ad_credits', { credits: '' }).replace(/:\s*$/, '') || 'Ad Credits'}</h2>
-          <div className={styles.metricAmount}>
+          <div className={styles.metricAmount} suppressHydrationWarning>
             <span className={styles.currency}>★</span>
             {adCredits.toLocaleString()}
           </div>
@@ -862,6 +872,7 @@ export default function StudioDashboard() {
                                   <div><strong>{ad.clicks}</strong> Clicks</div>
                                   <div><strong>{ad.ctr}%</strong> CTR</div>
                                   <div><strong>★ {ad.maxCpcBid}</strong> Bid</div>
+                                  <div style={{ color: '#10b981' }}><strong>🎟️ {ad.voucherClaims || 0}</strong> Vouchers</div>
                                   {ad.inStoreRedemptions > 0 && (
                                     <div style={{ color: 'hsl(var(--primary))' }}>
                                       <strong>🏪 {ad.inStoreRedemptions}</strong> Drops
@@ -955,6 +966,15 @@ export default function StudioDashboard() {
                                   disabled={simulatingId === ad.id}
                                 >
                                   {simulatingId === ad.id ? '...' : 'Click (CTR+)'}
+                                </button>
+                                <button 
+                                  type="button" 
+                                  onClick={() => handleSimulate(ad.id, 'voucher_claim')}
+                                  className="btn"
+                                  style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: 'rgba(16, 185, 129, 0.15)', color: 'rgb(110, 231, 183)', border: '1px solid rgba(16, 185, 129, 0.3)', height: 'auto', borderRadius: '4px', cursor: 'pointer' }}
+                                  disabled={simulatingId === ad.id}
+                                >
+                                  {simulatingId === ad.id ? '...' : '🎟️ Claim Voucher'}
                                 </button>
                               </div>
                             </div>

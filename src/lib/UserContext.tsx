@@ -11,6 +11,7 @@ import {
   CoarseLocation,
 } from "@/types/location";
 import { quantizeCoordinates } from "@/lib/location/quantize";
+import { generateVoucherSignature, extractOfferHeadline } from "@/lib/services/attention-shield";
 
 interface User {
   id: string;
@@ -49,7 +50,9 @@ interface UserContextType {
   upgradeSubscription: (tier: string) => Promise<void>;
   submitLead: (adId: string, message: string, contactInfo?: string) => Promise<void>;
   coupons: any[];
+  claimedVouchers: string[];
   redeemPerk: (name: string, cost: number) => Promise<string>;
+  claimAdVoucher: (ad: any, customOffer?: string) => Promise<{ code: string; couponId: string }>;
   setLocation: (loc: { lat: number; lng: number } | null) => void;
   selectPersona: (id: string | null, redirectPath?: string) => Promise<void>;
   adFrequency: 'low' | 'balanced' | 'high';
@@ -230,6 +233,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
   });
 
   const [coupons, setCoupons] = useState<any[]>([]);
+  const [claimedVouchers, setClaimedVouchers] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('adme_claimed_vouchers');
+        if (stored) return JSON.parse(stored);
+      } catch {}
+    }
+    return [];
+  });
 
   const [preferences, setPreferences] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
@@ -997,6 +1009,71 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return generatedCode;
   };
 
+  const claimAdVoucher = async (ad: any, customOffer?: string): Promise<{ code: string; couponId: string }> => {
+    const couponId = crypto.randomUUID();
+    const merchantName = ad?.advertiser?.name || 'Local Merchant';
+    const headline = ad?.content?.headline || '';
+    const ctaLabel = ad?.cta?.label || '';
+    const offerText = customOffer || extractOfferHeadline(headline, ctaLabel);
+    const generatedCode = generateVoucherSignature(ad.id || 'ad', merchantName);
+
+    // Reward user +25 points for value exchange
+    addReward(25, `Voucher Saved: ${merchantName}`);
+
+    const newCoupon = {
+      id: couponId,
+      user_id: user?.id || '00000000-0000-0000-0000-000000000001',
+      code: generatedCode,
+      name: `${merchantName}: ${offerText}`,
+      cost_points: 0,
+      is_used: false,
+      created_at: new Date().toISOString()
+    };
+
+    setCoupons(prev => [newCoupon, ...prev]);
+
+    setClaimedVouchers(prev => {
+      if (prev.includes(ad.id)) return prev;
+      const updated = [...prev, ad.id];
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('adme_claimed_vouchers', JSON.stringify(updated));
+        } catch {}
+      }
+      return updated;
+    });
+
+    // Anonymous server conversion logging
+    if (typeof window !== 'undefined') {
+      fetch('/api/engagement/voucher-claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adId: ad.id,
+          merchantName,
+          offerName: offerText,
+          code: generatedCode
+        })
+      }).catch(err => console.warn('Failed to log voucher claim conversion:', err));
+    }
+
+    if (isSupabaseEnabled && user) {
+      try {
+        const supabase = createClient();
+        await supabase.rpc('redeem_perk_coupon', {
+          perk_name: `${merchantName}: ${offerText}`,
+          cost_points: 0,
+          generated_code: generatedCode,
+          coupon_id: couponId
+        });
+      } catch (e) {
+        console.warn("Failed to persist voucher coupon via RPC:", e);
+      }
+    }
+
+    return { code: generatedCode, couponId };
+  };
+
   const updateAdControlSettings = (settings: {
     adFrequency?: 'low' | 'balanced' | 'high';
     deliveryChannels?: { feed: boolean; geofenced: boolean; push: boolean };
@@ -1068,7 +1145,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, snoozedMerchants, categoryWeights, snoozeMerchant, adjustCategoryWeight, sendAdFeedback, location, locationState, setLocationMode, setManualCity, clearLocation, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, redeemPerk, setLocation, selectPersona, adFrequency, deliveryChannels, quietHours, updateAdControlSettings, locale, setLocale, t, loadingCatalog, claimGeofenceReward, claimViewportReward, sessionMode, exitDemoMode, refreshUser: loadData }}>
+    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, snoozedMerchants, categoryWeights, snoozeMerchant, adjustCategoryWeight, sendAdFeedback, location, locationState, setLocationMode, setManualCity, clearLocation, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, claimedVouchers, redeemPerk, claimAdVoucher, setLocation, selectPersona, adFrequency, deliveryChannels, quietHours, updateAdControlSettings, locale, setLocale, t, loadingCatalog, claimGeofenceReward, claimViewportReward, sessionMode, exitDemoMode, refreshUser: loadData }}>
       {children}
     </UserContext.Provider>
   );

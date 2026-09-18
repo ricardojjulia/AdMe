@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.3.0] - 2026-09-17
+
+### Added
+- **Instant Value-Exchange Voucher Minting ('Claim to Wallet') & Anti-Fatigue Attention Shield (COUNCIL-2026-009)**:
+  - **Client-Side Anti-Fatigue Attention Shield (`src/lib/services/attention-shield.ts`)**:
+    - Pure, deterministic session fatigue capping de-prioritizing over-served ads ($\ge$ 3 impressions).
+    - Intelligent category anti-clustering enforcing a strict limit of max 2 contiguous ads of the same category.
+    - Zero-knowledge ephemeral storage isolated entirely within browser `sessionStorage` with zero persistent user tracking.
+    - Exported `useAttentionShield` React hook for seamless state consumption and live fatigue metrics.
+  - **Direct Attention Value-Exchange Stash (`src/lib/UserContext.tsx`)**:
+    - Added `claimAdVoucher(ad)` action allowing users to instantly save any merchant promo deal or drop directly to their Coupon & Perk Wallet.
+    - Cryptographically structured coupon code generation (`VLB-7A9F-2026`) with deterministic merchant hashing.
+    - Awards +25 immediate attention reward points upon claim, creating a tangible reciprocal value exchange.
+    - Anonymous server-side conversion logging (`/api/engagement/voucher-claim`) without harvesting user PII.
+  - **UI/UX Feed & Card Integration**:
+    - Created `AttentionShieldBadge` component with live pulsing status indicator, fatigue count, zero-knowledge guarantee explainer, and one-click session reset.
+    - Integrated "🎟️ Claim Deal (+25 pts)" / "🎟️ Saved to Wallet" interactive buttons across `FeedCard`, `NativeAdCard`, and `CarouselAdCard`.
+    - Integrated voucher redemption into `/rewards` Coupon & Perk Wallet for in-store Barcode / QR matrix redemption.
+  - **Advertiser Studio Integration (`/studio`)**:
+    - Added `🎟️ Voucher Claims` conversion metric column to Campaign Performance analytics.
+    - Added voucher claim event firing in the Audience Behavior Simulator for interactive testing.
+  - **Verification & Test Suite**:
+    - Unit tests in `src/components/attention-shield.test.ts` (19 test suites, 133 tests passing).
+    - Playwright browser E2E test in `tests/e2e/attention-shield.spec.ts` (16/16 E2E tests passing).
+
 ## [5.2.0] - 2026-09-16
 
 ### Added
