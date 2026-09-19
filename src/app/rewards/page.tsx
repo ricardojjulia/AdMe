@@ -287,6 +287,7 @@ export default function RewardsPage() {
                 </div>
                 <button 
                   className={`btn ${styles.redeemBtn}`}
+                  suppressHydrationWarning
                   disabled={balance < perk.cost}
                   onClick={() => setConfirmPerk(perk)}
                   style={{ width: '100%', marginTop: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}

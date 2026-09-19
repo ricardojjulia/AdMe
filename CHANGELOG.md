@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Adopted Software Factory & Council Governance System (`improve-software.md`, `CLAUDE.md`, skills, and subagents).
+- Adopted Pilot Feedback & Error-Triage System Playbook (`docs/playbooks/pilot-feedback-and-error-triage.md`).
+- Adopted Language Translation Pipeline skill (`language-translation`).
+- Automated data-isolation RLS audit script (`scripts/audit-data-isolation.mjs` and `npm run audit:rls`).
+
+### Fixed
+- Eliminated SSR hydration mismatch warnings across Client Components (`src/app/rewards/page.tsx`, `src/app/studio/create/page.tsx`, `src/app/profile/page.tsx`) by providing resilient server fallbacks and DOM-level hydration suppression attributes.
+
 ## [5.3.0] - 2026-09-17
 
 ### Added

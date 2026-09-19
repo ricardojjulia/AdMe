@@ -31,6 +31,41 @@ To build the AdMe platform with a deep understanding of user preferences, ensuri
 *   **Propose** innovative ad formats that leverage the specific context of the AdMe application.
 *   **Document** all findings and architectural decisions related to ad delivery.
 
+
+---
+
+# AdMe Agent Rules & Development Governance
+
+- Read `ARCHITECTURE.md` and `docs/AI_COUNCIL_ARCHITECTURE_AND_IMPLEMENTATION_SPEC.md` before proposing or implementing changes. If no separate planning doc exists for a feature, those files plus `improve-software.md` are the source of truth.
+- Keep the repo aligned with its documented directory structure. Do not add ad hoc top-level folders.
+- Favor mainstream, well-supported dependencies. Write an ADR under `docs/adr/` (following the `docs/decisions/COUNCIL-YYYY-NNN.md` format) before introducing anything unusual.
+- Update `README.md`, `CHANGELOG.md`, and relevant docs under `/docs` with every meaningful feature change.
+- Document meaningful agent/factory runs transparently: intent, architecture impact, verification commands/results, residual risk, and follow-up work must be captured in committed docs or handoff notes — not only in chat.
+- Verify work with `npm run lint`, `npm run test`, and `npm run build` before handoff when feasible.
+- Do not push directly to `main`. Use a feature branch, push the branch, open a pull request, merge through GitHub after required checks and review, then pull the default branch.
+- **The Council runs before every non-trivial merge to the default branch.** This is a mandate, not a suggestion — see `improve-software.md` §0 for scope and exceptions. AdMe uses a dual Council discipline:
+  1. The 6-Persona Architecture Deliberation Board (The Architect, The Engineer, The Security Lead, The Product Owner, The QA Lead, The Data Engineer) for architectural and strategic proposals (see `docs/AI_COUNCIL_ARCHITECTURE_AND_IMPLEMENTATION_SPEC.md` and `scripts/run-council-deliberation.mjs`), which ratifies binding decisions into `docs/decisions/`.
+  2. The 5-Agent Council Audit & Software Factory Protocol (4 read-only audit agents + Documenter) defined in `improve-software.md` for reviewing non-trivial branches before merge.
+- **The `pr-review` gate runs before every merge, non-trivial or not** — in addition to, not instead of, the Council. `pr-reviewer` is read-only: it ranks findings Critical/Important/Minor and hands them back; it never merges, approves, or closes anything itself.
+- Use repo-local skills under `.claude/skills/` and `.agents/skills/` as the software-factory workflow:
+  - `council` — the Council review and Documenter close-out.
+  - `feature-factory` — non-trivial feature planning and orchestration (idea → story → spec).
+  - `build-with-tests` — implementation work.
+  - `pr-review` — the mandatory pre-merge review gate.
+  - `language-translation` — five-agent automated localization pipeline (integrated with AdMe's `@localization-governance` framework).
+- **Security-first discipline (non-negotiable):**
+  - Never expose secrets, credentials, PII, payment details, or raw database/stack-trace errors in responses, logs, error messages, or committed files.
+  - Enforce authorization at the data layer wherever the stack supports it — PostgreSQL Row-Level Security (RLS) policies keyed on `user_id` / `owner_id` / `merchant_id` across all public tables — not only in application code. Application-layer-only authorization is a known regression path.
+  - Run the automated data-isolation audit (`npm run audit:rls` / `node scripts/audit-data-isolation.mjs`) to verify RLS and policies on all tables.
+  - Validate all external input at system boundaries. Never trust a client-supplied identifier for an authorization or accounting decision (e.g. dwell time must be HMAC-signed via `/api/engagement/heartbeat`; reward points can only be updated via `SECURITY DEFINER` RPCs).
+- **Documentation discipline:** README, CHANGELOG, and docs are updated in the same change that needs them, not deferred. `ACTIVITY_LOG.md` and roadmap-style docs are updated to match reality.
+- **Testing discipline:**
+  - *Creation:* new or changed behavior gets a test near the change, sized to the actual risk.
+  - *Execution:* run targeted tests first, then the full test suite (`npm run test`), lint (`npm run lint`), and build (`npm run build`).
+  - *Evolution:* `test-verifier` and `implementation-validator` check tests and implementation against the approved story/brief. A red result is a stop condition.
+
+Update this file only through the same PR discipline it describes.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
