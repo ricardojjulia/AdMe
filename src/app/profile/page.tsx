@@ -157,21 +157,19 @@ export default function ProfilePage() {
     fetchSavedAds();
   }, [activeTab, savedAds]);
 
-  if (!user) return null;
-
   return (
-    <main className={`container ${styles.shell} animate-fade-in`}>
+    <main className={`container ${styles.shell} animate-fade-in`} suppressHydrationWarning>
       <header className={styles.header}>
         <div className={styles.headerTop}>
           <Link href="/" className={styles.backBtn}>← {t('back_to_feed')}</Link>
         </div>
         <h1 className={styles.title}>{t('profile_title')}</h1>
         <div className={styles.userInfo}>
-          <div className={styles.avatar}>{user.avatar}</div>
+          <div className={styles.avatar} suppressHydrationWarning>{user?.avatar || '👤'}</div>
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.2rem' }}>{user.name}</h2>
-            <div style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem' }}>
-              🔥 {user.currentStreak} {t('day_streak')} • ★ {savedAds.length} {t('saved')}
+            <h2 suppressHydrationWarning style={{ margin: 0, fontSize: '1.2rem' }}>{user?.name || 'Consumer'}</h2>
+            <div suppressHydrationWarning style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem' }}>
+              🔥 {user?.currentStreak || 0} {t('day_streak')} • ★ {savedAds.length} {t('saved')}
             </div>
           </div>
         </div>
@@ -209,6 +207,7 @@ export default function ProfilePage() {
               return (
                 <button
                   key={cat}
+                  suppressHydrationWarning
                   onClick={() => togglePreference(cat)}
                   className={`${styles.prefChip} ${isActive ? styles.active : ''} hover-lift`}
                 >
@@ -473,7 +472,7 @@ export default function ProfilePage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'hsl(var(--muted)/0.2)', padding: '1rem', borderRadius: '6px', border: '1px solid hsl(var(--border)/0.5)', fontSize: '0.85rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'hsl(var(--muted-foreground))' }}>{t('anonymous_uid')}</span>
-                  <code style={{ color: 'hsl(var(--primary))', fontWeight: 'bold' }}>{user.id}</code>
+                  <code suppressHydrationWarning style={{ color: 'hsl(var(--primary))', fontWeight: 'bold' }}>{user?.id || '...'}</code>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'hsl(var(--muted-foreground))' }}>{t('shared_preferences')}</span>

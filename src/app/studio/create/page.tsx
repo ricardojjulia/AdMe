@@ -796,6 +796,7 @@ export default function CreateAdPage() {
 
           <button
             type="submit"
+            suppressHydrationWarning
             disabled={loading || !hasSufficientFunds}
             className="btn"
             style={{ width: '100%', padding: '0.85rem', fontSize: '1rem', fontWeight: 700 }}
@@ -854,23 +855,26 @@ export default function CreateAdPage() {
                 {/* Card Header */}
                 <div style={{ padding: '0.85rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <div style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '8px',
-                      background: primaryColor,
-                      color: 'black',
-                      fontWeight: 800,
-                      fontSize: '0.85rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      overflow: 'hidden'
-                    }}>
+                    <div
+                      suppressHydrationWarning
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '8px',
+                        background: primaryColor,
+                        color: 'black',
+                        fontWeight: 800,
+                        fontSize: '0.85rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden'
+                      }}
+                    >
                       {user?.name ? user.name.substring(0, 2).toUpperCase() : 'VB'}
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'white', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <div suppressHydrationWarning style={{ fontSize: '0.85rem', fontWeight: 700, color: 'white', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                         {user?.name || 'Your Brand'}
                         {isBoosted && <span style={{ fontSize: '0.7rem' }}>🚀</span>}
                       </div>

@@ -14,6 +14,7 @@
     "test:e2e": "playwright test",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "audit:rls": "node scripts/audit-data-isolation.mjs",
     "version:check": "node scripts/check-version.mjs"
   },
   "dependencies": {
