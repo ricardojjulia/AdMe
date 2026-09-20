@@ -8,13 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Adopted Software Factory & Council Governance System (`improve-software.md`, `CLAUDE.md`, skills, and subagents).
-- Adopted Pilot Feedback & Error-Triage System Playbook (`docs/playbooks/pilot-feedback-and-error-triage.md`).
-- Adopted Language Translation Pipeline skill (`language-translation`).
-- Automated data-isolation RLS audit script (`scripts/audit-data-isolation.mjs` and `npm run audit:rls`).
+- **Zero-Knowledge Ad-Free 'Focus Pass' & Editorial Zen Stream Mode (COUNCIL-2026-010)**:
+  - **Ad-Free Focus Pass Architecture (`src/lib/services/focus-pass.ts` & `src/lib/hooks/useFocusPass.ts`)**:
+    - Dedicated redemption tiers: `15m Sprint` (100 pts), `1h Deep Work` (250 pts), and `24h Day of Calm` (500 pts).
+    - Cryptographic client-side HMAC token generation and validation preventing local storage clock tampering without central telemetry.
+    - Full suppression of commercial ads, carousels, and geofence alerts during active focus windows across `Feed.tsx` and `GeofenceAlert.tsx`.
+  - **Editorial Zen Stream (`src/components/ZenCard.tsx`)**:
+    - Curated mindful cards with tranquil imagery, inspiring philosophical quotes, and interactive 4-4-4 breathing pacing exercises.
+  - **Floating Zen HUD (`src/components/FocusModeWidget.tsx`)**:
+    - Minimalist collapsible HUD tracking real-time remaining focus duration with one-click cancellation or extension.
+  - **Rewards Store Integration (`src/app/rewards/page.tsx`)**:
+    - Dedicated Focus Pass redemption cards with real-time balance checks and instant ledger deduction RPC sync.
+  - Adopted Software Factory & Council Governance System (`improve-software.md`, `CLAUDE.md`, skills, and subagents).
+  - Adopted Pilot Feedback & Error-Triage System Playbook (`docs/playbooks/pilot-feedback-and-error-triage.md`).
+  - Adopted Language Translation Pipeline skill (`language-translation`).
+  - Automated data-isolation RLS audit script (`scripts/audit-data-isolation.mjs` and `npm run audit:rls`).
 
 ### Fixed
-- Eliminated SSR hydration mismatch warnings across Client Components (`src/app/rewards/page.tsx`, `src/app/studio/create/page.tsx`, `src/app/profile/page.tsx`) by providing resilient server fallbacks and DOM-level hydration suppression attributes.
+- Eliminated SSR hydration mismatch warnings across Client Components (`src/app/rewards/page.tsx`, `src/app/studio/create/page.tsx`, `src/app/profile/page.tsx`, `src/components/Feed.tsx`, `src/components/FocusModeWidget.tsx`) by replacing brittle attribute suppression with robust client-mount gating.
 
 ## [5.3.0] - 2026-09-17
 

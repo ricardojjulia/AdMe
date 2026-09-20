@@ -8,9 +8,10 @@ import styles from "./page.module.css";
 import { createClient } from "@/lib/supabase/client";
 import { PollDeck } from "@/components/PollDeck";
 import { CouponWallet } from "@/components/CouponWallet";
+import { FOCUS_TIERS, FocusPassTier } from "@/lib/services/focus-pass";
 
 export default function RewardsPage() {
-  const { user, savedAds, redeemPerk, locale, t } = useUser();
+  const { user, savedAds, redeemPerk, isFocusActive, focusPass, focusTimeLeft, activateFocusPass, cancelFocusPass, locale, t } = useUser();
   const { addToast } = useToast();
   const [history, setHistory] = useState<any[]>([]);
   const [localAds, setLocalAds] = useState<any[]>([]);
@@ -20,6 +21,11 @@ export default function RewardsPage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [affordableOnly, setAffordableOnly] = useState(false);
   const [confirmPerk, setConfirmPerk] = useState<any | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const balance = user?.rewardsBalance || 0;
 
@@ -163,9 +169,9 @@ export default function RewardsPage() {
         <section className={`${styles.balanceCard} glass`}>
           <div className={styles.balanceContent}>
             <h2>{t('available_balance')}</h2>
-            <div className={styles.balanceAmount} suppressHydrationWarning>
+            <div className={styles.balanceAmount}>
               <span className={styles.currency}>★</span>
-              {balance.toLocaleString()}
+              {mounted ? balance.toLocaleString() : '0'}
             </div>
             <p className={styles.balanceSubtext}>
               {t('saved_offers_redemption', { count: savedAds.length })}
@@ -201,6 +207,103 @@ export default function RewardsPage() {
 
       {/* Vouchers Wallet */}
       <CouponWallet />
+
+      {/* Zero-Knowledge Ad-Free Focus Passes (COUNCIL-2026-010) */}
+      <section className={styles.storeSection} style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <span style={{ fontSize: '1.4rem' }}>🧘</span>
+              <h3 style={{ margin: 0 }}>{t('focus_pass_section_title')}</h3>
+              <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: '9999px', background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', fontWeight: 600, border: '1px solid rgba(52, 211, 153, 0.3)' }}>
+                {t('focus_pass_zk_tag')}
+              </span>
+            </div>
+            <p className={styles.storeSubtext} style={{ margin: '0.35rem 0 0 0', maxWidth: '650px' }}>
+              {t('focus_pass_section_desc')}
+            </p>
+          </div>
+          {isFocusActive && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(16, 185, 129, 0.1)', padding: '0.4rem 0.85rem', borderRadius: '9999px', border: '1px solid rgba(52, 211, 153, 0.3)' }}>
+              <span style={{ fontSize: '0.85rem', color: '#34d399', fontWeight: 600 }}>
+                ⏳ {t('focus_pass_active_label')}: {focusTimeLeft}
+              </span>
+              <button
+                type="button"
+                onClick={cancelFocusPass}
+                style={{ background: 'transparent', border: 'none', color: '#f87171', fontSize: '0.75rem', cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                {t('focus_mode_end_early')}
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem', marginBottom: '2.5rem' }}>
+          {(['15m', '1h', '24h'] as FocusPassTier[]).map((tierKey) => {
+            const tier = FOCUS_TIERS[tierKey];
+            const isCurrentlyActive = mounted && isFocusActive && focusPass.tier === tierKey;
+            const canAfford = mounted && balance >= tier.cost;
+
+            return (
+              <div
+                key={tierKey}
+                className="glass hover-lift"
+                style={{
+                  padding: '1.25rem',
+                  borderRadius: '0.75rem',
+                  border: isCurrentlyActive ? '1px solid #34d399' : '1px solid rgba(255, 255, 255, 0.1)',
+                  background: isCurrentlyActive ? 'rgba(6, 78, 59, 0.25)' : 'rgba(255, 255, 255, 0.03)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '1rem'
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#f3f4f6' }}>{tier.name}</h4>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fbbf24' }}>
+                      {tier.cost} pts
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.82rem', color: 'hsl(var(--muted-foreground))', lineHeight: '1.4' }}>
+                    {tier.description}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn"
+                  data-testid={`redeem-focus-pass-${tierKey}`}
+                  disabled={mounted ? (!canAfford && !isCurrentlyActive) : true}
+                  onClick={async () => {
+                    const success = await activateFocusPass(tierKey);
+                    if (success) {
+                      addToast(t('focus_pass_activated_toast', { name: tier.name }), 'success');
+                    } else {
+                      addToast(t('focus_pass_insufficient_points'), 'error');
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.55rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    background: isCurrentlyActive ? '#10b981' : (canAfford ? 'hsl(var(--primary))' : 'rgba(255,255,255,0.1)'),
+                    color: isCurrentlyActive ? 'white' : (canAfford ? 'hsl(var(--primary-foreground))' : '#9ca3af'),
+                    cursor: (mounted && !canAfford && !isCurrentlyActive) ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {isCurrentlyActive
+                    ? `✓ ${t('focus_pass_btn_active')}`
+                    : (canAfford || !mounted ? `${t('focus_pass_btn_activate')} (${tier.cost} pts)` : t('focus_pass_btn_need_points', { cost: tier.cost }))}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Rewards Store Marketplace */}
       <section className={styles.storeSection} style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '2rem' }}>

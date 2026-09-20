@@ -351,5 +351,22 @@
   "event_details": "Detalles del Evento",
   "fair_use_disclaimer": "Curaduría comunitaria sin fines comerciales · 0% comisión · Crédito total a la fuente original",
   "hide_listing": "Ocultar",
-  "listing_hidden_toast": "Publicación ocultada de tu feed."
+  "listing_hidden_toast": "Publicación ocultada de tu feed.",
+  "focus_mode_zen_active": "Modo Zen Activo",
+  "focus_mode_silence_tooltip": "Anuncios y radar de ofertas silenciados",
+  "focus_mode_cancel_title": "Cancelar ventana de enfoque y reanudar feed normal",
+  "focus_mode_end_early": "Terminar Modo Zen",
+  "zen_mode_badge": "Transmisión Zen Editorial",
+  "zen_editorial_note": "Calma curada · Cero rastreo comercial",
+  "zen_take_a_breath": "Respira profundo",
+  "zen_exhale_breathe": "Exhala suavemente...",
+  "focus_pass_section_title": "Pases de Enfoque Sin Anuncios",
+  "focus_pass_zk_tag": "Cero-Conocimiento",
+  "focus_pass_section_desc": "Canjea tus puntos ganados por tranquilidad sin anuncios. Durante tu ventana activa, los anuncios comerciales y alertas de radar son silenciados y sustituidos por la transmisión Zen.",
+  "focus_pass_active_label": "Ventana Activa",
+  "focus_pass_btn_active": "Activo Ahora",
+  "focus_pass_btn_activate": "Activar Pase",
+  "focus_pass_btn_need_points": "Faltan {cost} pts",
+  "focus_pass_activated_toast": "¡{name} activado! Disfruta de tu sesión de enfoque sin anuncios.",
+  "focus_pass_insufficient_points": "Puntos insuficientes para este pase de enfoque."
 }

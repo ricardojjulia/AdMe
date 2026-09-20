@@ -12,6 +12,16 @@ import {
 } from "@/types/location";
 import { quantizeCoordinates } from "@/lib/location/quantize";
 import { generateVoucherSignature, extractOfferHeadline } from "@/lib/services/attention-shield";
+import {
+  FocusPassTier,
+  FocusPassState,
+  getStoredFocusPass,
+  setStoredFocusPass,
+  clearStoredFocusPass,
+  createFocusToken,
+  FOCUS_TIERS
+} from "@/lib/services/focus-pass";
+import { formatFocusTimeLeft } from "@/lib/hooks/useFocusPass";
 
 interface User {
   id: string;
@@ -73,6 +83,11 @@ interface UserContextType {
   sendAdFeedback: (adId: string, action: 'snooze_advertiser' | 'downweight_category' | 'irrelevant' | 'helpful', category: string) => Promise<void>;
   exitDemoMode: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  focusPass: FocusPassState;
+  isFocusActive: boolean;
+  focusTimeLeft: string;
+  activateFocusPass: (tier: FocusPassTier) => Promise<boolean>;
+  cancelFocusPass: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -233,6 +248,21 @@ export function UserProvider({ children }: { children: ReactNode }) {
   });
 
   const [coupons, setCoupons] = useState<any[]>([]);
+  const [focusPass, setFocusPass] = useState<FocusPassState>(() => {
+    if (typeof window !== 'undefined') {
+      return getStoredFocusPass();
+    }
+    return { active: false, tier: null, expiresAt: null, token: null };
+  });
+  const [focusRemainingSeconds, setFocusRemainingSeconds] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = getStoredFocusPass();
+      if (stored.active && stored.expiresAt) {
+        return Math.max(0, Math.floor((stored.expiresAt - Date.now()) / 1000));
+      }
+    }
+    return 0;
+  });
   const [claimedVouchers, setClaimedVouchers] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -498,6 +528,28 @@ export function UserProvider({ children }: { children: ReactNode }) {
       });
       setPreferences(defaultPersona.preferences);
     }
+  }, []);
+ 
+  // Tick Focus Pass countdown
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const stored = getStoredFocusPass();
+      if (stored.active && stored.expiresAt) {
+        const diffMs = stored.expiresAt - Date.now();
+        if (diffMs <= 0) {
+          clearStoredFocusPass();
+          setFocusPass({ active: false, tier: null, expiresAt: null, token: null });
+          setFocusRemainingSeconds(0);
+        } else {
+          setFocusPass(stored);
+          setFocusRemainingSeconds(Math.floor(diffMs / 1000));
+        }
+      } else {
+        setFocusRemainingSeconds(0);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -1093,6 +1145,51 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const activateFocusPass = async (tier: FocusPassTier): Promise<boolean> => {
+    const config = FOCUS_TIERS[tier];
+    if (!config) return false;
+    if (!user || user.rewardsBalance < config.cost) {
+      return false;
+    }
+
+    const expiresAt = Date.now() + config.durationMs;
+    const token = createFocusToken(tier, expiresAt);
+    const newState: FocusPassState = {
+      active: true,
+      tier,
+      expiresAt,
+      token
+    };
+
+    // Optimistically deduct points
+    setUser(prev => prev ? { ...prev, rewardsBalance: Math.max(0, prev.rewardsBalance - config.cost) } : prev);
+
+    setStoredFocusPass(newState);
+    setFocusPass(newState);
+    setFocusRemainingSeconds(Math.floor(config.durationMs / 1000));
+
+    // Ledger write
+    if (isSupabaseEnabled && user) {
+      try {
+        const supabase = createClient();
+        await supabase.rpc('add_reward_points', {
+          points: -config.cost,
+          action_name: `Ad-Free Focus Pass: ${config.name}`
+        });
+      } catch (e) {
+        console.warn("Failed to deduct points for Focus Pass via RPC:", e);
+      }
+    }
+
+    return true;
+  };
+
+  const cancelFocusPass = () => {
+    clearStoredFocusPass();
+    setFocusPass({ active: false, tier: null, expiresAt: null, token: null });
+    setFocusRemainingSeconds(0);
+  };
+
   const exitDemoMode = async () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('adme_demo_persona_id');
@@ -1145,7 +1242,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, snoozedMerchants, categoryWeights, snoozeMerchant, adjustCategoryWeight, sendAdFeedback, location, locationState, setLocationMode, setManualCity, clearLocation, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, claimedVouchers, redeemPerk, claimAdVoucher, setLocation, selectPersona, adFrequency, deliveryChannels, quietHours, updateAdControlSettings, locale, setLocale, t, loadingCatalog, claimGeofenceReward, claimViewportReward, sessionMode, exitDemoMode, refreshUser: loadData }}>
+    <UserContext.Provider value={{ user, preferences, savedAds, reportedAds, skippedAds, snoozedMerchants, categoryWeights, snoozeMerchant, adjustCategoryWeight, sendAdFeedback, location, locationState, setLocationMode, setManualCity, clearLocation, addReward, togglePreference, toggleSavedAd, reportAd, skipAd, updateStreak, switchRole, buyCredits, deductCredits, enableLocation, upgradeSubscription, submitLead, coupons, claimedVouchers, redeemPerk, claimAdVoucher, setLocation, selectPersona, adFrequency, deliveryChannels, quietHours, updateAdControlSettings, locale, setLocale, t, loadingCatalog, claimGeofenceReward, claimViewportReward, sessionMode, exitDemoMode, refreshUser: loadData, focusPass, isFocusActive: focusPass.active && focusRemainingSeconds > 0, focusTimeLeft: formatFocusTimeLeft(focusRemainingSeconds), activateFocusPass, cancelFocusPass }}>
       {children}
     </UserContext.Provider>
   );

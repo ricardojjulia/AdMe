@@ -12,6 +12,9 @@ import { getLocalDiscoveryAds } from "@/lib/services/local-discovery";
 import { getPublicSyndicatedPosts } from "@/lib/services/public-syndication";
 import { AttentionShieldBadge } from "./AttentionShieldBadge";
 import { applyAntiClustering, getFatiguedAdIds, recordSessionImpression } from "@/lib/services/attention-shield";
+import { FocusModeWidget } from "./FocusModeWidget";
+import { ZenCard } from "./ZenCard";
+import { ZEN_STREAM_ITEMS } from "@/lib/services/focus-pass";
 import styles from "./Feed.module.css";
 
 interface FeedProps {
@@ -65,7 +68,12 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [rotatedCount, setRotatedCount] = useState(0);
-  const { user, preferences, reportedAds, skippedAds, snoozedMerchants, categoryWeights, location, locationState, adFrequency, deliveryChannels, t } = useUser();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  const { user, preferences, reportedAds, skippedAds, snoozedMerchants, categoryWeights, location, locationState, adFrequency, deliveryChannels, isFocusActive, t } = useUser();
 
   useEffect(() => {
     setLoading(true);
@@ -333,6 +341,7 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
   const visibleItems = timeline.filter(item => {
     const isAdItem = (item as Ad).advertiser !== undefined;
     if (isAdItem) {
+      if (mounted && isFocusActive) return false;
       const ad = item as Ad;
       if (reportedAds.includes(ad.id) || skippedAds.includes(ad.id)) return false;
       if (snoozedMerchants.includes(ad.advertiser.name) || snoozedMerchants.includes(ad.id)) return false;
@@ -345,10 +354,19 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
 
   return (
     <div className={styles.feed}>
+      <FocusModeWidget />
       <AttentionShieldBadge
         rotatedCount={rotatedCount}
         onResetFeed={() => setRefreshKey(k => k + 1)}
       />
+
+      {mounted && isFocusActive && (
+        <div data-testid="zen-stream-container">
+          {ZEN_STREAM_ITEMS.map((zen) => (
+            <ZenCard key={zen.id} item={zen} />
+          ))}
+        </div>
+      )}
 
       {visibleItems.length === 0 && !loading && (
         <div className={styles.empty}>
