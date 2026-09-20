@@ -58,6 +58,10 @@ To build the AdMe platform with a deep understanding of user preferences, ensuri
   - Enforce authorization at the data layer wherever the stack supports it — PostgreSQL Row-Level Security (RLS) policies keyed on `user_id` / `owner_id` / `merchant_id` across all public tables — not only in application code. Application-layer-only authorization is a known regression path.
   - Run the automated data-isolation audit (`npm run audit:rls` / `node scripts/audit-data-isolation.mjs`) to verify RLS and policies on all tables.
   - Validate all external input at system boundaries. Never trust a client-supplied identifier for an authorization or accounting decision (e.g. dwell time must be HMAC-signed via `/api/engagement/heartbeat`; reward points can only be updated via `SECURITY DEFINER` RPCs).
+- **Background Task & Process Hygiene (Mandatory):**
+  - Never run unconstrained background commands or inline scripts that leave open network/database handles or open event loops.
+  - All ad-hoc Node.js or bash scripts interacting with PostgreSQL, Redis, or external services MUST enforce explicit short timeouts (`connectionTimeoutMillis: 3000`, watchdog timers) and explicitly call `process.exit(0)` on completion or `process.exit(1)` on error. Use `npm run db:query` / `node scripts/db-query.mjs` for database inspection.
+  - Never leave background tasks running when concluding a run, handoff, or user turn. Agents must execute a task audit (`manage_task` with action `'list'`) and terminate any non-daemon or orphan background tasks before reporting completion or relinquishing turns.
 - **Documentation discipline:** README, CHANGELOG, and docs are updated in the same change that needs them, not deferred. `ACTIVITY_LOG.md` and roadmap-style docs are updated to match reality.
 - **Testing discipline:**
   - *Creation:* new or changed behavior gets a test near the change, sized to the actual risk.
