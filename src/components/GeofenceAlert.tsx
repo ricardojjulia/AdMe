@@ -334,13 +334,21 @@ export function ScratchCard({ onComplete, brandName }: ScratchCardProps) {
 }
 
 export function GeofenceAlert() {
-  const { location, savedAds, coupons, deliveryChannels, quietHours, claimGeofenceReward, locale, t } = useUser();
+  const { location, savedAds, coupons, deliveryChannels, quietHours, claimGeofenceReward, isFocusActive, locale, t } = useUser();
   const { addToast } = useToast();
   const [alerts, setAlerts] = useState<ActiveAlert[]>([]);
   const [dismissedAds, setDismissedAds] = useState<string[]>([]);
   const [claimedCoupons, setClaimedCoupons] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    // Silence proximity alerts if Focus Pass is active
+    if (isFocusActive) {
+      if (alerts.length > 0) {
+        setAlerts([]);
+      }
+      return;
+    }
+
     // Clear alerts if geofenced channel is disabled
     if (!deliveryChannels.geofenced) {
       if (alerts.length > 0) {
@@ -463,7 +471,7 @@ export function GeofenceAlert() {
     }
 
     checkProximity();
-  }, [location, savedAds, coupons, dismissedAds, deliveryChannels, quietHours]);
+  }, [location, savedAds, coupons, dismissedAds, deliveryChannels, quietHours, isFocusActive]);
 
   const handleScratchComplete = async (alert: ActiveAlert) => {
     const success = await claimGeofenceReward(alert.adId, 50, alert.brandName);
@@ -506,7 +514,7 @@ export function GeofenceAlert() {
     addToast(t("copied_to_clipboard"), "success");
   };
 
-  if (alerts.length === 0) return null;
+  if (isFocusActive || alerts.length === 0) return null;
 
   return (
     <div className={styles.alertContainer}>

@@ -351,5 +351,22 @@
   "event_details": "Event Details",
   "fair_use_disclaimer": "Non-commercial community curation · 0% commission · Full credit to original source",
   "hide_listing": "Hide",
-  "listing_hidden_toast": "Listing hidden from your feed."
+  "listing_hidden_toast": "Listing hidden from your feed.",
+  "focus_mode_zen_active": "Zen Focus Active",
+  "focus_mode_silence_tooltip": "Commercial ads & proximity radar muted",
+  "focus_mode_cancel_title": "Cancel active focus window and restore regular feed",
+  "focus_mode_end_early": "End Focus",
+  "zen_mode_badge": "Editorial Zen Stream",
+  "zen_editorial_note": "Curated calm · Zero commercial tracking",
+  "zen_take_a_breath": "Take a Deep Breath",
+  "zen_exhale_breathe": "Exhale slowly...",
+  "focus_pass_section_title": "Ad-Free Focus Passes",
+  "focus_pass_zk_tag": "Zero-Knowledge",
+  "focus_pass_section_desc": "Exchange your earned attention dividends for ad-free calm. During active windows, all ads and radar interruptions are silenced and replaced by our tranquil Zen Stream.",
+  "focus_pass_active_label": "Active Window",
+  "focus_pass_btn_active": "Active Now",
+  "focus_pass_btn_activate": "Activate Pass",
+  "focus_pass_btn_need_points": "Need {cost} pts",
+  "focus_pass_activated_toast": "{name} activated! Enjoy your tranquil ad-free focus.",
+  "focus_pass_insufficient_points": "Insufficient reward points for this focus pass."
 }
