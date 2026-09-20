@@ -15,6 +15,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "audit:rls": "node scripts/audit-data-isolation.mjs",
+    "db:query": "node scripts/db-query.mjs",
     "version:check": "node scripts/check-version.mjs"
   },
   "dependencies": {
