@@ -15,13 +15,17 @@ import { ScratchCard, QuizCard } from "./InteractionUnits";
 import { ZkpWebGLSwiper } from "./ZkpWebGLSwiper";
 import { ReportModal } from "./ReportModal";
 import { AdTransparencyModal } from "./AdTransparencyModal";
+import { IntentResonanceBadge } from "./IntentResonanceBadge";
+import { IntentMode, IntentResonanceInfo } from "@/lib/services/intent-tuner";
 import styles from "./FeedCard.module.css";
 
 interface FeedCardProps {
   ad: Ad;
+  intentMatch?: IntentResonanceInfo;
+  intent?: IntentMode;
 }
 
-export function FeedCard({ ad }: FeedCardProps) {
+export function FeedCard({ ad, intentMatch, intent = 'all' }: FeedCardProps) {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isTransparencyOpen, setIsTransparencyOpen] = useState(false);
   const { ref, logClick, logLike, isLiked } = useEngagementAnalytics(ad.id);
@@ -118,11 +122,11 @@ export function FeedCard({ ad }: FeedCardProps) {
   }, [ad.id]);
 
   if (ad.formatType === 'native') {
-    return <NativeAdCard ad={ad} />;
+    return <NativeAdCard ad={ad} intentMatch={intentMatch} intent={intent} />;
   }
 
   if (ad.formatType === 'carousel') {
-    return <CarouselAdCard ad={ad} />;
+    return <CarouselAdCard ad={ad} intentMatch={intentMatch} intent={intent} />;
   }
 
   const handleMouseEnter = () => {
@@ -181,6 +185,13 @@ export function FeedCard({ ad }: FeedCardProps) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          {intentMatch && (
+            <IntentResonanceBadge
+              labelKey={intentMatch.labelKey}
+              defaultText={intentMatch.defaultText}
+              intent={intent}
+            />
+          )}
           <button 
             type="button" 
             onClick={() => setIsTransparencyOpen(true)}

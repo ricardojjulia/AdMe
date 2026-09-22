@@ -368,5 +368,14 @@
   "focus_pass_btn_activate": "Activate Pass",
   "focus_pass_btn_need_points": "Need {cost} pts",
   "focus_pass_activated_toast": "{name} activated! Enjoy your tranquil ad-free focus.",
-  "focus_pass_insufficient_points": "Insufficient reward points for this focus pass."
+  "focus_pass_insufficient_points": "Insufficient reward points for this focus pass.",
+  "intent_tuner_title": "Ad Radar Intent Tuner",
+  "intent_mode_all": "Discovery",
+  "intent_mode_local": "Local Gems",
+  "intent_mode_deals": "Deal Hunter",
+  "intent_mode_mindful": "Mindful",
+  "intent_badge_local": "📍 Local Gem",
+  "intent_badge_deal": "🏷️ Deal Pick",
+  "intent_badge_mindful": "🍃 Mindful Pick",
+  "intent_zero_tracking_tooltip": "Zero Tracking • Ephemeral Memory"
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Ad } from "@/types/ad";
 import { OrganicPost } from "@/lib/mock-data";
 import { calculateDistanceMiles } from "@/lib/utils/distance";
@@ -15,6 +15,8 @@ import { applyAntiClustering, getFatiguedAdIds, recordSessionImpression } from "
 import { FocusModeWidget } from "./FocusModeWidget";
 import { ZenCard } from "./ZenCard";
 import { ZEN_STREAM_ITEMS } from "@/lib/services/focus-pass";
+import { IntentTunerHUD } from "./IntentTunerHUD";
+import { IntentMode, applyIntentRanking } from "@/lib/services/intent-tuner";
 import styles from "./Feed.module.css";
 
 interface FeedProps {
@@ -65,6 +67,7 @@ export function performABSplitTest(ads: Ad[], userId: string | null): Ad[] {
 
 export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
   const [timeline, setTimeline] = useState<(Ad | OrganicPost)[]>([]);
+  const [activeIntent, setActiveIntent] = useState<IntentMode>('all');
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [rotatedCount, setRotatedCount] = useState(0);
@@ -324,6 +327,11 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
     return () => clearTimeout(timer);
   }, [preferences.join(','), snoozedMerchants.join(','), searchQuery, activeTab, location, locationState.privacyMode, locationState.coarseLocation?.city, adFrequency, deliveryChannels, refreshKey]);
 
+  // Apply client-side zero-tracking intent ranking
+  const { timeline: rankedTimeline, intentResonances } = useMemo(() => {
+    return applyIntentRanking(timeline, activeIntent);
+  }, [timeline, activeIntent]);
+
   if (!deliveryChannels.feed) {
     return (
       <div className={styles.feed}>
@@ -338,7 +346,7 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
   const maxAds = adFrequency === 'low' ? 5 : (adFrequency === 'balanced' ? 14 : 25);
   let adCount = 0;
   
-  const visibleItems = timeline.filter(item => {
+  const visibleItems = rankedTimeline.filter(item => {
     const isAdItem = (item as Ad).advertiser !== undefined;
     if (isAdItem) {
       if (mounted && isFocusActive) return false;
@@ -358,6 +366,10 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
       <AttentionShieldBadge
         rotatedCount={rotatedCount}
         onResetFeed={() => setRefreshKey(k => k + 1)}
+      />
+      <IntentTunerHUD
+        activeIntent={activeIntent}
+        onSelectIntent={setActiveIntent}
       />
 
       {mounted && isFocusActive && (
@@ -391,7 +403,15 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
       {visibleItems.map((item) => {
         const isAdItem = (item as Ad).advertiser !== undefined;
         if (isAdItem) {
-          return <FeedCard key={item.id} ad={item as Ad} />;
+          const ad = item as Ad;
+          return (
+            <FeedCard
+              key={item.id}
+              ad={ad}
+              intentMatch={intentResonances[ad.id]}
+              intent={activeIntent}
+            />
+          );
         } else {
           return <OrganicPostCard key={item.id} post={item as OrganicPost} />;
         }

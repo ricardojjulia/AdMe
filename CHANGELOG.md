@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Ephemeral Contextual Intent Tuner & Client-Side Zero-Tracking Feed Personalization Engine (COUNCIL-2026-011)**:
+  - **Client-Side Intent Tuner Engine (`src/lib/services/intent-tuner.ts`)**:
+    - Pure, deterministic scoring for 4 contextual modes: `All-Around Discovery`, `Local Gems`, `Deal Hunter`, and `Mindful / Low-Stimulus`.
+    - Real-time scoring factoring in geographic proximity, discount density, typographical agitation penalties (exclamation counts, all-caps clickbait), ethical smart score, and artisan authenticity.
+    - Zero server-side tracking, zero persistent profiling cookies, zero user mood retention.
+  - **Floating Glassmorphic Intent Tuner HUD (`src/components/IntentTunerHUD.tsx`)**:
+    - Accessible, keyboard-navigable (`role="radiogroup"`) pill selector atop the consumer feed.
+    - Real-time zero-tracking privacy assurance indicator.
+  - **Intent Resonance Micro-Badges (`src/components/IntentResonanceBadge.tsx`)**:
+    - Dynamic pulsing badges (`📍 Local Gem`, `🏷️ Deal Pick`, `🌿 Mindful Match`) rendering explanation context directly on resonant feed cards across `FeedCard`, `NativeAdCard`, and `CarouselAdCard`.
+  - **Localization & Test Verification**:
+    - Full English (`en-US`) and Puerto Rican Spanish (`es-PR`) translation keys in i18n catalogs.
+    - Comprehensive unit test suite (`src/components/intent-tuner.test.ts`, 12 tests) and Playwright browser E2E test (`tests/e2e/intent-tuner.spec.ts`).
 - **Zero-Knowledge Ad-Free 'Focus Pass' & Editorial Zen Stream Mode (COUNCIL-2026-010)**:
   - **Ad-Free Focus Pass Architecture (`src/lib/services/focus-pass.ts` & `src/lib/hooks/useFocusPass.ts`)**:
     - Dedicated redemption tiers: `15m Sprint` (100 pts), `1h Deep Work` (250 pts), and `24h Day of Calm` (500 pts).
