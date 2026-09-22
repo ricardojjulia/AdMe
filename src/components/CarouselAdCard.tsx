@@ -11,13 +11,17 @@ import { useToast } from "@/lib/ToastContext";
 import { LeadModal } from "./LeadModal";
 import { ReportModal } from "./ReportModal";
 import { AdTransparencyModal } from "./AdTransparencyModal";
+import { IntentResonanceBadge } from "./IntentResonanceBadge";
+import { IntentMode, IntentResonanceInfo } from "@/lib/services/intent-tuner";
 import styles from "./CarouselAdCard.module.css";
 
 interface CarouselAdCardProps {
   ad: Ad;
+  intentMatch?: IntentResonanceInfo;
+  intent?: IntentMode;
 }
 
-export function CarouselAdCard({ ad }: CarouselAdCardProps) {
+export function CarouselAdCard({ ad, intentMatch, intent = 'all' }: CarouselAdCardProps) {
   const { ref, logClick, logLike, isLiked } = useEngagementAnalytics(ad.id);
   const { toggleSavedAd, savedAds, reportAd, skipAd, claimedVouchers, claimAdVoucher, t } = useUser();
   const { addToast } = useToast();
@@ -130,6 +134,13 @@ export function CarouselAdCard({ ad }: CarouselAdCardProps) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          {intentMatch && (
+            <IntentResonanceBadge
+              labelKey={intentMatch.labelKey}
+              defaultText={intentMatch.defaultText}
+              intent={intent}
+            />
+          )}
           <button 
             type="button" 
             onClick={() => setIsTransparencyOpen(true)}

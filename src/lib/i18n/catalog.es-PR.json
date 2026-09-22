@@ -368,5 +368,14 @@
   "focus_pass_btn_activate": "Activar Pase",
   "focus_pass_btn_need_points": "Faltan {cost} pts",
   "focus_pass_activated_toast": "¡{name} activado! Disfruta de tu sesión de enfoque sin anuncios.",
-  "focus_pass_insufficient_points": "Puntos insuficientes para este pase de enfoque."
+  "focus_pass_insufficient_points": "Puntos insuficientes para este pase de enfoque.",
+  "intent_tuner_title": "Sintonizador de Intención",
+  "intent_mode_all": "Descubrimiento",
+  "intent_mode_local": "Tesoros Locales",
+  "intent_mode_deals": "Cazador de Ofertas",
+  "intent_mode_mindful": "Mente Serena",
+  "intent_badge_local": "📍 Tesoro Local",
+  "intent_badge_deal": "🏷️ Oferta Destacada",
+  "intent_badge_mindful": "🍃 Elección Zen",
+  "intent_zero_tracking_tooltip": "Cero Rastreo • Memoria Efímera"
 }

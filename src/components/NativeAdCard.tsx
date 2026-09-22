@@ -14,13 +14,17 @@ import { ScratchCard, QuizCard } from "./InteractionUnits";
 import { ReportModal } from "./ReportModal";
 import { AdTransparencyModal } from "./AdTransparencyModal";
 import EditorialVisual from "./EditorialVisual";
+import { IntentResonanceBadge } from "./IntentResonanceBadge";
+import { IntentMode, IntentResonanceInfo } from "@/lib/services/intent-tuner";
 import styles from "./NativeAdCard.module.css";
 
 interface NativeAdCardProps {
   ad: Ad;
+  intentMatch?: IntentResonanceInfo;
+  intent?: IntentMode;
 }
 
-export function NativeAdCard({ ad }: NativeAdCardProps) {
+export function NativeAdCard({ ad, intentMatch, intent = 'all' }: NativeAdCardProps) {
   const { ref, logClick, logLike, isLiked } = useEngagementAnalytics(ad.id);
   const { toggleSavedAd, savedAds, reportAd, skipAd, addReward, claimedVouchers, claimAdVoucher, t } = useUser();
   const { addToast } = useToast();
@@ -199,6 +203,13 @@ export function NativeAdCard({ ad }: NativeAdCardProps) {
         <div>
           <div className={styles.meta} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+              {intentMatch && (
+                <IntentResonanceBadge
+                  labelKey={intentMatch.labelKey}
+                  defaultText={intentMatch.defaultText}
+                  intent={intent}
+                />
+              )}
               <span className={styles.category} style={{ color: ad.content.primaryColor }}>
                 {ad.category}
               </span>
