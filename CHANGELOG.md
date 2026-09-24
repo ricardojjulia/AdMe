@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Full Software Testing Suite & Unified 6-Tier Verification Pipeline**:
+  - **Comprehensive API Integration Matrix (`tests/integration/api-endpoints.test.ts`)**:
+    - 21 automated integration tests covering 100% of Next.js route handlers (`/api/checkout`, `/api/checkout/verify`, `/api/engagement/*`, `/api/location/coarse`, `/api/marketplace/nearby`, `/api/places/nearby`, `/api/moderation/ad`, `/api/moderation/report`, `/api/studio/copilot`, `/api/webhooks/stripe`).
+  - **Full-Stack Playwright Browser E2E Suite (`tests/e2e/`)**:
+    - Expanded end-to-end browser coverage to 25 test journeys across all 26 application routes.
+    - Added `tests/e2e/checkout-and-studio.spec.ts` for Stripe monetization and advertiser campaign lifecycle.
+    - Added `tests/e2e/admin-hq-and-roles.spec.ts` for persona switching, role guards, and bilingual localization (`EN` vs `ES-PR`).
+  - **Unified Verification Orchestrator (`scripts/run-full-test-suite.mjs` & `npm run test:all`)**:
+    - Single-command 6-tier release gate executing Version Check, ESLint, TypeScript Typecheck, RLS Security Audit, Vitest Unit/Integration Suites, and Playwright E2E with structured summary reporting.
+  - **Formal Testing Guidelines & Release Governance (`docs/testing/TESTING_GUIDELINES.md`)**:
+    - Enforces mandatory testing surfaces for all future pull requests and features.
+    - Wired pre-merge testing gates into `AGENTS.md`, `improve-software.md`, and GitHub Actions CI (`.github/workflows/ci.yml`).
 - **Ephemeral Contextual Intent Tuner & Client-Side Zero-Tracking Feed Personalization Engine (COUNCIL-2026-011)**:
   - **Client-Side Intent Tuner Engine (`src/lib/services/intent-tuner.ts`)**:
     - Pure, deterministic scoring for 4 contextual modes: `All-Around Discovery`, `Local Gems`, `Deal Hunter`, and `Mindful / Low-Stimulus`.

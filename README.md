@@ -200,37 +200,27 @@ Meta and TikTok monitor every click, scroll, and keystroke. AdMe stores **zero p
 
 ## 🧪 Testing & Quality Assurance
 
-AdMe enforces automated testing across all layers:
+AdMe enforces a rigorous 6-tier automated verification pipeline across all layers (see [TESTING_GUIDELINES.md](./docs/testing/TESTING_GUIDELINES.md)):
 
-### 1. Vitest Unit & Integration Tests (58 / 58 Passing)
+### 1. The Unified 6-Tier Verification Release Gate
 ```bash
-npm run test
+npm run test:all
 ```
-* **Coverage**: RTB auction ranking, deterministic A/B variation hashing, budget pacing calculations, geofence distance algorithms, HMAC engagement verification, checkout validation, and localization governance.
+Executes all 6 tiers in sequence:
+1. **Version Consistency**: `node scripts/check-version.mjs`
+2. **Static Analysis & Lint**: `npm run lint` (0 ESLint errors)
+3. **Strict TypeScript Typecheck**: `npm run typecheck` (0 `tsc` errors)
+4. **Data Isolation & RLS Security Audit**: `npm run audit:rls` (18/18 tables verified with RLS)
+5. **Vitest Unit, Integration & Localization Suites**: `npm run test:ci` (100% passing)
+6. **Playwright End-to-End Browser Suite**: `npm run test:e2e` (25/25 tests passing across all routes)
 
-### 2. Playwright End-to-End Browser Tests (12 / 12 Passing)
+### 2. Modular Test Execution Commands
 ```bash
-npm run test:e2e
+npm run test:unit          # Run unit test suites
+npm run test:integration   # Run complete API endpoint integration tests
+npm run test:e2e           # Run Playwright E2E browser tests
+npm run audit:rls          # Run PostgreSQL Row-Level Security audit
 ```
-* **Automated Journeys Tested**:
-  1. Brand homepage & value proposition verification
-  2. Persona switcher state transitions
-  3. Proximity deals simulation and geofence alerts
-  4. GDPR "Forget Me" database cascade & session purge
-  5. Swipeable preference deck & AdPoints rewards
-  6. Ad Studio campaign selection & Max CPC bid updates
-  7. Rewards marketplace search, filtering, and voucher redemption
-  8. Business owner campaign status management & inbound leads pipeline
-  9. Barcode / 2D QR matrix display toggle & in-store verification
-  10. Anonymous JSON profile export (GDPR Article 20)
-  11. **Consumer account creation, 3-step onboarding & welcome bonus**
-  12. **Business account creation with brand name & direct Studio routing**
-
-### 3. Production Build Compilation
-```bash
-npm run build
-```
-* Clean Next.js 16 compile in under 2 seconds with zero TypeScript or ESLint warnings.
 
 ---
 

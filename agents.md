@@ -63,9 +63,9 @@ To build the AdMe platform with a deep understanding of user preferences, ensuri
   - All ad-hoc Node.js or bash scripts interacting with PostgreSQL, Redis, or external services MUST enforce explicit short timeouts (`connectionTimeoutMillis: 3000`, watchdog timers) and explicitly call `process.exit(0)` on completion or `process.exit(1)` on error. Use `npm run db:query` / `node scripts/db-query.mjs` for database inspection.
   - Never leave background tasks running when concluding a run, handoff, or user turn. Agents must execute a task audit (`manage_task` with action `'list'`) and terminate any non-daemon or orphan background tasks before reporting completion or relinquishing turns.
 - **Documentation discipline:** README, CHANGELOG, and docs are updated in the same change that needs them, not deferred. `ACTIVITY_LOG.md` and roadmap-style docs are updated to match reality.
-- **Testing discipline:**
-  - *Creation:* new or changed behavior gets a test near the change, sized to the actual risk.
-  - *Execution:* run targeted tests first, then the full test suite (`npm run test`), lint (`npm run lint`), and build (`npm run build`).
+- **Testing discipline (Mandatory surfaces per `docs/testing/TESTING_GUIDELINES.md`):**
+  - *Creation:* new or changed behavior MUST ship accompanying test surfaces (unit tests in `src/components/*.test.ts` or `tests/unit/`, API integration tests in `tests/integration/api-endpoints.test.ts`, and Playwright E2E browser tests in `tests/e2e/`).
+  - *Execution:* run targeted tests first, then the unified release gate (`npm run test:all`), which executes the 6-tier pipeline: Version Check, ESLint, TypeScript Typecheck, RLS Security Audit, Vitest Suites, and Playwright E2E.
   - *Evolution:* `test-verifier` and `implementation-validator` check tests and implementation against the approved story/brief. A red result is a stop condition.
 
 Update this file only through the same PR discipline it describes.
