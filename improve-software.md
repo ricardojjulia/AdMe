@@ -156,13 +156,14 @@ Every prompt from synthesis goes through `feature-factory` / `build-with-tests`.
 - Retain existing comments, type boundaries, and docstrings unrelated to the current change.
 - Never commit directly to `main`.
 
-### Sanity Checks Before Delivery
-1. `npm run test` (full vitest unit suite).
-2. `npm run lint` (ESLint 0 errors).
-3. `npm run typecheck` (TypeScript 0 errors).
-4. `npm run build` (Next.js production build).
+### Sanity Checks & Testing Surfaces (per `docs/testing/TESTING_GUIDELINES.md`)
+1. Unit test coverage near any pure logic or domain service.
+2. API integration test in `tests/integration/api-endpoints.test.ts` for any endpoint change.
+3. Playwright browser E2E test in `tests/e2e/` for any user-facing flow.
+4. Clean execution of the full 6-tier pipeline: `npm run test:all` (Version, Lint, Typecheck, RLS Audit, Unit/Integration, Playwright E2E).
+5. `npm run build` (Next.js production build with 0 errors).
 
-Only once all four are clean does work move to Phase 4. A red result is a stop condition, not a Documenter task.
+Only once all tiers are clean does work move to Phase 4. A red result is a stop condition, not a Documenter task.
 
 ---
 
