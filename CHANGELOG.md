@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **CI Supabase Client Resilience & Playwright Headless WebServer Timeout**:
+  - Add defensive fallbacks in `src/proxy.ts`, `src/lib/supabase/client.ts`, and `src/lib/supabase/server.ts` to prevent fatal Next.js initialization crashes when Supabase environment variables are missing in CI or unconfigured test runners.
+  - Wrap Supabase authentication calls in `src/proxy.ts` in safe `try...catch` blocks and position static route guards (`/hq`) upfront to avoid unhandled 500 errors and ensure seamless offline fallthrough.
+  - Update `.github/workflows/ci.yml` `e2e-tests` and `build` jobs to provide explicit mock Supabase credentials and enable `NEXT_PUBLIC_ENABLE_DEMO_PANEL: 'true'`.
+
 ### Added
 - **Full Software Testing Suite & Unified 6-Tier Verification Pipeline**:
   - **Comprehensive API Integration Matrix (`tests/integration/api-endpoints.test.ts`)**:

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { Ad } from "@/types/ad";
-import { OrganicPost } from "@/lib/mock-data";
+import { OrganicPost, STATIC_MOCK_ADS } from "@/lib/mock-data";
 import { calculateDistanceMiles } from "@/lib/utils/distance";
 import { FeedCard } from "./FeedCard";
 import { OrganicPostCard } from "./OrganicPostCard";
@@ -133,6 +133,11 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
         } catch (e) {
           console.error("Failed to load ads from Supabase", e);
         }
+      }
+
+      // If no ads loaded from database (e.g. offline, mock mode, or unseeded), fall back to STATIC_MOCK_ADS
+      if (filteredAds.length === 0) {
+        filteredAds = [...STATIC_MOCK_ADS];
       }
 
       // Filter out paused or archived campaigns
