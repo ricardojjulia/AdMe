@@ -16,6 +16,7 @@ import { FocusModeWidget } from "./FocusModeWidget";
 import { ZenCard } from "./ZenCard";
 import { ZEN_STREAM_ITEMS } from "@/lib/services/focus-pass";
 import { IntentTunerHUD } from "./IntentTunerHUD";
+import { SensoryShieldHUD } from "./SensoryShieldHUD";
 import { IntentMode, applyIntentRanking } from "@/lib/services/intent-tuner";
 import styles from "./Feed.module.css";
 
@@ -372,6 +373,7 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
         rotatedCount={rotatedCount}
         onResetFeed={() => setRefreshKey(k => k + 1)}
       />
+      <SensoryShieldHUD />
       <IntentTunerHUD
         activeIntent={activeIntent}
         onSelectIntent={setActiveIntent}

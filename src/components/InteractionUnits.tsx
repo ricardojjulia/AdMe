@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import styles from "./InteractionUnits.module.css";
 import { useUser } from "@/lib/UserContext";
+import { useSensoryShield } from "@/lib/hooks/useSensoryShield";
 
 interface ScratchCardProps {
   rewardAmount: number;
@@ -12,6 +13,7 @@ interface ScratchCardProps {
 
 export function ScratchCard({ rewardAmount, onComplete, brandName }: ScratchCardProps) {
   const { locale, t } = useUser();
+  const { isSensoryActive } = useSensoryShield();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [scratched, setScratched] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -148,7 +150,29 @@ export function ScratchCard({ rewardAmount, onComplete, brandName }: ScratchCard
     }
   };
 
-  const isSpanish = locale === 'es-PR';
+  if (isSensoryActive && !scratched) {
+    return (
+      <div className={styles.scratchWrapper} data-testid="sensory-scratch-card">
+        <div className={styles.calmRevealCard}>
+          <div className={styles.rewardCrown}>🎁</div>
+          <div className={styles.rewardHeading}>{brandName}</div>
+          <div className={styles.calmRewardPoints}>+{rewardAmount} pts</div>
+          <p className={styles.calmInstruction}>{t("sensory_shield_scratch_simplified")}</p>
+          <button
+            type="button"
+            className={styles.calmRevealBtn}
+            onClick={() => {
+              setScratched(true);
+              onComplete();
+            }}
+            data-testid="sensory-reveal-btn"
+          >
+            {t("sensory_shield_instant_reveal")}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.scratchWrapper}>

@@ -14,6 +14,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Update `.github/workflows/ci.yml` `e2e-tests` and `build` jobs to provide explicit mock Supabase credentials and enable `NEXT_PUBLIC_ENABLE_DEMO_PANEL: 'true'`.
 
 ### Added
+- **Sensory Shield & Cognitive Comfort Mode for Neurodivergent-Friendly, Low-Stimulus Ad Viewing (COUNCIL-2026-012)**:
+  - **Sensory Shield Service & Client-Side Engine (`src/lib/services/sensory-shield.ts` & `src/lib/hooks/useSensoryShield.ts`)**:
+    - Zero-tracking client-side engine respecting `localStorage` key `adme_sensory_shield_v1` and system `prefers-reduced-motion` media queries.
+    - Synchronizes `data-sensory-mode="comfort"` on root DOM `<html>` element with event-driven state propagation.
+  - **Global CSS Token Modulation (`src/app/globals.css`)**:
+    - Overrides design tokens when `data-sensory-mode="comfort"` is active, neutralizing keyframe animations (`animation-duration: 0.001ms !important`), suppressing flashing background radial gradients, and enforcing high-legibility calm contrast.
+  - **Floating Glassmorphic Sensory Shield HUD (`src/components/SensoryShieldHUD.tsx` & `.module.css`)**:
+    - Accessible, keyboard-navigable (`aria-pressed`, Enter/Space) floating pill mounted above the feed for 1-click toggling between Standard and Calm Mode.
+  - **Sensory-Adaptive Component Fallbacks (`src/components/InteractionUnits.tsx` & `src/components/GeofenceAlert.tsx`)**:
+    - Refactors `<ScratchCard />` and proximity deal modals to provide clean, accessible single-click instant reveal cards (`sensory-reveal-btn`) instead of repetitive canvas swiping.
+  - **Bilingual Localization Catalogs**:
+    - Full English (`en-US`) and Spanish (`es-PR`) translations in `src/lib/i18n/catalog.en-US.json` and `catalog.es-PR.json`.
+  - **Comprehensive Verification Suite**:
+    - Vitest unit tests in `src/components/sensory-shield.test.ts` (5 tests passing).
+    - Playwright browser E2E test in `tests/e2e/sensory-shield.spec.ts` asserting DOM attribute mutation, computed animation duration suppression, and persistence across reloads.
 - **Full Software Testing Suite & Unified 6-Tier Verification Pipeline**:
   - **Comprehensive API Integration Matrix (`tests/integration/api-endpoints.test.ts`)**:
     - 21 automated integration tests covering 100% of Next.js route handlers (`/api/checkout`, `/api/checkout/verify`, `/api/engagement/*`, `/api/location/coarse`, `/api/marketplace/nearby`, `/api/places/nearby`, `/api/moderation/ad`, `/api/moderation/report`, `/api/studio/copilot`, `/api/webhooks/stripe`).

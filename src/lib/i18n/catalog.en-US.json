@@ -377,5 +377,14 @@
   "intent_badge_local": "📍 Local Gem",
   "intent_badge_deal": "🏷️ Deal Pick",
   "intent_badge_mindful": "🍃 Mindful Pick",
-  "intent_zero_tracking_tooltip": "Zero Tracking • Ephemeral Memory"
+  "intent_zero_tracking_tooltip": "Zero Tracking • Ephemeral Memory",
+  "sensory_shield_title": "Sensory Shield",
+  "sensory_shield_calm": "Calm Mode",
+  "sensory_shield_standard": "Standard",
+  "sensory_shield_active_desc": "Reduced motion and low-stimulus reading active",
+  "sensory_shield_paused_desc": "Click to enable distraction-free, low-motion viewing",
+  "sensory_shield_instant_reveal": "Instant Offer Reveal",
+  "sensory_shield_scratch_simplified": "Sensory comfort active: Tap once to reveal reward",
+  "sensory_shield_on": "ON",
+  "sensory_shield_off": "OFF"
 }
