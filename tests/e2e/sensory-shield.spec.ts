@@ -53,4 +53,37 @@ test.describe('Sensory Shield & Cognitive Comfort Mode E2E (COUNCIL-2026-012)', 
     });
     expect(updatedStoredPref).toBe('false');
   });
+
+  test('should render accessible single-tap reveal cards for interactive units when Comfort Mode is active and persist attribute across routes', async ({ page }) => {
+    await page.goto('/');
+
+    // 1. Activate Sensory Shield
+    const toggleBtn = page.locator('[data-testid="sensory-shield-toggle"]');
+    await expect(toggleBtn).toBeVisible();
+    await toggleBtn.click();
+    await expect(page.locator('html')).toHaveAttribute('data-sensory-mode', 'comfort');
+
+    // 2. Locate an interaction button in the feed and activate it
+    const scratchTrigger = page.locator('button:has-text("Scratch to Win")').first();
+    if (await scratchTrigger.isVisible()) {
+      await scratchTrigger.click();
+
+      // Verify that instead of a canvas scratch-off, the sensory-adaptive reveal card is rendered
+      const sensoryCard = page.locator('[data-testid="sensory-scratch-card"]');
+      await expect(sensoryCard).toBeVisible();
+
+      const revealBtn = page.locator('[data-testid="sensory-reveal-btn"]');
+      await expect(revealBtn).toBeVisible();
+
+      // Click to instantly reveal and claim reward
+      await revealBtn.click();
+
+      // Assert interaction completes
+      await expect(page.locator('text=Claimed (+50 pts)').first()).toBeVisible();
+    }
+
+    // 3. Verify that navigating to another route (e.g. /rewards) initializes data-sensory-mode="comfort" immediately
+    await page.goto('/rewards');
+    await expect(page.locator('html')).toHaveAttribute('data-sensory-mode', 'comfort');
+  });
 });

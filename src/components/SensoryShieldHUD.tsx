@@ -50,14 +50,12 @@ export function SensoryShieldHUD() {
           </span>
         </div>
 
-        <button
-          type="button"
+        <span
           className={styles.toggleButton}
-          tabIndex={-1}
           aria-hidden="true"
         >
-          {isSensoryActive ? "ON" : "OFF"}
-        </button>
+          {isSensoryActive ? t("sensory_shield_on") : t("sensory_shield_off")}
+        </span>
       </div>
     </div>
   );

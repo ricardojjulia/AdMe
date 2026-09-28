@@ -11,6 +11,11 @@ export const SENSORY_SHIELD_EVENT = 'adme:sensory-shield-change';
 
 export type SensoryMode = 'standard' | 'comfort';
 
+export interface SensoryAdaptiveProps {
+  isSensoryActive?: boolean;
+  onInstantReveal?: () => void;
+}
+
 /**
  * Checks system-level accessibility settings for reduced motion.
  */

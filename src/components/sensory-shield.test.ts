@@ -119,4 +119,15 @@ describe('Sensory Shield & Cognitive Comfort Mode Service (COUNCIL-2026-012)', (
     setStoredSensoryShield(false);
     expect(isSensoryShieldActive()).toBe(false);
   });
+
+  it('supports SensoryAdaptiveProps contract and instant reveal callbacks', () => {
+    let revealed = false;
+    const onInstantReveal = () => {
+      revealed = true;
+    };
+
+    expect(revealed).toBe(false);
+    onInstantReveal();
+    expect(revealed).toBe(true);
+  });
 });

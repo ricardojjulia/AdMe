@@ -384,5 +384,7 @@
   "sensory_shield_active_desc": "Reduced motion and low-stimulus reading active",
   "sensory_shield_paused_desc": "Click to enable distraction-free, low-motion viewing",
   "sensory_shield_instant_reveal": "Instant Offer Reveal",
-  "sensory_shield_scratch_simplified": "Sensory comfort active: Tap once to reveal reward"
+  "sensory_shield_scratch_simplified": "Sensory comfort active: Tap once to reveal reward",
+  "sensory_shield_on": "ON",
+  "sensory_shield_off": "OFF"
 }

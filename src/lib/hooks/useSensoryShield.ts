@@ -6,6 +6,7 @@ import {
   setStoredSensoryShield,
   applySensoryModeToDOM,
   SENSORY_SHIELD_EVENT,
+  SENSORY_SHIELD_STORAGE_KEY,
   getStoredSensoryShield,
 } from "@/lib/services/sensory-shield";
 
@@ -29,7 +30,7 @@ export function useSensoryShield() {
     };
 
     const handleStorage = (e: StorageEvent) => {
-      if (e.key === "adme_sensory_shield_v1") {
+      if (e.key === SENSORY_SHIELD_STORAGE_KEY) {
         const active = isSensoryShieldActive();
         setIsSensoryActive(active);
         applySensoryModeToDOM(active);

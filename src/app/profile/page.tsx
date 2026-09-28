@@ -7,6 +7,7 @@ import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
 import { FeedCard } from "@/components/FeedCard";
 import { TransparencyModal } from "@/components/TransparencyModal";
+import { useSensoryShield } from "@/lib/hooks/useSensoryShield";
 import { Ad } from "@/types/ad";
 import styles from "./page.module.css";
 
@@ -18,6 +19,7 @@ const ALL_CATEGORIES = [
 export default function ProfilePage() {
   const { user, preferences, togglePreference, savedAds, coupons, adFrequency, deliveryChannels, quietHours, updateAdControlSettings, locale, setLocale, t } = useUser();
   const { addToast } = useToast();
+  const { isSensoryActive, toggleSensory } = useSensoryShield();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'Preferences' | 'Wallet' | 'Controls'>('Preferences');
   const [walletAds, setWalletAds] = useState<Ad[]>([]);
@@ -312,6 +314,31 @@ export default function ProfilePage() {
                 {adFrequency === 'low' && t('low_explain')}
                 {adFrequency === 'balanced' && t('balanced_explain')}
                 {adFrequency === 'high' && t('high_explain')}
+              </div>
+            </div>
+
+            {/* Sensory Shield & Cognitive Comfort */}
+            <div className={styles.controlCard}>
+              <div>
+                <h3 className={styles.controlGroupTitle}>🌱 {t('sensory_shield_title')}</h3>
+                <p className={styles.controlGroupDesc}>{isSensoryActive ? t('sensory_shield_active_desc') : t('sensory_shield_paused_desc')}</p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div className={styles.channelRow}>
+                  <div className={styles.channelLabel}>
+                    <span className={styles.channelName}>{t('sensory_shield_calm')}</span>
+                    <span className={styles.channelDesc}>{t('sensory_shield_scratch_simplified')}</span>
+                  </div>
+                  <label className={styles.switch}>
+                    <input 
+                      type="checkbox" 
+                      data-testid="profile-sensory-toggle"
+                      checked={isSensoryActive} 
+                      onChange={toggleSensory} 
+                    />
+                    <span className={styles.slider}></span>
+                  </label>
+                </div>
               </div>
             </div>
 

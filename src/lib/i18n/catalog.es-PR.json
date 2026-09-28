@@ -384,5 +384,7 @@
   "sensory_shield_active_desc": "Reducción de movimiento y lectura de bajo estímulo activa",
   "sensory_shield_paused_desc": "Haz clic para activar la visualización sin distracciones y bajo movimiento",
   "sensory_shield_instant_reveal": "Revelación Instantánea de Oferta",
-  "sensory_shield_scratch_simplified": "Comodidad sensorial activa: Toca una vez para revelar la recompensa"
+  "sensory_shield_scratch_simplified": "Comodidad sensorial activa: Toca una vez para revelar la recompensa",
+  "sensory_shield_on": "ACTIVADO",
+  "sensory_shield_off": "DESACTIVADO"
 }

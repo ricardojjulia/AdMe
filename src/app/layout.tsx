@@ -49,6 +49,13 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning className={display.variable}>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var k='adme_sensory_shield_v1';var p=localStorage.getItem(k);var r=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;if(p==='true'||(p===null&&r)){document.documentElement.setAttribute('data-sensory-mode','comfort')}else{document.documentElement.setAttribute('data-sensory-mode','standard')}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body suppressHydrationWarning>
         <ToastProvider>
           <UserProvider>

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
+import { useSensoryShield } from "@/lib/hooks/useSensoryShield";
 import styles from "./ZkpWebGLSwiper.module.css";
 
 interface ZkpWebGLSwiperProps {
@@ -26,6 +27,7 @@ export function ZkpWebGLSwiper({
 }: ZkpWebGLSwiperProps) {
   const { claimViewportReward, locale, t, user } = useUser();
   const { addToast } = useToast();
+  const { isSensoryActive } = useSensoryShield();
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -207,6 +209,7 @@ export function ZkpWebGLSwiper({
 
   // Compile shaders & setup WebGL
   useEffect(() => {
+    if (isSensoryActive) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -383,7 +386,7 @@ export function ZkpWebGLSwiper({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, []);
+  }, [isSensoryActive]);
 
   // WebGL Fallback layout if context is missing
   const hasWebGL = typeof window !== 'undefined' && !!window.WebGLRenderingContext && !!document.createElement('canvas').getContext('webgl');
@@ -413,11 +416,58 @@ export function ZkpWebGLSwiper({
       </div>
 
       {/* Swipe visual aids */}
-      <span className={styles.swipeArrowLeft}>◀ NOPE</span>
-      <span className={styles.swipeArrowRight}>LIKE ▶</span>
+      {!isSensoryActive && (
+        <>
+          <span className={styles.swipeArrowLeft}>◀ NOPE</span>
+          <span className={styles.swipeArrowRight}>LIKE ▶</span>
+        </>
+      )}
 
       {/* Core Swiping Target */}
-      {hasWebGL ? (
+      {isSensoryActive ? (
+        <div
+          className={styles.fallbackCard}
+          style={{ borderColor: primaryColor, transform: "none" }}
+          data-testid="sensory-zkp-card"
+        >
+          <div className={styles.cardFace}>
+            <span className={styles.cardLogo}>{advertiserAvatar}</span>
+            <h4 className={styles.cardName}>{brandName}</h4>
+            <span className={styles.cardCat}>{category}</span>
+            <div style={{ marginTop: "1rem", textAlign: "center" }}>
+              <p style={{ fontSize: "0.85rem", color: "#94a3b8", marginBottom: "0.75rem" }}>
+                {t("sensory_shield_scratch_simplified")}
+              </p>
+              <button
+                type="button"
+                data-testid="sensory-zkp-claim-btn"
+                onClick={async () => {
+                  const mockZkpProof = `zkp_proof_0x${Math.random().toString(16).substr(2, 8)}${Math.random().toString(16).substr(2, 8)}`;
+                  const success = await claimViewportReward(adId, 1, mockZkpProof, 50);
+                  if (success) {
+                    addToast(t("zkp_proof_verified"), "success");
+                    if (onComplete) onComplete();
+                  } else {
+                    addToast(t("double_claim_prevented") || "Already claimed points for this viewport offer!", "error");
+                  }
+                }}
+                style={{
+                  background: primaryColor,
+                  color: "#0f172a",
+                  fontWeight: 600,
+                  fontSize: "0.875rem",
+                  padding: "0.5rem 1rem",
+                  borderRadius: "0.5rem",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                {t("sensory_shield_instant_reveal")} (+50 pts)
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : hasWebGL ? (
         <canvas
           ref={canvasRef}
           className={styles.canvas}
@@ -445,11 +495,13 @@ export function ZkpWebGLSwiper({
       )}
 
       {/* Interactive Instructions */}
-      <div className={styles.instructions}>
-        {swipeOffset > 40 && "Agree 👉"}
-        {swipeOffset < -40 && "👈 Disagree"}
-        {Math.abs(swipeOffset) <= 40 && (t("disagree_instruction") || "👈 Drag left to Skip / Drag right to Agree 👉")}
-      </div>
+      {!isSensoryActive && (
+        <div className={styles.instructions}>
+          {swipeOffset > 40 && "Agree 👉"}
+          {swipeOffset < -40 && "👈 Disagree"}
+          {Math.abs(swipeOffset) <= 40 && (t("disagree_instruction") || "👈 Drag left to Skip / Drag right to Agree 👉")}
+        </div>
+      )}
 
       {/* Viewport tracking accumulation bar */}
       <div className={styles.progressContainer}>
