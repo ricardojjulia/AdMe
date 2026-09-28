@@ -377,5 +377,12 @@
   "intent_badge_local": "📍 Tesoro Local",
   "intent_badge_deal": "🏷️ Oferta Destacada",
   "intent_badge_mindful": "🍃 Elección Zen",
-  "intent_zero_tracking_tooltip": "Cero Rastreo • Memoria Efímera"
+  "intent_zero_tracking_tooltip": "Cero Rastreo • Memoria Efímera",
+  "sensory_shield_title": "Escudo Sensorial",
+  "sensory_shield_calm": "Modo Tranquilo",
+  "sensory_shield_standard": "Estándar",
+  "sensory_shield_active_desc": "Reducción de movimiento y lectura de bajo estímulo activa",
+  "sensory_shield_paused_desc": "Haz clic para activar la visualización sin distracciones y bajo movimiento",
+  "sensory_shield_instant_reveal": "Revelación Instantánea de Oferta",
+  "sensory_shield_scratch_simplified": "Comodidad sensorial activa: Toca una vez para revelar la recompensa"
 }

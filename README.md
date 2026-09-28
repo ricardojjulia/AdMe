@@ -147,6 +147,7 @@ Meta and TikTok monitor every click, scroll, and keystroke. AdMe stores **zero p
 *   **Interactive Barcode & 2D QR Voucher Wallet**: Instant switching between Code-128 linear barcodes and HTML canvas-rendered 2D QR codes with cashier verification PIN support.
 *   **Proximity Compass Maps & Scratch Cards**: Real-time compass navigation and canvas scratch cards rewarding users with +50 points when walking within 0.25 miles of local merchants.
 *   **Gamified Preference Swipe Polls**: Swipe card decks in the Rewards Hub that reward users with points for refining their interest profiles.
+*   **Sensory Shield & Cognitive Comfort Mode**: Low-stimulus, neurodivergent-friendly viewing toggle that completely neutralizes aggressive CSS animations, keyframe pulsing, and flashing canvas interactions, providing calm single-click reveal fallbacks and high-legibility readability with zero server tracking.
 *   **GDPR Article 17 & 20 Compliance**: One-click complete anonymous JSON profile data download and an atomic `gdpr_forget_user` cascade purge.
 
 ### 2. Business Ad Studio & Inbound Leads Cockpit

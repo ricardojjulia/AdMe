@@ -5,6 +5,7 @@ import { useUser } from "@/lib/UserContext";
 import { calculateDistanceMiles } from "@/lib/utils/distance";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/lib/ToastContext";
+import { useSensoryShield } from "@/lib/hooks/useSensoryShield";
 import styles from "./GeofenceAlert.module.css";
 
 interface ActiveAlert {
@@ -221,6 +222,7 @@ interface ScratchCardProps {
 
 export function ScratchCard({ onComplete, brandName }: ScratchCardProps) {
   const { locale, t } = useUser();
+  const { isSensoryActive } = useSensoryShield();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [scratchedPercent, setScratchedPercent] = useState(0);
   const [completeTriggered, setCompleteTriggered] = useState(false);
@@ -285,6 +287,33 @@ export function ScratchCard({ onComplete, brandName }: ScratchCardProps) {
       onComplete();
     }
   };
+
+  if (isSensoryActive && !completeTriggered) {
+    return (
+      <div style={{ marginTop: '0.65rem', userSelect: 'none' }} data-testid="sensory-proximity-reveal">
+        <button
+          type="button"
+          onClick={() => {
+            setCompleteTriggered(true);
+            onComplete();
+          }}
+          data-testid="sensory-reveal-btn"
+          style={{
+            background: 'hsl(var(--primary))',
+            color: 'hsl(var(--primary-foreground))',
+            border: 'none',
+            borderRadius: '6px',
+            padding: '0.45rem 1rem',
+            fontSize: '0.8rem',
+            fontWeight: 700,
+            cursor: 'pointer'
+          }}
+        >
+          {t("sensory_shield_instant_reveal")}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={{ position: 'relative', width: '230px', height: '50px', marginTop: '0.65rem', userSelect: 'none' }}>
