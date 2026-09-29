@@ -16,6 +16,8 @@ import { AdTransparencyModal } from "./AdTransparencyModal";
 import EditorialVisual from "./EditorialVisual";
 import { IntentResonanceBadge } from "./IntentResonanceBadge";
 import { IntentMode, IntentResonanceInfo } from "@/lib/services/intent-tuner";
+import { CommunityImpactBadge } from "./CommunityImpactBadge";
+import { useCommunityImpact } from "@/lib/hooks/useCommunityImpact";
 import styles from "./NativeAdCard.module.css";
 
 interface NativeAdCardProps {
@@ -27,6 +29,7 @@ interface NativeAdCardProps {
 export function NativeAdCard({ ad, intentMatch, intent = 'all' }: NativeAdCardProps) {
   const { ref, logClick, logLike, isLiked } = useEngagementAnalytics(ad.id);
   const { toggleSavedAd, savedAds, reportAd, skipAd, addReward, claimedVouchers, claimAdVoucher, t } = useUser();
+  const { routeRewardBonus } = useCommunityImpact();
   const { addToast } = useToast();
   const [isReportOpen, setIsReportOpen] = useState(false);
   const isSaved = savedAds.includes(ad.id);
@@ -58,7 +61,8 @@ export function NativeAdCard({ ad, intentMatch, intent = 'all' }: NativeAdCardPr
   const handleCompleteInteraction = () => {
     if (isInteractionCompleted) return;
     
-    addReward(50, `Value-Exchange: ${ad.advertiser.name}`);
+    // Route reward according to user's Ads for Good split preference
+    routeRewardBonus(50);
     localStorage.setItem(`adme_interaction_completed_${ad.id}`, 'true');
     setIsInteractionCompleted(true);
     addToast(t("reward_success_toast"), "success");
@@ -280,6 +284,8 @@ export function NativeAdCard({ ad, intentMatch, intent = 'all' }: NativeAdCardPr
               >
                 {t('why_this_ad') || "Why this? ✨"}
               </button>
+
+              <CommunityImpactBadge advertiserName={ad.advertiser.name} category={ad.category} />
 
               {/* Instant Value-Exchange Voucher Stash */}
               {isVoucherClaimed ? (

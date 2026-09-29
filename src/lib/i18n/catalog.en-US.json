@@ -386,5 +386,13 @@
   "sensory_shield_instant_reveal": "Instant Offer Reveal",
   "sensory_shield_scratch_simplified": "Sensory comfort active: Tap once to reveal reward",
   "sensory_shield_on": "ON",
-  "sensory_shield_off": "OFF"
+  "sensory_shield_off": "OFF",
+  "ads_for_good_title": "Ads for Good & Community Impact",
+  "ads_for_good_badge": "Ads for Good",
+  "community_causes_title": "Verified Community Initiatives",
+  "impact_split_title": "Reward Value-Exchange Split",
+  "impact_certificates_title": "My Community Impact Certificates",
+  "impact_split_balanced": "50/50 Dual Benefit",
+  "impact_split_cause": "100% Community Champion",
+  "impact_split_perks": "100% Personal Perks"
 }

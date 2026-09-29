@@ -13,6 +13,7 @@ import { ReportModal } from "./ReportModal";
 import { AdTransparencyModal } from "./AdTransparencyModal";
 import { IntentResonanceBadge } from "./IntentResonanceBadge";
 import { IntentMode, IntentResonanceInfo } from "@/lib/services/intent-tuner";
+import { CommunityImpactBadge } from "./CommunityImpactBadge";
 import styles from "./CarouselAdCard.module.css";
 
 interface CarouselAdCardProps {
@@ -131,6 +132,7 @@ export function CarouselAdCard({ ad, intentMatch, intent = 'all' }: CarouselAdCa
               {t('sponsored')} · {ad.category}
               {ad.distanceMiles !== undefined && ` · 📍 ${t('miles_away', { distance: ad.distanceMiles.toFixed(1) })}`}
             </p>
+            <CommunityImpactBadge advertiserName={ad.advertiser.name} category={ad.category} />
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>

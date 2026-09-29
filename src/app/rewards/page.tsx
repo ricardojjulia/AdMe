@@ -9,12 +9,14 @@ import { createClient } from "@/lib/supabase/client";
 import { PollDeck } from "@/components/PollDeck";
 import { CouponWallet } from "@/components/CouponWallet";
 import { FOCUS_TIERS, FocusPassTier } from "@/lib/services/focus-pass";
+import { CommunityImpactDashboard } from "@/components/CommunityImpactDashboard";
 
 export default function RewardsPage() {
   const { user, savedAds, redeemPerk, isFocusActive, focusPass, focusTimeLeft, activateFocusPass, cancelFocusPass, locale, t } = useUser();
   const { addToast } = useToast();
   const [history, setHistory] = useState<any[]>([]);
   const [localAds, setLocalAds] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'all' | 'impact'>('all');
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -25,7 +27,21 @@ export default function RewardsPage() {
 
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('tab') === 'impact') {
+        setActiveTab('impact');
+      }
+    }
   }, []);
+
+  const handleTabChange = (tab: 'all' | 'impact') => {
+    setActiveTab(tab);
+    if (typeof window !== 'undefined') {
+      const url = tab === 'impact' ? '/rewards?tab=impact' : '/rewards';
+      window.history.replaceState({}, '', url);
+    }
+  };
 
   const balance = user?.rewardsBalance || 0;
 
@@ -202,8 +218,50 @@ export default function RewardsPage() {
         </section>
       </div>
 
-      {/* Tinder-style preferences swiper */}
-      <PollDeck />
+      {/* Navigation Tabs */}
+      <div style={{ display: 'flex', gap: '0.75rem', borderBottom: '1px solid hsl(var(--border) / 0.5)', paddingBottom: '0.75rem', overflowX: 'auto', alignItems: 'center' }}>
+        <button
+          type="button"
+          onClick={() => handleTabChange('all')}
+          data-testid="tab-all-perks"
+          style={{
+            background: activeTab === 'all' ? 'hsl(var(--primary))' : 'rgba(255, 255, 255, 0.05)',
+            color: activeTab === 'all' ? '#ffffff' : 'hsl(var(--muted-foreground))',
+            border: activeTab === 'all' ? 'none' : '1px solid hsl(var(--border))',
+            padding: '0.55rem 1.2rem',
+            borderRadius: '9999px',
+            fontWeight: 600,
+            fontSize: '0.9rem',
+            cursor: 'pointer'
+          }}
+        >
+          🛍️ {t('cat_all') || 'All Perks & Marketplace'}
+        </button>
+        <button
+          type="button"
+          onClick={() => handleTabChange('impact')}
+          data-testid="tab-community-impact"
+          style={{
+            background: activeTab === 'impact' ? '#10b981' : 'rgba(16, 185, 129, 0.1)',
+            color: activeTab === 'impact' ? '#ffffff' : '#10b981',
+            border: activeTab === 'impact' ? 'none' : '1px solid rgba(16, 185, 129, 0.4)',
+            padding: '0.55rem 1.2rem',
+            borderRadius: '9999px',
+            fontWeight: 600,
+            fontSize: '0.9rem',
+            cursor: 'pointer'
+          }}
+        >
+          🌱 {locale?.startsWith('es') ? 'Anuncios con Causa & Impacto' : 'Ads for Good & Impact'}
+        </button>
+      </div>
+
+      {activeTab === 'impact' ? (
+        <CommunityImpactDashboard />
+      ) : (
+        <>
+          {/* Tinder-style preferences swiper */}
+          <PollDeck />
 
       {/* Vouchers Wallet */}
       <CouponWallet />
@@ -402,6 +460,8 @@ export default function RewardsPage() {
           )}
         </div>
       </section>
+      </>
+      )}
 
       {/* Confirmation Modal */}
       {confirmPerk && (
