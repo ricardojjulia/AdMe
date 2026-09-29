@@ -386,5 +386,13 @@
   "sensory_shield_instant_reveal": "Revelación Instantánea de Oferta",
   "sensory_shield_scratch_simplified": "Comodidad sensorial activa: Toca una vez para revelar la recompensa",
   "sensory_shield_on": "ACTIVADO",
-  "sensory_shield_off": "DESACTIVADO"
+  "sensory_shield_off": "DESACTIVADO",
+  "ads_for_good_title": "Anuncios con Causa & Impacto Comunitario",
+  "ads_for_good_badge": "Anuncios con Causa",
+  "community_causes_title": "Iniciativas Comunitarias Verificadas",
+  "impact_split_title": "Configuración de Reparto de Recompensas",
+  "impact_certificates_title": "Mis Certificados de Impacto Comunitario",
+  "impact_split_balanced": "50/50 Beneficio Dual",
+  "impact_split_cause": "100% Campeón Comunitario",
+  "impact_split_perks": "100% Recompensas Personales"
 }

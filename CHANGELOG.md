@@ -14,6 +14,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Update `.github/workflows/ci.yml` `e2e-tests` and `build` jobs to provide explicit mock Supabase credentials and enable `NEXT_PUBLIC_ENABLE_DEMO_PANEL: 'true'`.
 
 ### Added
+- **"Ads for Good" & Community Impact Co-Sponsorship: Dual-Benefit Engagement Routing and Verified Social Impact Dividends (COUNCIL-2026-013)**:
+  - **Community Impact Service & Engine (`src/lib/services/community-impact.ts` & `src/lib/hooks/useCommunityImpact.ts`)**:
+    - Pure, zero-tracking client-side engine supporting 3 value-exchange split modes: `50/50 Dual Benefit`, `100% Community Champion`, and `100% Personal Perks`.
+    - Seed registry of certified community initiatives (Urban Reforestation, Local Food Pantries, Youth STEM Robotics, Community Animal Rescue) with real-world impact conversion rates.
+    - Deterministic client-side digital impact certificate generator (`IMP-<PREFIX>-<TIME>-<POINTS>P`).
+  - **In-Feed Cause Co-Sponsorship Badge (`src/components/CommunityImpactBadge.tsx` & `.module.css`)**:
+    - Accessible, non-intrusive "Ads for Good" pill attached to sponsored cards in the feed.
+    - Interactive details modal showing civic mission, partner co-sponsor, community goal progress bar, and instant 25-point contribution button.
+  - **Community Impact Dashboard in Rewards (`src/components/CommunityImpactDashboard.tsx` & `src/app/rewards/page.tsx`)**:
+    - Integrated under `/rewards?tab=impact` and accessible via navigation tabs.
+    - Interactive split preference selector, verified initiatives cards, and digital impact certificate wallet.
+  - **Bilingual Localization Catalogs**:
+    - Parity across English (`en-US`) and Spanish (`es-PR`) in `catalog.en-US.json` and `catalog.es-PR.json`.
+  - **Comprehensive Verification Suite**:
+    - 10 Vitest unit tests in `src/components/community-impact.test.ts`.
+    - 3 Playwright E2E browser tests in `tests/e2e/community-impact.spec.ts`.
 - **Sensory Shield & Cognitive Comfort Mode for Neurodivergent-Friendly, Low-Stimulus Ad Viewing (COUNCIL-2026-012)**:
   - **Sensory Shield Service & Client-Side Engine (`src/lib/services/sensory-shield.ts` & `src/lib/hooks/useSensoryShield.ts`)**:
     - Zero-tracking client-side engine respecting `localStorage` key `adme_sensory_shield_v1` and system `prefers-reduced-motion` media queries.

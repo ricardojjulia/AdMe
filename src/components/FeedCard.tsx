@@ -17,6 +17,8 @@ import { ReportModal } from "./ReportModal";
 import { AdTransparencyModal } from "./AdTransparencyModal";
 import { IntentResonanceBadge } from "./IntentResonanceBadge";
 import { IntentMode, IntentResonanceInfo } from "@/lib/services/intent-tuner";
+import { CommunityImpactBadge } from "./CommunityImpactBadge";
+import { useCommunityImpact } from "@/lib/hooks/useCommunityImpact";
 import styles from "./FeedCard.module.css";
 
 interface FeedCardProps {
@@ -29,7 +31,8 @@ export function FeedCard({ ad, intentMatch, intent = 'all' }: FeedCardProps) {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isTransparencyOpen, setIsTransparencyOpen] = useState(false);
   const { ref, logClick, logLike, isLiked } = useEngagementAnalytics(ad.id);
-  const { toggleSavedAd, savedAds, reportAd, user, skipAd, addReward, claimedVouchers, claimAdVoucher, t } = useUser();
+  const { toggleSavedAd, savedAds, reportAd, user, skipAd, addReward, claimedVouchers, claimAdVoucher, locale, t } = useUser();
+  const { routeRewardBonus } = useCommunityImpact();
   const { addToast } = useToast();
   const isSaved = savedAds.includes(ad.id);
   const isVoucherClaimed = claimedVouchers.includes(ad.id);
@@ -64,11 +67,26 @@ export function FeedCard({ ad, intentMatch, intent = 'all' }: FeedCardProps) {
     if (isInteractionCompleted) return;
     
     if (!isZkpClaim) {
-      addReward(50, `Value-Exchange: ${ad.advertiser.name}`);
+      const routed = routeRewardBonus(50);
+      if (routed.personalBonus > 0) {
+        addReward(routed.personalBonus, `Value-Exchange: ${ad.advertiser.name}`);
+      }
+      if (routed.causeBonus > 0) {
+        const isEs = locale === 'es' || locale?.startsWith('es');
+        addToast(
+          isEs
+            ? `🌱 +${routed.causeBonus} pts a ${routed.causeTitle} (+${routed.personalBonus} pts personales)!`
+            : `🌱 +${routed.causeBonus} pts to ${routed.causeTitle} (+${routed.personalBonus} personal pts)!`,
+          "success"
+        );
+      } else {
+        addToast(t("reward_success_toast"), "success");
+      }
+    } else {
+      addToast(t("reward_success_toast"), "success");
     }
     localStorage.setItem(`adme_interaction_completed_${ad.id}`, 'true');
     setIsInteractionCompleted(true);
-    addToast(t("reward_success_toast"), "success");
     
     setTimeout(() => {
       setActiveInteraction(false);
@@ -182,6 +200,7 @@ export function FeedCard({ ad, intentMatch, intent = 'all' }: FeedCardProps) {
               )}
               {ad.distanceMiles !== undefined && ` · 📍 ${t('miles_away', { distance: ad.distanceMiles.toFixed(1) })}`}
             </p>
+            <CommunityImpactBadge advertiserName={ad.advertiser.name} category={ad.category} />
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
