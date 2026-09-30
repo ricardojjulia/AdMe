@@ -8,6 +8,7 @@ import { useToast } from "@/lib/ToastContext";
 import { FeedCard } from "@/components/FeedCard";
 import { TransparencyModal } from "@/components/TransparencyModal";
 import { useSensoryShield } from "@/lib/hooks/useSensoryShield";
+import { useAttentionBudget } from "@/lib/hooks/useAttentionBudget";
 import { Ad } from "@/types/ad";
 import styles from "./page.module.css";
 
@@ -20,6 +21,7 @@ export default function ProfilePage() {
   const { user, preferences, togglePreference, savedAds, coupons, adFrequency, deliveryChannels, quietHours, updateAdControlSettings, locale, setLocale, t } = useUser();
   const { addToast } = useToast();
   const { isSensoryActive, toggleSensory } = useSensoryShield();
+  const { config: budgetConfig, streakCount: budgetStreak, updateConfig: updateBudgetConfig } = useAttentionBudget();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'Preferences' | 'Wallet' | 'Controls'>('Preferences');
   const [walletAds, setWalletAds] = useState<Ad[]>([]);
@@ -339,6 +341,55 @@ export default function ProfilePage() {
                     <span className={styles.slider}></span>
                   </label>
                 </div>
+              </div>
+            </div>
+
+            {/* Mindful Attention Budget & Digital Wellness */}
+            <div className={styles.controlCard} data-testid="profile-attention-budget-card">
+              <div>
+                <h3 className={styles.controlGroupTitle}>🎯 {t('attention_budget_title')}</h3>
+                <p className={styles.controlGroupDesc}>{t('attention_budget_subtitle')}</p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.9rem', color: 'hsl(var(--foreground))', fontWeight: 600 }}>
+                    {t('attention_budget_daily_limit_label')}
+                  </span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'hsl(var(--primary))' }}>
+                    {budgetConfig.dailyCap === 0 ? t('attention_budget_unlimited_name') : `${budgetConfig.dailyCap} ${t('attention_budget_ads_label')}`}
+                  </span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+                  {[3, 5, 10, 0].map((cap) => {
+                    const isSelected = cap === 0 ? budgetConfig.dailyCap === 0 : budgetConfig.dailyCap === cap;
+                    return (
+                      <button
+                        key={cap}
+                        type="button"
+                        onClick={() => updateBudgetConfig({ dailyCap: cap, enabled: cap !== 0 })}
+                        data-testid={`profile-budget-cap-${cap}`}
+                        style={{
+                          padding: '0.5rem 0.25rem',
+                          borderRadius: '0.5rem',
+                          border: isSelected ? '1px solid hsl(var(--primary))' : '1px solid hsl(var(--border))',
+                          background: isSelected ? 'hsl(var(--primary)/0.15)' : 'hsl(var(--card))',
+                          color: isSelected ? 'hsl(var(--primary))' : 'hsl(var(--foreground))',
+                          fontWeight: isSelected ? 'bold' : 'normal',
+                          cursor: 'pointer',
+                          fontSize: '0.8rem',
+                          textAlign: 'center'
+                        }}
+                      >
+                        {cap === 0 ? '∞' : `${cap}`}
+                      </button>
+                    );
+                  })}
+                </div>
+                {budgetStreak > 0 && (
+                  <div style={{ fontSize: '0.85rem', color: '#ea580c', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    🔥 {t('attention_budget_streak_banner', { count: budgetStreak })}
+                  </div>
+                )}
               </div>
             </div>
 

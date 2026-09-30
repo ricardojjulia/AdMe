@@ -17,6 +17,9 @@ import { ZenCard } from "./ZenCard";
 import { ZEN_STREAM_ITEMS } from "@/lib/services/focus-pass";
 import { IntentTunerHUD } from "./IntentTunerHUD";
 import { SensoryShieldHUD } from "./SensoryShieldHUD";
+import { AttentionBudgetHUD } from "./AttentionBudgetHUD";
+import { MindfulCeilingCard } from "./MindfulCeilingCard";
+import { useAttentionBudget } from "@/lib/hooks/useAttentionBudget";
 import { IntentMode, applyIntentRanking } from "@/lib/services/intent-tuner";
 import styles from "./Feed.module.css";
 
@@ -78,6 +81,7 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
     setMounted(true);
   }, []);
   const { user, preferences, reportedAds, skippedAds, snoozedMerchants, categoryWeights, location, locationState, adFrequency, deliveryChannels, isFocusActive, t } = useUser();
+  const { isBudgetReached } = useAttentionBudget();
 
   useEffect(() => {
     setLoading(true);
@@ -356,6 +360,7 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
     const isAdItem = (item as Ad).advertiser !== undefined;
     if (isAdItem) {
       if (mounted && isFocusActive) return false;
+      if (mounted && isBudgetReached) return false;
       const ad = item as Ad;
       if (reportedAds.includes(ad.id) || skippedAds.includes(ad.id)) return false;
       if (snoozedMerchants.includes(ad.advertiser.name) || snoozedMerchants.includes(ad.id)) return false;
@@ -374,6 +379,7 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
         onResetFeed={() => setRefreshKey(k => k + 1)}
       />
       <SensoryShieldHUD />
+      <AttentionBudgetHUD />
       <IntentTunerHUD
         activeIntent={activeIntent}
         onSelectIntent={setActiveIntent}
@@ -385,6 +391,10 @@ export function Feed({ searchQuery = '', activeTab = 'For You' }: FeedProps) {
             <ZenCard key={zen.id} item={zen} />
           ))}
         </div>
+      )}
+
+      {mounted && isBudgetReached && (
+        <MindfulCeilingCard />
       )}
 
       {visibleItems.length === 0 && !loading && (
