@@ -14,6 +14,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Update `.github/workflows/ci.yml` `e2e-tests` and `build` jobs to provide explicit mock Supabase credentials and enable `NEXT_PUBLIC_ENABLE_DEMO_PANEL: 'true'`.
 
 ### Added
+- **Mindful Attention Budget & Digital Wellness Dividend: Voluntary Daily Exposure Caps, Anti-Doomscrolling Soft Ceilings, and Mindful Streak Rewards (COUNCIL-2026-014)**:
+  - **Client-Side Mindful Attention Engine (`src/lib/services/attention-budget.ts` & `src/lib/hooks/useAttentionBudget.ts`)**:
+    - Pure TypeScript zero-knowledge state engine tracking daily commercial exposures, user-configured daily caps (3, 5, 10, or unlimited ads/day), mindful completion streaks, and +25 pt bonus dividend claims.
+    - Deterministic UTC date handling (`getTodayUTCKey`, `getYesterdayUTCKey`) preventing timezone manipulation and ensuring safe calendar roll-overs.
+    - Resilient localStorage persistence (`adme_attention_budget_v1`) with corrupt state defense and DOM event bus synchronization (`adme:attention-budget-change`).
+  - **Feed Header Mindful Attention Ring & Budget Pill (`src/components/AttentionBudgetHUD.tsx` & `.module.css`)**:
+    - Accessible floating HUD pill mounted atop the consumer feed displaying progress bar, remaining quota, streak indicator, and 1-click modal for instant budget preset configuration.
+  - **Celebratory 'Mindful Goal Reached' Feed Milestone Card (`src/components/MindfulCeilingCard.tsx` & `.module.css`)**:
+    - Automatically rendered when the daily quota is reached, gracefully silencing commercial ads while offering a 1-click claim button for the +25 pt Daily Mindful Completion Dividend, streak milestones, and session extension options (+3 ads).
+  - **Profile Ad Controls Integration (`src/app/profile/page.tsx`)**:
+    - Integrated Mindful Attention Budget card under the "Ad Controls" tab with interactive cap preset selectors, streak indicators, and digital wellness guarantees.
+  - **Bilingual Localization Catalogs**:
+    - 100% parity across English (`en-US`) and Puerto Rican Spanish (`es-PR`) in `catalog.en-US.json` and `catalog.es-PR.json`.
+  - **Comprehensive Verification Suite**:
+    - 9 Vitest unit tests in `src/components/attention-budget.test.ts`.
+    - 3 Playwright E2E browser tests in `tests/e2e/attention-budget.spec.ts`.
 - **"Ads for Good" & Community Impact Co-Sponsorship: Dual-Benefit Engagement Routing and Verified Social Impact Dividends (COUNCIL-2026-013)**:
   - **Community Impact Service & Engine (`src/lib/services/community-impact.ts` & `src/lib/hooks/useCommunityImpact.ts`)**:
     - Pure, zero-tracking client-side engine supporting 3 value-exchange split modes: `50/50 Dual Benefit`, `100% Community Champion`, and `100% Personal Perks`.

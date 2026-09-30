@@ -1,0 +1,352 @@
+.hudContainer {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0.75rem;
+  font-family: inherit;
+  position: relative;
+  z-index: 10;
+}
+
+.hudPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.45rem 0.85rem;
+  background: hsl(var(--card) / 0.85);
+  border: 1px solid hsl(var(--border));
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  color: hsl(var(--foreground));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.hudPill:hover {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 4px 12px hsl(var(--primary) / 0.12);
+}
+
+.reachedPill {
+  border-color: rgba(245, 158, 11, 0.6);
+  background: hsl(var(--card) / 0.95);
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.12);
+}
+
+.pillLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.icon {
+  font-size: 0.9rem;
+}
+
+.title {
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: hsl(var(--foreground));
+  letter-spacing: -0.01em;
+}
+
+.pillCenter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  max-width: 260px;
+  margin: 0 0.5rem;
+}
+
+.progressBarBg {
+  flex: 1;
+  height: 6px;
+  background: hsl(var(--muted) / 0.8);
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progressBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.progressBarComplete {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.quotaText {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+}
+
+.unlimitedText {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+}
+
+.pillRight {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.streakBadge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(249, 115, 22, 0.15);
+  color: #ea580c;
+  padding: 0.15rem 0.45rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+.settingsIcon {
+  font-size: 0.78rem;
+  opacity: 0.6;
+}
+
+/* Modal Overlay & Card */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 100;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modalCard {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 1.25rem;
+  width: 100%;
+  max-width: 480px;
+  padding: 1.5rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  color: hsl(var(--foreground));
+  animation: slideUp 0.25s ease-out;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.modalTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.modalIcon {
+  font-size: 1.2rem;
+}
+
+.modalTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: hsl(var(--muted-foreground));
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+}
+
+.closeBtn:hover {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+}
+
+.modalSubtitle {
+  font-size: 0.85rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0 0 1.25rem 0;
+  line-height: 1.4;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.statBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem 0.5rem;
+  background: hsl(var(--muted) / 0.5);
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--border) / 0.5);
+}
+
+.statNumber {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: hsl(var(--foreground));
+}
+
+.statLabel {
+  font-size: 0.72rem;
+  color: hsl(var(--muted-foreground));
+  text-align: center;
+  margin-top: 0.2rem;
+}
+
+.section {
+  margin-bottom: 1.25rem;
+}
+
+.sectionLabel {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: hsl(var(--foreground));
+}
+
+.presetGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.presetBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 0.35rem;
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: hsl(var(--foreground));
+}
+
+.presetBtn:hover {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--accent) / 0.2);
+}
+
+.presetSelected {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.12);
+  color: hsl(var(--primary));
+  font-weight: 700;
+  box-shadow: 0 0 0 1px hsl(var(--primary));
+}
+
+.presetNumber {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.presetDesc {
+  font-size: 0.68rem;
+  color: hsl(var(--muted-foreground));
+  margin-top: 0.15rem;
+}
+
+.actionsRow {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.secondaryBtn {
+  flex: 1;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.secondaryBtn:hover {
+  background: hsl(var(--secondary) / 0.8);
+}
+
+.resetBtn {
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--border));
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.resetBtn:hover {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+}
+
+.zkNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 0.75rem;
+}
+
+.zkIcon {
+  font-size: 0.95rem;
+  margin-top: 0.1rem;
+}
+
+.zkText {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0;
+  line-height: 1.35;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

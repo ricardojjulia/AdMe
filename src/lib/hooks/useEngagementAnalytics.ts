@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useUser } from "@/lib/UserContext";
 import { useToast } from "@/lib/ToastContext";
+import { recordAdExposure } from "@/lib/services/attention-budget";
 
 export function useEngagementAnalytics(adId: string) {
     const ref = useRef<HTMLDivElement>(null);
@@ -143,6 +144,7 @@ export function useEngagementAnalytics(adId: string) {
                                 }
                                 console.log(`[Analytics] Ad ${adId} viewed for 2+ continuous seconds. Awarding points.`);
                                 logAction('view_reward', 1);
+                                recordAdExposure(1);
                             }
                         }
                     }, 2000);
